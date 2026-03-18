@@ -19,6 +19,7 @@ import AdminRequirements from "./pages/AdminRequirements";
 import AuditLog from "./pages/AuditLog";
 import AdminSettings from "./pages/AdminSettings";
 import Approvals from "./pages/Approvals";
+import SupplierDetail from "./pages/SupplierDetail";
 import Notifications from "./pages/Notifications";
 import SyncPage from "./pages/SyncPage";
 
@@ -52,6 +53,9 @@ function Router() {
       </Route>
       <Route path="/suppliers">
         {() => <ProtectedRoute component={Suppliers} />}
+      </Route>
+      <Route path="/suppliers/:id">
+        {() => <ProtectedRoute component={SupplierDetail} />}
       </Route>
       <Route path="/sync">
         {() => <ProtectedRoute component={SyncPage} />}
