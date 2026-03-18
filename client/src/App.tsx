@@ -22,6 +22,10 @@ import Approvals from "./pages/Approvals";
 import SupplierDetail from "./pages/SupplierDetail";
 import Notifications from "./pages/Notifications";
 import SyncPage from "./pages/SyncPage";
+import ExpiryTracker from "./pages/ExpiryTracker";
+import InvitationsManager from "./pages/InvitationsManager";
+import TemplatesManager from "./pages/TemplatesManager";
+import AcceptInvite from "./pages/AcceptInvite";
 
 // Wrapper that applies the ComplianceLayout to protected routes
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
@@ -78,6 +82,19 @@ function Router() {
       <Route path="/admin/settings">
         {() => <ProtectedRoute component={AdminSettings} />}
       </Route>
+
+      {/* Feature routes */}
+      <Route path="/expiry">
+        {() => <ProtectedRoute component={ExpiryTracker} />}
+      </Route>
+      <Route path="/admin/invitations">
+        {() => <ProtectedRoute component={InvitationsManager} />}
+      </Route>
+      <Route path="/admin/templates">
+        {() => <ProtectedRoute component={TemplatesManager} />}
+      </Route>
+      {/* Public invite accept page */}
+      <Route path="/invite/accept" component={AcceptInvite} />
 
       {/* 404 */}
       <Route path="/404" component={NotFound} />

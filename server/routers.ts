@@ -11,6 +11,9 @@ import { adminRouter } from "./routers/admin";
 import { notificationsRouter } from "./routers/notifications";
 import { syncRouter } from "./routers/sync";
 import { aiAnalysisRouter } from "./routers/aiAnalysis";
+import { expiryRouter } from "./routers/expiry";
+import { invitationsRouter } from "./routers/invitations";
+import { templatesRouter } from "./routers/templates";
 
 export const appRouter = router({
   system: systemRouter,
@@ -32,6 +35,9 @@ export const appRouter = router({
   notifications: notificationsRouter,
   sync: syncRouter,
   aiAnalysis: aiAnalysisRouter,
+  expiry: expiryRouter,
+  invitations: invitationsRouter,
+  templates: templatesRouter,
 });
 
 export type AppRouter = typeof appRouter;

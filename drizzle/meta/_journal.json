@@ -22,6 +22,13 @@
       "when": 1773872380802,
       "tag": "0002_futuristic_colonel_america",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1773873255942,
+      "tag": "0003_even_william_stryker",
+      "breakpoints": true
     }
   ]
 }

@@ -350,3 +350,62 @@ export const aiAnalysisResults = mysqlTable("ai_analysis_results", {
 
 export type AiAnalysisResult = typeof aiAnalysisResults.$inferSelect;
 export type InsertAiAnalysisResult = typeof aiAnalysisResults.$inferInsert;
+
+// ─── Supplier Invitations (Magic-Link Onboarding) ────────────────────────────
+export const supplierInvitations = mysqlTable("supplier_invitations", {
+  id: int("id").autoincrement().primaryKey(),
+  supplierId: int("supplierId").notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  token: varchar("token", { length: 128 }).notNull().unique(),
+  status: mysqlEnum("status", ["pending", "accepted", "expired", "revoked"]).default("pending").notNull(),
+  invitedByUserId: int("invitedByUserId").notNull(),
+  acceptedByUserId: int("acceptedByUserId"),
+  expiresAt: timestamp("expiresAt").notNull(),
+  acceptedAt: timestamp("acceptedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type SupplierInvitation = typeof supplierInvitations.$inferSelect;
+export type InsertSupplierInvitation = typeof supplierInvitations.$inferInsert;
+
+// ─── Product Categories ──────────────────────────────────────────────────────
+export const productCategories = mysqlTable("product_categories", {
+  id: int("id").autoincrement().primaryKey(),
+  key: varchar("key", { length: 64 }).notNull().unique(),
+  labelDe: varchar("labelDe", { length: 255 }).notNull(),
+  labelEn: varchar("labelEn", { length: 255 }).notNull(),
+  description: text("description"),
+  active: boolean("active").default(true).notNull(),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ProductCategory = typeof productCategories.$inferSelect;
+export type InsertProductCategory = typeof productCategories.$inferInsert;
+
+// ─── Product Templates (Requirement sets per category) ───────────────────────
+export const productTemplates = mysqlTable("product_templates", {
+  id: int("id").autoincrement().primaryKey(),
+  categoryId: int("categoryId").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  descriptionDe: text("descriptionDe"),
+  descriptionEn: text("descriptionEn"),
+  // JSON array of requirement keys that are REQUIRED for this template
+  requiredDocuments: json("requiredDocuments").notNull(), // string[]
+  // JSON array of requirement keys that are OPTIONAL/RECOMMENDED
+  optionalDocuments: json("optionalDocuments"),           // string[]
+  // JSON array of data fields required (safety_text, age_grading, etc.)
+  requiredDataFields: json("requiredDataFields"),          // string[]
+  active: boolean("active").default(true).notNull(),
+  createdByUserId: int("createdByUserId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ProductTemplate = typeof productTemplates.$inferSelect;
+export type InsertProductTemplate = typeof productTemplates.$inferInsert;
+
+// ─── Product → Category assignment ──────────────────────────────────────────
+// We add categoryId + templateId to products via ALTER TABLE (migration)
+// These are tracked as optional fields on the products table
