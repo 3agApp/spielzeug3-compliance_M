@@ -1,0 +1,9 @@
+{
+  "query": "\nINSERT INTO suppliers (supplierCode, name, address, country, email, phone, kontorId, active, createdAt, updatedAt)\nVALUES\n  ('SUP001', 'Müller Spielwaren GmbH', 'Hauptstraße 12, 80331 München', 'DE', 'compliance@mueller-spielwaren.de', '+49 89 123456', 'KONT-001', true, NOW(), NOW()),\n  ('SUP002', 'Toy Factory Asia Ltd.', '123 Industrial Road, Guangzhou', 'CN', 'quality@toyfactory-asia.com', '+86 20 98765432', 'KONT-002', true, NOW(), NOW()),\n  ('SUP003', 'Nordic Toys AB', 'Storgatan 45, 11122 Stockholm', 'SE', 'info@nordictoys.se', '+46 8 5551234', 'KONT-003', true, NOW(), NOW()),\n  ('SUP004', 'Plastik & Co. KG', 'Industrieweg 7, 50667 Köln', 'DE', 'kontakt@plastikco.de', '+49 221 654321', 'KONT-004', false, NOW(), NOW())\nON DUPLICATE KEY UPDATE updatedAt = NOW();\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user J1L9FvUd1r4oKv8.75a96d268c41 --database kgkV5LdecSJ3HqPv7WFR7a --execute \nINSERT INTO suppliers (supplierCode, name, address, country, email, phone, kontorId, active, createdAt, updatedAt)\nVALUES\n  ('SUP001', 'Müller Spielwaren GmbH', 'Hauptstraße 12, 80331 München', 'DE', 'compliance@mueller-spielwaren.de', '+49 89 123456', 'KONT-001', true, NOW(), NOW()),\n  ('SUP002', 'Toy Factory Asia Ltd.', '123 Industrial Road, Guangzhou', 'CN', 'quality@toyfactory-asia.com', '+86 20 98765432', 'KONT-002', true, NOW(), NOW()),\n  ('SUP003', 'Nordic Toys AB', 'Storgatan 45, 11122 Stockholm', 'SE', 'info@nordictoys.se', '+46 8 5551234', 'KONT-003', true, NOW(), NOW()),\n  ('SUP004', 'Plastik & Co. KG', 'Industrieweg 7, 50667 Köln', 'DE', 'kontakt@plastikco.de', '+49 221 654321', 'KONT-004', false, NOW(), NOW())\nON DUPLICATE KEY UPDATE updatedAt = NOW();\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 60
+}

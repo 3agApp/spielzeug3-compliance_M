@@ -1,11 +1,23 @@
-import { eq } from "drizzle-orm";
+import { and, desc, eq, like, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
-import { ENV } from './_core/env';
+import {
+  InsertUser,
+  approvalHistory,
+  auditLogs,
+  comments,
+  documents,
+  missingRequirements,
+  notifications,
+  productSafetyEntries,
+  products,
+  requirementTypes,
+  suppliers,
+  users,
+} from "../drizzle/schema";
+import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
-// Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
@@ -18,75 +30,395 @@ export async function getDb() {
   return _db;
 }
 
+// ─── Users ───────────────────────────────────────────────────────────────────
 export async function upsertUser(user: InsertUser): Promise<void> {
-  if (!user.openId) {
-    throw new Error("User openId is required for upsert");
-  }
-
+  if (!user.openId) throw new Error("User openId is required for upsert");
   const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot upsert user: database not available");
-    return;
+  if (!db) return;
+
+  const values: InsertUser = { openId: user.openId };
+  const updateSet: Record<string, unknown> = {};
+
+  const textFields = ["name", "email", "loginMethod"] as const;
+  textFields.forEach((field) => {
+    const value = user[field];
+    if (value === undefined) return;
+    const normalized = value ?? null;
+    values[field] = normalized;
+    updateSet[field] = normalized;
+  });
+
+  if (user.lastSignedIn !== undefined) {
+    values.lastSignedIn = user.lastSignedIn;
+    updateSet.lastSignedIn = user.lastSignedIn;
   }
-
-  try {
-    const values: InsertUser = {
-      openId: user.openId,
-    };
-    const updateSet: Record<string, unknown> = {};
-
-    const textFields = ["name", "email", "loginMethod"] as const;
-    type TextField = (typeof textFields)[number];
-
-    const assignNullable = (field: TextField) => {
-      const value = user[field];
-      if (value === undefined) return;
-      const normalized = value ?? null;
-      values[field] = normalized;
-      updateSet[field] = normalized;
-    };
-
-    textFields.forEach(assignNullable);
-
-    if (user.lastSignedIn !== undefined) {
-      values.lastSignedIn = user.lastSignedIn;
-      updateSet.lastSignedIn = user.lastSignedIn;
-    }
-    if (user.role !== undefined) {
-      values.role = user.role;
-      updateSet.role = user.role;
-    } else if (user.openId === ENV.ownerOpenId) {
-      values.role = 'admin';
-      updateSet.role = 'admin';
-    }
-
-    if (!values.lastSignedIn) {
-      values.lastSignedIn = new Date();
-    }
-
-    if (Object.keys(updateSet).length === 0) {
-      updateSet.lastSignedIn = new Date();
-    }
-
-    await db.insert(users).values(values).onDuplicateKeyUpdate({
-      set: updateSet,
-    });
-  } catch (error) {
-    console.error("[Database] Failed to upsert user:", error);
-    throw error;
+  if (user.role !== undefined) {
+    values.role = user.role;
+    updateSet.role = user.role;
+  } else if (user.openId === ENV.ownerOpenId) {
+    values.role = "admin";
+    updateSet.role = "admin";
   }
+  if (user.openId === ENV.ownerOpenId) {
+    values.complianceRole = "administrator";
+    updateSet.complianceRole = "administrator";
+  }
+  if (!values.lastSignedIn) values.lastSignedIn = new Date();
+  if (Object.keys(updateSet).length === 0) updateSet.lastSignedIn = new Date();
+
+  await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
 }
 
 export async function getUserByOpenId(openId: string) {
   const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot get user: database not available");
-    return undefined;
-  }
-
+  if (!db) return undefined;
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
-
-  return result.length > 0 ? result[0] : undefined;
+  return result[0];
 }
 
-// TODO: add feature queries here as your schema grows.
+export async function getAllUsers() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(users).orderBy(desc(users.createdAt));
+}
+
+export async function updateUser(id: number, data: Partial<InsertUser>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set(data).where(eq(users.id, id));
+}
+
+// ─── Suppliers ───────────────────────────────────────────────────────────────
+export async function getAllSuppliers() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(suppliers).orderBy(suppliers.name);
+}
+
+export async function getSupplierById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(suppliers).where(eq(suppliers.id, id)).limit(1);
+  return result[0];
+}
+
+export async function createSupplier(data: typeof suppliers.$inferInsert) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const result = await db.insert(suppliers).values(data);
+  return result;
+}
+
+export async function updateSupplier(id: number, data: Partial<typeof suppliers.$inferInsert>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(suppliers).set(data).where(eq(suppliers.id, id));
+}
+
+// ─── Products ────────────────────────────────────────────────────────────────
+export async function getAllProducts(filters?: {
+  supplierId?: number;
+  status?: string;
+  brand?: string;
+  search?: string;
+}) {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions = [];
+  if (filters?.supplierId) conditions.push(eq(products.supplierId, filters.supplierId));
+  if (filters?.status) conditions.push(eq(products.status, filters.status as any));
+  if (filters?.brand) conditions.push(eq(products.brand, filters.brand));
+  if (filters?.search) {
+    conditions.push(
+      or(
+        like(products.productName, `%${filters.search}%`),
+        like(products.internalArticleNumber, `%${filters.search}%`),
+        like(products.ean, `%${filters.search}%`)
+      )
+    );
+  }
+  const query = db
+    .select()
+    .from(products)
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(desc(products.lastUpdatedAt));
+  return query;
+}
+
+export async function getProductById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(products).where(eq(products.id, id)).limit(1);
+  return result[0];
+}
+
+export async function createProduct(data: typeof products.$inferInsert) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const result = await db.insert(products).values(data);
+  return result;
+}
+
+export async function updateProduct(id: number, data: Partial<typeof products.$inferInsert>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(products).set(data).where(eq(products.id, id));
+}
+
+export async function getProductsBySupplier(supplierId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(products)
+    .where(eq(products.supplierId, supplierId))
+    .orderBy(desc(products.lastUpdatedAt));
+}
+
+// ─── Missing Requirements ────────────────────────────────────────────────────
+export async function getMissingRequirementsByProduct(productId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(missingRequirements)
+    .where(eq(missingRequirements.productId, productId))
+    .orderBy(missingRequirements.requirementType);
+}
+
+export async function createMissingRequirement(data: typeof missingRequirements.$inferInsert) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  return db.insert(missingRequirements).values(data);
+}
+
+export async function updateMissingRequirement(
+  id: number,
+  data: Partial<typeof missingRequirements.$inferInsert>
+) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(missingRequirements).set(data).where(eq(missingRequirements.id, id));
+}
+
+// ─── Documents ───────────────────────────────────────────────────────────────
+export async function getDocumentsByProduct(productId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(documents)
+    .where(eq(documents.productId, productId))
+    .orderBy(desc(documents.uploadedAt));
+}
+
+export async function createDocument(data: typeof documents.$inferInsert) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const result = await db.insert(documents).values(data);
+  return result;
+}
+
+export async function updateDocument(id: number, data: Partial<typeof documents.$inferInsert>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(documents).set(data).where(eq(documents.id, id));
+}
+
+export async function deleteDocument(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(documents).where(eq(documents.id, id));
+}
+
+// ─── Product Safety ──────────────────────────────────────────────────────────
+export async function getProductSafety(productId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db
+    .select()
+    .from(productSafetyEntries)
+    .where(eq(productSafetyEntries.productId, productId))
+    .limit(1);
+  return result[0];
+}
+
+export async function upsertProductSafety(data: typeof productSafetyEntries.$inferInsert) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db
+    .insert(productSafetyEntries)
+    .values(data)
+    .onDuplicateKeyUpdate({
+      set: {
+        safetyText: data.safetyText,
+        warningText: data.warningText,
+        ageGrading: data.ageGrading,
+        materialInformation: data.materialInformation,
+        usageRestrictions: data.usageRestrictions,
+        safetyNotes: data.safetyNotes,
+        submittedByUserId: data.submittedByUserId,
+      },
+    });
+}
+
+// ─── Comments ────────────────────────────────────────────────────────────────
+export async function getCommentsByProduct(productId: number, internalOnly = false) {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions = [eq(comments.productId, productId)];
+  if (!internalOnly) conditions.push(eq(comments.visibilityInternalOnly, false));
+  return db
+    .select()
+    .from(comments)
+    .where(and(...conditions))
+    .orderBy(desc(comments.createdAt));
+}
+
+export async function createComment(data: typeof comments.$inferInsert) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  return db.insert(comments).values(data);
+}
+
+// ─── Approval History ────────────────────────────────────────────────────────
+export async function getApprovalHistory(productId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(approvalHistory)
+    .where(eq(approvalHistory.productId, productId))
+    .orderBy(desc(approvalHistory.createdAt));
+}
+
+export async function createApprovalHistoryEntry(data: typeof approvalHistory.$inferInsert) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  return db.insert(approvalHistory).values(data);
+}
+
+// ─── Audit Logs ──────────────────────────────────────────────────────────────
+export async function createAuditLog(data: typeof auditLogs.$inferInsert) {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(auditLogs).values(data);
+}
+
+export async function getAuditLogs(limit = 100) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(auditLogs).orderBy(desc(auditLogs.createdAt)).limit(limit);
+}
+
+// ─── Notifications ───────────────────────────────────────────────────────────
+export async function createNotification(data: typeof notifications.$inferInsert) {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(notifications).values(data);
+}
+
+export async function getNotificationsByUser(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(notifications)
+    .where(eq(notifications.userId, userId))
+    .orderBy(desc(notifications.createdAt))
+    .limit(50);
+}
+
+export async function markNotificationRead(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(notifications).set({ isRead: true }).where(eq(notifications.id, id));
+}
+
+export async function markAllNotificationsRead(userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .update(notifications)
+    .set({ isRead: true })
+    .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
+}
+
+// ─── Requirement Types ───────────────────────────────────────────────────────
+export async function getAllRequirementTypes() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(requirementTypes).orderBy(requirementTypes.sortOrder);
+}
+
+export async function createRequirementType(data: typeof requirementTypes.$inferInsert) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  return db.insert(requirementTypes).values(data);
+}
+
+export async function updateRequirementType(
+  id: number,
+  data: Partial<typeof requirementTypes.$inferInsert>
+) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(requirementTypes).set(data).where(eq(requirementTypes.id, id));
+}
+
+// ─── Dashboard Stats ─────────────────────────────────────────────────────────
+export async function getSupplierDashboardStats(supplierId: number) {
+  const db = await getDb();
+  if (!db) return { open: 0, submitted: 0, clarification: 0, completed: 0 };
+
+  const allProducts = await db
+    .select()
+    .from(products)
+    .where(eq(products.supplierId, supplierId));
+
+  return {
+    open: allProducts.filter((p) => p.status === "open" || p.status === "in_progress").length,
+    submitted: allProducts.filter((p) => p.status === "submitted" || p.status === "under_review")
+      .length,
+    clarification: allProducts.filter((p) => p.status === "clarification_needed").length,
+    completed: allProducts.filter((p) => p.status === "completed" || p.status === "approved")
+      .length,
+    total: allProducts.length,
+  };
+}
+
+export async function getInternalDashboardStats() {
+  const db = await getDb();
+  if (!db) return {};
+
+  const allProducts = await db.select().from(products);
+  const allSuppliers = await db.select().from(suppliers);
+
+  return {
+    totalProducts: allProducts.length,
+    openItems: allProducts.filter((p) => p.status === "open" || p.status === "in_progress").length,
+    awaitingReview: allProducts.filter(
+      (p) => p.status === "submitted" || p.status === "under_review"
+    ).length,
+    clarificationNeeded: allProducts.filter((p) => p.status === "clarification_needed").length,
+    completed: allProducts.filter((p) => p.status === "completed").length,
+    approved: allProducts.filter((p) => p.status === "approved").length,
+    rejected: allProducts.filter((p) => p.status === "rejected").length,
+    totalSuppliers: allSuppliers.length,
+    activeSuppliers: allSuppliers.filter((s) => s.active).length,
+  };
+}
+
+export async function computeCompletenessScore(productId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+
+  const reqs = await db
+    .select()
+    .from(missingRequirements)
+    .where(and(eq(missingRequirements.productId, productId), eq(missingRequirements.required, true)));
+
+  if (reqs.length === 0) return 100;
+  const fulfilled = reqs.filter((r) => r.status === "approved" || r.status === "provided").length;
+  return Math.round((fulfilled / reqs.length) * 100);
+}

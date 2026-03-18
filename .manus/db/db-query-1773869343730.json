@@ -1,0 +1,9 @@
+{
+  "query": "\nINSERT INTO requirement_types (`key`, labelDe, labelEn, category, required, active, sortOrder)\nVALUES\n  ('test_report', 'Prüfbericht', 'Test Report', 'document', true, true, 1),\n  ('declaration_of_conformity', 'Konformitätserklärung', 'Declaration of Conformity', 'document', true, true, 2),\n  ('manual', 'Bedienungsanleitung', 'User Manual', 'document', true, true, 3),\n  ('certificate', 'Zertifikat', 'Certificate', 'document', false, true, 4),\n  ('product_image', 'Produktbild', 'Product Image', 'document', true, true, 5),\n  ('safety_text', 'Sicherheitstext', 'Safety Text', 'data', true, true, 7),\n  ('warning_text', 'Warnhinweis', 'Warning Text', 'data', true, true, 8),\n  ('age_grading', 'Altersangabe', 'Age Grading', 'data', true, true, 9)\nON DUPLICATE KEY UPDATE labelDe = VALUES(labelDe);\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user J1L9FvUd1r4oKv8.75a96d268c41 --database kgkV5LdecSJ3HqPv7WFR7a --execute \nINSERT INTO requirement_types (`key`, labelDe, labelEn, category, required, active, sortOrder)\nVALUES\n  ('test_report', 'Prüfbericht', 'Test Report', 'document', true, true, 1),\n  ('declaration_of_conformity', 'Konformitätserklärung', 'Declaration of Conformity', 'document', true, true, 2),\n  ('manual', 'Bedienungsanleitung', 'User Manual', 'document', true, true, 3),\n  ('certificate', 'Zertifikat', 'Certificate', 'document', false, true, 4),\n  ('product_image', 'Produktbild', 'Product Image', 'document', true, true, 5),\n  ('safety_text', 'Sicherheitstext', 'Safety Text', 'data', true, true, 7),\n  ('warning_text', 'Warnhinweis', 'Warning Text', 'data', true, true, 8),\n  ('age_grading', 'Altersangabe', 'Age Grading', 'data', true, true, 9)\nON DUPLICATE KEY UPDATE labelDe = VALUES(labelDe);\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 71
+}
