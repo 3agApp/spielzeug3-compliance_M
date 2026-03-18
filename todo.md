@@ -67,3 +67,7 @@
 - [x] Einstellungen-Seite (/admin/settings) fehlt → 404
 - [x] Genehmigungen-Seite (/approvals) für Compliance Manager mit Approve/Reject/Clarification-Workflow
 - [x] Lieferanten-Detailseite (/suppliers/:id) mit Kontaktdaten, Compliance-Score, Produktliste und Statusverteilung
+- [x] KI-Plausibilitätsprüfung: OpenAI-Key in Einstellungen hinterlegen
+- [x] KI-Analyse-Router: GPT-4o analysiert Dokumente und gibt Score zurück
+- [x] Produktliste: Checkbox-Selektion und KI-Analyse-Button mit Fortschrittsanzeige
+- [x] AI-Score-Visualisierung: Score-Karte mit Kategorie-Aufschlüsselung und Begründung

@@ -309,3 +309,44 @@ export const batchRecords = mysqlTable("batch_records", {
 
 export type BatchRecord = typeof batchRecords.$inferSelect;
 export type InsertBatchRecord = typeof batchRecords.$inferInsert;
+
+// ─── System Settings (key-value store for admin config) ──────────────────────
+export const systemSettings = mysqlTable("system_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  settingKey: varchar("settingKey", { length: 128 }).notNull().unique(),
+  settingValue: text("settingValue"),
+  isEncrypted: boolean("isEncrypted").default(false).notNull(),
+  updatedByUserId: int("updatedByUserId"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type SystemSetting = typeof systemSettings.$inferSelect;
+export type InsertSystemSetting = typeof systemSettings.$inferInsert;
+
+// ─── AI Analysis Results ─────────────────────────────────────────────────────
+export const aiAnalysisResults = mysqlTable("ai_analysis_results", {
+  id: int("id").autoincrement().primaryKey(),
+  productId: int("productId").notNull(),
+  overallScore: decimal("overallScore", { precision: 5, scale: 2 }).notNull(),
+  // Sub-scores (0-100)
+  documentCompletenessScore: decimal("documentCompletenessScore", { precision: 5, scale: 2 }),
+  contentPlausibilityScore: decimal("contentPlausibilityScore", { precision: 5, scale: 2 }),
+  formalCorrectnessScore: decimal("formalCorrectnessScore", { precision: 5, scale: 2 }),
+  consistencyScore: decimal("consistencyScore", { precision: 5, scale: 2 }),
+  // AI output
+  summary: text("summary"),
+  findings: json("findings"), // array of { category, severity, description }
+  recommendations: json("recommendations"), // array of strings
+  analyzedDocumentIds: json("analyzedDocumentIds"), // array of document IDs
+  modelUsed: varchar("modelUsed", { length: 64 }),
+  tokensUsed: int("tokensUsed"),
+  status: mysqlEnum("status", ["pending", "running", "completed", "failed"]).default("pending").notNull(),
+  errorMessage: text("errorMessage"),
+  triggeredByUserId: int("triggeredByUserId"),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type AiAnalysisResult = typeof aiAnalysisResults.$inferSelect;
+export type InsertAiAnalysisResult = typeof aiAnalysisResults.$inferInsert;

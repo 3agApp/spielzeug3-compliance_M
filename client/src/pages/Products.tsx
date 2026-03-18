@@ -3,7 +3,16 @@ import { StatusBadge, CompletenessBar } from "@/components/StatusBadge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -16,12 +25,123 @@ import { trpc } from "@/lib/trpc";
 import {
   AlertCircle,
   ArrowRight,
+  Bot,
+  CheckCircle2,
   Package,
   Search,
+  Sparkles,
+  XCircle,
 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { useLocation } from "wouter";
 
+// ─── AI Score mini-badge ──────────────────────────────────────────────────────
+function AiScoreBadge({ score }: { score: number | null | undefined }) {
+  if (score === null || score === undefined) return <span className="text-muted-foreground text-xs">–</span>;
+  const color =
+    score >= 75 ? "text-emerald-700 bg-emerald-50 border-emerald-300"
+    : score >= 50 ? "text-amber-700 bg-amber-50 border-amber-300"
+    : "text-red-700 bg-red-50 border-red-300";
+  return (
+    <Badge variant="outline" className={`gap-1 text-xs font-semibold ${color}`}>
+      <Bot className="h-3 w-3" />
+      {score}%
+    </Badge>
+  );
+}
+
+// ─── Batch analysis progress dialog ──────────────────────────────────────────
+interface AnalysisProgress {
+  total: number;
+  done: number;
+  current: string;
+  results: Array<{ productId: number; name: string; success: boolean; score?: number; error?: string }>;
+}
+
+function AnalysisProgressDialog({
+  open,
+  progress,
+  onClose,
+}: {
+  open: boolean;
+  progress: AnalysisProgress | null;
+  onClose: () => void;
+}) {
+  const pct = progress ? Math.round((progress.done / progress.total) * 100) : 0;
+  const done = progress?.done ?? 0;
+  const total = progress?.total ?? 0;
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && done === total && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            KI-Plausibilitätsprüfung
+          </DialogTitle>
+          <DialogDescription>
+            GPT-4o analysiert die Produktdokumente auf Plausibilität und Vollständigkeit.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {/* Overall progress */}
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Fortschritt</span>
+              <span className="font-medium">{done} / {total}</span>
+            </div>
+            <Progress value={pct} className="h-2" />
+          </div>
+
+          {/* Current item */}
+          {done < total && progress?.current && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/40 rounded-lg px-3 py-2">
+              <Bot className="h-4 w-4 animate-pulse text-primary shrink-0" />
+              <span className="truncate">Analysiere: {progress.current}</span>
+            </div>
+          )}
+
+          {/* Results list */}
+          {(progress?.results?.length ?? 0) > 0 && (
+            <div className="space-y-1.5 max-h-52 overflow-y-auto">
+              {progress!.results.map((r) => (
+                <div
+                  key={r.productId}
+                  className="flex items-center justify-between gap-2 text-sm rounded-lg px-3 py-2 bg-muted/30"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    {r.success ? (
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                    ) : (
+                      <XCircle className="h-4 w-4 text-red-500 shrink-0" />
+                    )}
+                    <span className="truncate">{r.name}</span>
+                  </div>
+                  {r.success && r.score !== undefined ? (
+                    <AiScoreBadge score={r.score} />
+                  ) : (
+                    <span className="text-xs text-red-500 shrink-0">Fehler</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Done */}
+          {done === total && total > 0 && (
+            <div className="flex justify-end pt-2">
+              <Button onClick={onClose}>Schließen</Button>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── STATUS OPTIONS ───────────────────────────────────────────────────────────
 const STATUS_OPTIONS = [
   "all",
   "open",
@@ -34,6 +154,7 @@ const STATUS_OPTIONS = [
   "completed",
 ] as const;
 
+// ─── Main page ────────────────────────────────────────────────────────────────
 export default function Products() {
   const { user } = useAuth();
   const { t } = useLang();
@@ -41,31 +162,139 @@ export default function Products() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
+  // Checkbox selection
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+
+  // AI analysis state
+  const [analysisOpen, setAnalysisOpen] = useState(false);
+  const [progress, setProgress] = useState<AnalysisProgress | null>(null);
+
+  // AI scores cache: productId → score
+  const [aiScores, setAiScores] = useState<Record<number, number>>({});
+
   const role = (user as any)?.complianceRole ?? "internal_employee";
+  const canRunAi = ["administrator", "compliance_manager", "internal_employee"].includes(role);
 
   const productsQuery = trpc.products.list.useQuery({
     status: statusFilter === "all" ? undefined : statusFilter,
     search: search || undefined,
   });
 
+  const utils = trpc.useUtils();
+  const analyzeProductMutation = trpc.aiAnalysis.analyzeProduct.useMutation();
+
   const products = productsQuery.data ?? [];
+
+  // ── Selection helpers ──────────────────────────────────────────────────────
+  const allSelected = products.length > 0 && products.every((p: any) => selected.has(p.id));
+  const someSelected = selected.size > 0;
+
+  const toggleAll = () => {
+    if (allSelected) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(products.map((p: any) => p.id)));
+    }
+  };
+
+  const toggleOne = (id: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  // ── AI batch analysis ──────────────────────────────────────────────────────
+  const runAiAnalysis = async () => {
+    const ids = Array.from(selected);
+    if (ids.length === 0) return;
+
+    const selectedProducts = products.filter((p: any) => ids.includes(p.id));
+
+    setProgress({
+      total: ids.length,
+      done: 0,
+      current: selectedProducts[0]?.productName ?? "",
+      results: [],
+    });
+    setAnalysisOpen(true);
+
+    const results: AnalysisProgress["results"] = [];
+
+    for (let i = 0; i < ids.length; i++) {
+      const productId = ids[i];
+      const productName = selectedProducts.find((p: any) => p.id === productId)?.productName ?? `Produkt ${productId}`;
+
+      setProgress((prev) => ({
+        ...prev!,
+        current: productName,
+        done: i,
+      }));
+
+      try {
+        const result = await analyzeProductMutation.mutateAsync({ productId });
+        results.push({ productId, name: productName, success: true, score: result.overallScore });
+        setAiScores((prev) => ({ ...prev, [productId]: result.overallScore }));
+      } catch (err: any) {
+        results.push({ productId, name: productName, success: false, error: err.message });
+        if (err.message?.includes("API-Schlüssel")) {
+          toast.error("Kein OpenAI API-Schlüssel konfiguriert. Bitte in den Einstellungen hinterlegen.");
+          break;
+        }
+      }
+
+      setProgress((prev) => ({
+        ...prev!,
+        done: i + 1,
+        results: [...results],
+      }));
+    }
+
+    // Refresh product list
+    utils.products.list.invalidate();
+    setSelected(new Set());
+  };
+
+  const handleCloseDialog = () => {
+    setAnalysisOpen(false);
+    setProgress(null);
+  };
 
   return (
     <div className="p-6 space-y-5 max-w-7xl">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-semibold">{t.nav.products}</h1>
           <p className="text-muted-foreground text-sm mt-1">
             {products.length} {t.common.items}
+            {someSelected && (
+              <span className="ml-2 text-primary font-medium">
+                · {selected.size} ausgewählt
+              </span>
+            )}
           </p>
         </div>
+
+        {/* AI analysis button – visible when items are selected */}
+        {canRunAi && someSelected && (
+          <Button
+            onClick={runAiAnalysis}
+            disabled={analyzeProductMutation.isPending}
+            className="gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-md"
+          >
+            <Sparkles className="h-4 w-4" />
+            KI-Analyse starten ({selected.size})
+          </Button>
+        )}
       </div>
 
       {/* Filters */}
       <Card>
         <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -87,6 +316,14 @@ export default function Products() {
                 ))}
               </SelectContent>
             </Select>
+
+            {/* AI hint when nothing selected */}
+            {canRunAi && !someSelected && products.length > 0 && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap">
+                <Bot className="h-3.5 w-3.5" />
+                Produkte auswählen für KI-Analyse
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -108,6 +345,15 @@ export default function Products() {
               <table className="w-full data-table">
                 <thead>
                   <tr>
+                    {canRunAi && (
+                      <th className="w-10 px-4">
+                        <Checkbox
+                          checked={allSelected}
+                          onCheckedChange={toggleAll}
+                          aria-label="Alle auswählen"
+                        />
+                      </th>
+                    )}
                     <th>{t.product.productName}</th>
                     <th>{t.product.internalArticleNumber}</th>
                     <th>{t.product.supplierArticleNumber}</th>
@@ -115,68 +361,99 @@ export default function Products() {
                     <th>{t.product.brand}</th>
                     <th>{t.product.status}</th>
                     <th>{t.product.completenessScore}</th>
+                    <th className="whitespace-nowrap">
+                      <span className="flex items-center gap-1">
+                        <Bot className="h-3.5 w-3.5" />
+                        KI-Score
+                      </span>
+                    </th>
                     <th>{t.product.missingRequirements}</th>
                     <th></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {products.map((p: any) => (
-                    <tr
-                      key={p.id}
-                      className="cursor-pointer hover:bg-muted/30 transition-colors"
-                      onClick={() => setLocation(`/products/${p.id}`)}
-                    >
-                      <td>
-                        <div className="font-medium">{p.productName}</div>
-                        {p.ean && (
-                          <div className="text-xs text-muted-foreground mt-0.5">
-                            EAN: {p.ean}
-                          </div>
+                  {products.map((p: any) => {
+                    const isSelected = selected.has(p.id);
+                    const aiScore = aiScores[p.id] ?? (p.latestAiScore != null ? Number(p.latestAiScore) : null);
+                    return (
+                      <tr
+                        key={p.id}
+                        className={`cursor-pointer transition-colors ${
+                          isSelected ? "bg-primary/5 hover:bg-primary/10" : "hover:bg-muted/30"
+                        }`}
+                        onClick={() => setLocation(`/products/${p.id}`)}
+                      >
+                        {canRunAi && (
+                          <td className="px-4" onClick={(e) => toggleOne(p.id, e)}>
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={() => {}}
+                              aria-label={`${p.productName} auswählen`}
+                            />
+                          </td>
                         )}
-                      </td>
-                      <td className="text-muted-foreground text-xs">
-                        {p.internalArticleNumber ?? "–"}
-                      </td>
-                      <td className="text-muted-foreground text-xs">
-                        {p.supplierArticleNumber ?? "–"}
-                      </td>
-                      {role !== "supplier" && (
-                        <td className="text-sm">{p.supplierName ?? "–"}</td>
-                      )}
-                      <td className="text-sm">{p.brand ?? "–"}</td>
-                      <td>
-                        <StatusBadge status={p.status} />
-                      </td>
-                      <td className="min-w-32">
-                        <CompletenessBar
-                          score={parseFloat(p.completenessScore ?? "0")}
-                        />
-                      </td>
-                      <td>
-                        {(p.missingCount ?? 0) > 0 ? (
-                          <Badge variant="outline" className="text-amber-700 border-amber-300 bg-amber-50 gap-1">
-                            <AlertCircle className="h-3 w-3" />
-                            {p.missingCount}
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-emerald-700 border-emerald-300 bg-emerald-50">
-                            OK
-                          </Badge>
+                        <td>
+                          <div className="font-medium">{p.productName}</div>
+                          {p.ean && (
+                            <div className="text-xs text-muted-foreground mt-0.5">
+                              EAN: {p.ean}
+                            </div>
+                          )}
+                        </td>
+                        <td className="text-muted-foreground text-xs">
+                          {p.internalArticleNumber ?? "–"}
+                        </td>
+                        <td className="text-muted-foreground text-xs">
+                          {p.supplierArticleNumber ?? "–"}
+                        </td>
+                        {role !== "supplier" && (
+                          <td className="text-sm">{p.supplierName ?? "–"}</td>
                         )}
-                      </td>
-                      <td>
-                        <Button variant="ghost" size="sm">
-                          <ArrowRight className="h-4 w-4" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
+                        <td className="text-sm">{p.brand ?? "–"}</td>
+                        <td>
+                          <StatusBadge status={p.status} />
+                        </td>
+                        <td className="min-w-32">
+                          <CompletenessBar
+                            score={parseFloat(p.completenessScore ?? "0")}
+                          />
+                        </td>
+                        <td>
+                          <AiScoreBadge score={aiScore} />
+                        </td>
+                        <td>
+                          {(p.missingCount ?? 0) > 0 ? (
+                            <Badge variant="outline" className="text-amber-700 border-amber-300 bg-amber-50 gap-1">
+                              <AlertCircle className="h-3 w-3" />
+                              {p.missingCount}
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-emerald-700 border-emerald-300 bg-emerald-50">
+                              OK
+                            </Badge>
+                          )}
+                        </td>
+                        <td>
+                          <Button variant="ghost" size="sm">
+                            <ArrowRight className="h-4 w-4" />
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* AI Analysis Progress Dialog */}
+      <AnalysisProgressDialog
+        open={analysisOpen}
+        progress={progress}
+        onClose={handleCloseDialog}
+      />
     </div>
   );
 }

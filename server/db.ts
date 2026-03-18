@@ -2,6 +2,7 @@ import { and, desc, eq, like, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser,
+  aiAnalysisResults,
   approvalHistory,
   auditLogs,
   comments,
@@ -12,6 +13,7 @@ import {
   products,
   requirementTypes,
   suppliers,
+  systemSettings,
   users,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
@@ -421,4 +423,72 @@ export async function computeCompletenessScore(productId: number): Promise<numbe
   if (reqs.length === 0) return 100;
   const fulfilled = reqs.filter((r) => r.status === "approved" || r.status === "provided").length;
   return Math.round((fulfilled / reqs.length) * 100);
+}
+
+// ─── System Settings ─────────────────────────────────────────────────────────
+export async function getSystemSetting(key: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db
+    .select()
+    .from(systemSettings)
+    .where(eq(systemSettings.settingKey, key))
+    .limit(1);
+  return result[0];
+}
+
+export async function upsertSystemSetting(
+  key: string,
+  value: string,
+  isEncrypted = false,
+  userId?: number
+) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db
+    .insert(systemSettings)
+    .values({ settingKey: key, settingValue: value, isEncrypted, updatedByUserId: userId })
+    .onDuplicateKeyUpdate({
+      set: { settingValue: value, isEncrypted, updatedByUserId: userId },
+    });
+}
+
+// ─── AI Analysis Results ─────────────────────────────────────────────────────
+export async function createAiAnalysis(data: typeof aiAnalysisResults.$inferInsert) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const result = await db.insert(aiAnalysisResults).values(data);
+  return result;
+}
+
+export async function updateAiAnalysis(
+  id: number,
+  data: Partial<typeof aiAnalysisResults.$inferInsert>
+) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(aiAnalysisResults).set(data).where(eq(aiAnalysisResults.id, id));
+}
+
+export async function getLatestAiAnalysisByProduct(productId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db
+    .select()
+    .from(aiAnalysisResults)
+    .where(eq(aiAnalysisResults.productId, productId))
+    .orderBy(desc(aiAnalysisResults.createdAt))
+    .limit(1);
+  return result[0];
+}
+
+export async function getAiAnalysisHistory(productId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(aiAnalysisResults)
+    .where(eq(aiAnalysisResults.productId, productId))
+    .orderBy(desc(aiAnalysisResults.createdAt))
+    .limit(10);
 }

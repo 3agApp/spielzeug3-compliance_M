@@ -10,6 +10,7 @@ import { commentsRouter } from "./routers/comments";
 import { adminRouter } from "./routers/admin";
 import { notificationsRouter } from "./routers/notifications";
 import { syncRouter } from "./routers/sync";
+import { aiAnalysisRouter } from "./routers/aiAnalysis";
 
 export const appRouter = router({
   system: systemRouter,
@@ -30,6 +31,7 @@ export const appRouter = router({
   admin: adminRouter,
   notifications: notificationsRouter,
   sync: syncRouter,
+  aiAnalysis: aiAnalysisRouter,
 });
 
 export type AppRouter = typeof appRouter;

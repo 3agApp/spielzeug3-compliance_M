@@ -11,9 +11,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useLang } from "@/lib/i18n";
 import { trpc } from "@/lib/trpc";
+import { AiAnalysisCard } from "@/components/AiAnalysisCard";
 import {
   AlertCircle,
   ArrowLeft,
+  Bot,
   CheckCircle2,
   Clock,
   FileText,
@@ -219,6 +221,10 @@ export default function ProductDetail() {
             <MessageSquare className="h-4 w-4" />
             {t.product.comments} ({comments.length})
           </TabsTrigger>
+          <TabsTrigger value="ai" className="gap-2">
+            <Bot className="h-4 w-4" />
+            KI-Analyse
+          </TabsTrigger>
           <TabsTrigger value="timeline" className="gap-2">
             <Clock className="h-4 w-4" />
             {t.product.timeline}
@@ -384,6 +390,13 @@ export default function ProductDetail() {
         </TabsContent>
 
         {/* Timeline Tab */}
+        <TabsContent value="ai" className="mt-4">
+          <AiAnalysisCard
+            productId={productId}
+            canTrigger={["administrator", "compliance_manager", "internal_employee"].includes(role)}
+          />
+        </TabsContent>
+
         <TabsContent value="timeline" className="mt-4">
           <TimelineCard productId={productId} t={t} />
         </TabsContent>
