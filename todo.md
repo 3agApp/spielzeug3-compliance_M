@@ -71,3 +71,4 @@
 - [x] KI-Analyse-Router: GPT-4o analysiert Dokumente und gibt Score zurück
 - [x] Produktliste: Checkbox-Selektion und KI-Analyse-Button mit Fortschrittsanzeige
 - [x] AI-Score-Visualisierung: Score-Karte mit Kategorie-Aufschlüsselung und Begründung
+- [x] PDF-Export des KI-Analyseberichts im KI-Analyse-Tab

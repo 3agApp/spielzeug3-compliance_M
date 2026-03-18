@@ -11,6 +11,7 @@ import {
   ChevronDown,
   ChevronUp,
   Clock,
+  Download,
   FileText,
   Info,
   RefreshCw,
@@ -108,6 +109,38 @@ interface AiAnalysisCardProps {
 
 export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCardProps) {
   const [showHistory, setShowHistory] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  async function downloadPdf(analysisId?: number) {
+    setIsDownloading(true);
+    try {
+      const url = analysisId
+        ? `/api/reports/ai-analysis/${productId}?analysisId=${analysisId}`
+        : `/api/reports/ai-analysis/${productId}`;
+      const response = await fetch(url, { credentials: "include" });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: "Unbekannter Fehler" }));
+        throw new Error(err.error ?? "PDF-Download fehlgeschlagen");
+      }
+      const blob = await response.blob();
+      const disposition = response.headers.get("Content-Disposition") ?? "";
+      const match = disposition.match(/filename="([^"]+)"/);
+      const filename = match?.[1] ?? `KI-Analyse-${productId}.pdf`;
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(objectUrl);
+      toast.success("PDF erfolgreich heruntergeladen");
+    } catch (e: any) {
+      toast.error(e.message ?? "PDF-Download fehlgeschlagen");
+    } finally {
+      setIsDownloading(false);
+    }
+  }
 
   const latestQuery = trpc.aiAnalysis.getLatest.useQuery({ productId });
   const historyQuery = trpc.aiAnalysis.getHistory.useQuery(
@@ -199,6 +232,20 @@ export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCard
               <Badge variant="outline" className="text-xs">
                 {analysis.modelUsed ?? "GPT-4o"}
               </Badge>
+              <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => downloadPdf()}
+                  disabled={isDownloading}
+                  className="h-7 text-xs gap-1"
+                >
+                  {isDownloading ? (
+                    <RefreshCw className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Download className="h-3 w-3" />
+                  )}
+                  PDF exportieren
+                </Button>
               {canTrigger && (
                 <Button
                   variant="outline"
