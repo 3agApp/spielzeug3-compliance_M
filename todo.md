@@ -62,3 +62,6 @@
 - [x] Demo-Daten für alle Rollen (Lieferanten, Produkte, Anforderungstypen)
 - [x] Vitest-Tests für kritische Backend-Prozeduren (10 Tests, alle grün)
 - [x] Checkpoint und Ablieferung
+
+## Bugfixes
+- [x] Einstellungen-Seite (/admin/settings) fehlt → 404

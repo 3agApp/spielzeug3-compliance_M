@@ -17,6 +17,7 @@ import Suppliers from "./pages/Suppliers";
 import AdminUsers from "./pages/AdminUsers";
 import AdminRequirements from "./pages/AdminRequirements";
 import AuditLog from "./pages/AuditLog";
+import AdminSettings from "./pages/AdminSettings";
 import Notifications from "./pages/Notifications";
 import SyncPage from "./pages/SyncPage";
 
@@ -65,6 +66,9 @@ function Router() {
       </Route>
       <Route path="/admin/audit">
         {() => <ProtectedRoute component={AuditLog} />}
+      </Route>
+      <Route path="/admin/settings">
+        {() => <ProtectedRoute component={AdminSettings} />}
       </Route>
 
       {/* 404 */}
