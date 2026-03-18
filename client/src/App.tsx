@@ -18,6 +18,7 @@ import AdminUsers from "./pages/AdminUsers";
 import AdminRequirements from "./pages/AdminRequirements";
 import AuditLog from "./pages/AuditLog";
 import AdminSettings from "./pages/AdminSettings";
+import Approvals from "./pages/Approvals";
 import Notifications from "./pages/Notifications";
 import SyncPage from "./pages/SyncPage";
 
@@ -54,6 +55,9 @@ function Router() {
       </Route>
       <Route path="/sync">
         {() => <ProtectedRoute component={SyncPage} />}
+      </Route>
+      <Route path="/approvals">
+        {() => <ProtectedRoute component={Approvals} />}
       </Route>
       <Route path="/notifications">
         {() => <ProtectedRoute component={Notifications} />}

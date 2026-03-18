@@ -65,3 +65,4 @@
 
 ## Bugfixes
 - [x] Einstellungen-Seite (/admin/settings) fehlt → 404
+- [x] Genehmigungen-Seite (/approvals) für Compliance Manager mit Approve/Reject/Clarification-Workflow
