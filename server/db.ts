@@ -236,13 +236,13 @@ export async function deleteDocument(id: number) {
 // ─── Product Safety ──────────────────────────────────────────────────────────
 export async function getProductSafety(productId: number) {
   const db = await getDb();
-  if (!db) return undefined;
+  if (!db) return null;
   const result = await db
     .select()
     .from(productSafetyEntries)
     .where(eq(productSafetyEntries.productId, productId))
     .limit(1);
-  return result[0];
+  return result[0] ?? null;
 }
 
 export async function upsertProductSafety(data: typeof productSafetyEntries.$inferInsert) {
@@ -472,14 +472,14 @@ export async function updateAiAnalysis(
 
 export async function getLatestAiAnalysisByProduct(productId: number) {
   const db = await getDb();
-  if (!db) return undefined;
+  if (!db) return null;
   const result = await db
     .select()
     .from(aiAnalysisResults)
     .where(eq(aiAnalysisResults.productId, productId))
     .orderBy(desc(aiAnalysisResults.createdAt))
     .limit(1);
-  return result[0];
+  return result[0] ?? null;
 }
 
 export async function getAiAnalysisHistory(productId: number) {
