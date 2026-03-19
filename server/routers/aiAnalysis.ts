@@ -4,6 +4,8 @@ import {
   createAiAnalysis,
   createAuditLog,
   getAiAnalysisHistory,
+  getAllComponentDocumentsByProduct,
+  getComponentsByProduct,
   getDocumentsByProduct,
   getLatestAiAnalysisByProduct,
   getProductById,
@@ -31,13 +33,26 @@ async function callOpenAI(apiKey: string, payload: object): Promise<any> {
 }
 
 // ─── Analyse prompt ───────────────────────────────────────────────────────────
-function buildAnalysisPrompt(product: any, docs: any[]): string {
+function buildAnalysisPrompt(product: any, docs: any[], components?: any[], componentDocs?: any[]): string {
   const docList = docs
     .map(
       (d, i) =>
         `${i + 1}. Typ: ${d.documentType}, Dateiname: ${d.fileName}, URL: ${d.fileUrl}, Status: ${d.reviewStatus}`
     )
     .join("\n");
+
+  // Build component section
+  let componentSection = "";
+  if (components && components.length > 0) {
+    const compLines = components.map((c) => {
+      const cDocs = (componentDocs ?? []).filter((d: any) => d.componentId === c.id);
+      const cDocList = cDocs.length > 0
+        ? cDocs.map((d: any, i: number) => `     ${i + 1}. Typ: ${d.documentType}, Norm: ${d.standard ?? "–"}, Datei: ${d.fileName}, Status: ${d.reviewStatus}`).join("\n")
+        : "     (Keine Dokumente)";
+      return `  - ${c.name} (Material: ${c.materialType ?? "unbekannt"}, Teilenr.: ${c.partNumber ?? "–"}):\n${cDocList}`;
+    }).join("\n");
+    componentSection = `\n\nPRODUKTKOMPONENTEN (${components.length} Stück):\n${compLines}`;
+  }
 
   return `Du bist ein Compliance-Experte für Produktsicherheit und Spielzeugrichtlinien (EN 71, CE, REACH, etc.).
 
@@ -50,8 +65,8 @@ PRODUKT:
 - Marke: ${product.brand ?? "nicht angegeben"}
 - Aktueller Status: ${product.status}
 
-VORHANDENE DOKUMENTE (${docs.length} Stück):
-${docList || "Keine Dokumente vorhanden"}
+PRODUKTDOKUMENTE (${docs.length} Stück):
+${docList || "Keine Dokumente vorhanden"}${componentSection}
 
 AUFGABE:
 Bewerte die Dokumentation anhand von 4 Kategorien und vergib jeweils einen Score von 0-100:
@@ -152,6 +167,9 @@ export const aiAnalysisRouter = router({
       if (!product) throw new TRPCError({ code: "NOT_FOUND" });
 
       const docs = await getDocumentsByProduct(input.productId);
+      // Also load component data for a more thorough analysis
+      const components = await getComponentsByProduct(input.productId);
+      const componentDocs = await getAllComponentDocumentsByProduct(input.productId);
 
       // Create a pending record first
       const insertResult = await createAiAnalysis({
@@ -164,7 +182,7 @@ export const aiAnalysisRouter = router({
       const analysisId = (insertResult as any).insertId as number;
 
       try {
-        const prompt = buildAnalysisPrompt(product, docs);
+        const prompt = buildAnalysisPrompt(product, docs, components, componentDocs);
         const response = await callOpenAI(setting.settingValue, {
           model: "gpt-4o",
           messages: [
@@ -261,6 +279,8 @@ export const aiAnalysisRouter = router({
           }
 
           const docs = await getDocumentsByProduct(productId);
+          const components = await getComponentsByProduct(productId);
+          const componentDocs = await getAllComponentDocumentsByProduct(productId);
           const insertResult = await createAiAnalysis({
             productId,
             overallScore: "0",
@@ -270,7 +290,7 @@ export const aiAnalysisRouter = router({
           });
           const analysisId = (insertResult as any).insertId as number;
 
-          const prompt = buildAnalysisPrompt(product, docs);
+          const prompt = buildAnalysisPrompt(product, docs, components, componentDocs);
           const response = await callOpenAI(setting.settingValue, {
             model: "gpt-4o",
             messages: [

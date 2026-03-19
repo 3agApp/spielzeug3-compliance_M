@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useLang } from "@/lib/i18n";
 import { trpc } from "@/lib/trpc";
 import { AiAnalysisCard } from "@/components/AiAnalysisCard";
+import ComponentsTab from "@/components/ComponentsTab";
 import {
   AlertCircle,
   ArrowLeft,
@@ -209,6 +210,10 @@ export default function ProductDetail() {
       {/* Tabs */}
       <Tabs defaultValue="documents">
         <TabsList>
+          <TabsTrigger value="components" className="gap-2">
+            <Package className="h-4 w-4" />
+            Komponenten
+          </TabsTrigger>
           <TabsTrigger value="documents" className="gap-2">
             <FileText className="h-4 w-4" />
             {t.product.documents} ({documents.length})
@@ -230,6 +235,11 @@ export default function ProductDetail() {
             {t.product.timeline}
           </TabsTrigger>
         </TabsList>
+
+        {/* Components Tab */}
+        <TabsContent value="components" className="mt-4">
+          <ComponentsTab productId={productId} readOnly={role !== "supplier" && role !== "internal_employee" && role !== "compliance_manager" && role !== "administrator"} />
+        </TabsContent>
 
         {/* Documents Tab */}
         <TabsContent value="documents" className="mt-4 space-y-4">

@@ -78,3 +78,9 @@
 - [x] Feature 2: Lieferanten-Einladungssystem mit Magic-Link-Onboarding (DB, Backend, Admin-UI, Registrierungsseite)
 - [x] Feature 3: Produktvorlagen/Anforderungs-Templates nach Produktkategorie (DB, Backend, Admin-Konfiguration, Produkt-Anlegen-Flow)
 - [x] Bugfix: aiAnalysis.getLatest und safety.getByProduct geben undefined statt null zurück
+
+## Komponenten-Feature
+- [x] DB: product_components und component_documents Tabellen
+- [x] Backend: components-Router (CRUD, Dokument-Upload, Vollständigkeit)
+- [x] Frontend: Komponenten-Tab in Produktdetailseite
+- [x] KI-Analyse: Komponenten-Dokumente einbeziehen

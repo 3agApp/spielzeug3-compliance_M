@@ -6,9 +6,13 @@ import {
   approvalHistory,
   auditLogs,
   comments,
+  componentDocuments,
   documents,
+  InsertComponentDocument,
+  InsertProductComponent,
   missingRequirements,
   notifications,
+  productComponents,
   productSafetyEntries,
   products,
   requirementTypes,
@@ -491,4 +495,88 @@ export async function getAiAnalysisHistory(productId: number) {
     .where(eq(aiAnalysisResults.productId, productId))
     .orderBy(desc(aiAnalysisResults.createdAt))
     .limit(10);
+}
+
+// ─── Product Components ───────────────────────────────────────────────────────
+export async function getComponentsByProduct(productId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(productComponents)
+    .where(and(eq(productComponents.productId, productId), eq(productComponents.active, true)))
+    .orderBy(productComponents.sortOrder, productComponents.createdAt);
+}
+
+export async function getComponentById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(productComponents).where(eq(productComponents.id, id)).limit(1);
+  return result[0] ?? null;
+}
+
+export async function createComponent(data: InsertProductComponent) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  return db.insert(productComponents).values(data);
+}
+
+export async function updateComponent(id: number, data: Partial<InsertProductComponent>) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  return db.update(productComponents).set(data).where(eq(productComponents.id, id));
+}
+
+export async function deleteComponent(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  // Soft-delete
+  return db.update(productComponents).set({ active: false }).where(eq(productComponents.id, id));
+}
+
+// ─── Component Documents ──────────────────────────────────────────────────────
+export async function getDocumentsByComponent(componentId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(componentDocuments)
+    .where(eq(componentDocuments.componentId, componentId))
+    .orderBy(desc(componentDocuments.createdAt));
+}
+
+export async function getAllComponentDocumentsByProduct(productId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(componentDocuments)
+    .where(eq(componentDocuments.productId, productId))
+    .orderBy(desc(componentDocuments.createdAt));
+}
+
+export async function createComponentDocument(data: InsertComponentDocument) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  return db.insert(componentDocuments).values(data);
+}
+
+export async function deleteComponentDocument(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  return db.delete(componentDocuments).where(eq(componentDocuments.id, id));
+}
+
+export async function updateComponentDocumentReview(
+  id: number,
+  reviewStatus: "pending" | "approved" | "rejected",
+  reviewNote: string | null,
+  reviewedByUserId: number
+) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  return db
+    .update(componentDocuments)
+    .set({ reviewStatus, reviewNote, reviewedByUserId, reviewedAt: new Date() })
+    .where(eq(componentDocuments.id, id));
 }

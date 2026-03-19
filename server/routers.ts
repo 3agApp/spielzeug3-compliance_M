@@ -14,6 +14,7 @@ import { aiAnalysisRouter } from "./routers/aiAnalysis";
 import { expiryRouter } from "./routers/expiry";
 import { invitationsRouter } from "./routers/invitations";
 import { templatesRouter } from "./routers/templates";
+import { componentsRouter } from "./routers/components";
 
 export const appRouter = router({
   system: systemRouter,
@@ -38,6 +39,7 @@ export const appRouter = router({
   expiry: expiryRouter,
   invitations: invitationsRouter,
   templates: templatesRouter,
+  components: componentsRouter,
 });
 
 export type AppRouter = typeof appRouter;

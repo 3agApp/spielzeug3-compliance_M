@@ -409,3 +409,74 @@ export type InsertProductTemplate = typeof productTemplates.$inferInsert;
 // ─── Product → Category assignment ──────────────────────────────────────────
 // We add categoryId + templateId to products via ALTER TABLE (migration)
 // These are tracked as optional fields on the products table
+
+// ─── Product Components ──────────────────────────────────────────────────────
+// A product can consist of multiple components (e.g. wooden wheel, metal axle).
+// Each component can have its own test reports and certificates.
+export const productComponents = mysqlTable("product_components", {
+  id: int("id").autoincrement().primaryKey(),
+  productId: int("productId").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  materialType: mysqlEnum("materialType", [
+    "wood",
+    "metal",
+    "plastic",
+    "textile",
+    "electronic",
+    "paint_coating",
+    "rubber",
+    "glass",
+    "other",
+  ]),
+  supplierName: varchar("supplierName", { length: 255 }), // component sub-supplier
+  partNumber: varchar("partNumber", { length: 128 }),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  active: boolean("active").default(true).notNull(),
+  createdByUserId: int("createdByUserId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ProductComponent = typeof productComponents.$inferSelect;
+export type InsertProductComponent = typeof productComponents.$inferInsert;
+
+// ─── Component Documents ─────────────────────────────────────────────────────
+// Documents (test reports, certificates) attached to a specific component.
+export const componentDocuments = mysqlTable("component_documents", {
+  id: int("id").autoincrement().primaryKey(),
+  componentId: int("componentId").notNull(),
+  productId: int("productId").notNull(), // denormalized for easier querying
+  documentType: mysqlEnum("documentType", [
+    "test_report",
+    "declaration_of_conformity",
+    "material_certificate",
+    "reach_declaration",
+    "rohs_declaration",
+    "certificate",
+    "regulatory_document",
+    "other",
+  ]).notNull(),
+  standard: varchar("standard", { length: 128 }), // e.g. "EN 71-3", "REACH"
+  fileName: varchar("fileName", { length: 512 }).notNull(),
+  fileUrl: text("fileUrl").notNull(),
+  fileKey: varchar("fileKey", { length: 512 }),
+  mimeType: varchar("mimeType", { length: 128 }),
+  fileSizeBytes: int("fileSizeBytes"),
+  version: int("version").default(1).notNull(),
+  expiryDate: timestamp("expiryDate"),
+  uploadedByUserId: int("uploadedByUserId"),
+  reviewStatus: mysqlEnum("reviewStatus", [
+    "pending",
+    "approved",
+    "rejected",
+  ]).default("pending").notNull(),
+  reviewNote: text("reviewNote"),
+  reviewedByUserId: int("reviewedByUserId"),
+  reviewedAt: timestamp("reviewedAt"),
+  uploadedAt: timestamp("uploadedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ComponentDocument = typeof componentDocuments.$inferSelect;
+export type InsertComponentDocument = typeof componentDocuments.$inferInsert;
