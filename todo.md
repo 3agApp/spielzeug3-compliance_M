@@ -84,3 +84,6 @@
 - [x] Backend: components-Router (CRUD, Dokument-Upload, Vollständigkeit)
 - [x] Frontend: Komponenten-Tab in Produktdetailseite
 - [x] KI-Analyse: Komponenten-Dokumente einbeziehen
+
+## Qualitätssicherung
+- [x] Testfall: DB-Funktionen dürfen niemals undefined zurückgeben (null-safety regression test)

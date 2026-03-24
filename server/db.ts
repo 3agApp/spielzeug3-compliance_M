@@ -77,9 +77,9 @@ export async function upsertUser(user: InsertUser): Promise<void> {
 
 export async function getUserByOpenId(openId: string) {
   const db = await getDb();
-  if (!db) return undefined;
+  if (!db) return null;
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
-  return result[0];
+  return result[0] ?? null;
 }
 
 export async function getAllUsers() {
@@ -103,9 +103,9 @@ export async function getAllSuppliers() {
 
 export async function getSupplierById(id: number) {
   const db = await getDb();
-  if (!db) return undefined;
+  if (!db) return null;
   const result = await db.select().from(suppliers).where(eq(suppliers.id, id)).limit(1);
-  return result[0];
+  return result[0] ?? null;
 }
 
 export async function createSupplier(data: typeof suppliers.$inferInsert) {
@@ -153,9 +153,9 @@ export async function getAllProducts(filters?: {
 
 export async function getProductById(id: number) {
   const db = await getDb();
-  if (!db) return undefined;
+  if (!db) return null;
   const result = await db.select().from(products).where(eq(products.id, id)).limit(1);
-  return result[0];
+  return result[0] ?? null;
 }
 
 export async function createProduct(data: typeof products.$inferInsert) {
@@ -432,13 +432,13 @@ export async function computeCompletenessScore(productId: number): Promise<numbe
 // ─── System Settings ─────────────────────────────────────────────────────────
 export async function getSystemSetting(key: string) {
   const db = await getDb();
-  if (!db) return undefined;
+  if (!db) return null;
   const result = await db
     .select()
     .from(systemSettings)
     .where(eq(systemSettings.settingKey, key))
     .limit(1);
-  return result[0];
+  return result[0] ?? null;
 }
 
 export async function upsertSystemSetting(
