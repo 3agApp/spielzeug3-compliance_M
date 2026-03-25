@@ -5,31 +5,46 @@ type SealStatus = "verified" | "in_progress" | "not_verified";
 
 const STATUS_CONFIG: Record<
   SealStatus,
-  { label: string; color: string; bg: string; badgeBg: string; badgeText: string; icon: string }
+  {
+    label: string;
+    bannerBg: string;
+    bannerText: string;
+    shieldStroke: string;
+    shieldFill: string;
+    checkColor: string;
+    borderColor: string;
+    urlColor: string;
+  }
 > = {
   verified: {
     label: "VERIFIED",
-    color: "#c8102e",
-    bg: "#f8f8f8",
-    badgeBg: "#2d7a3a",
-    badgeText: "#ffffff",
-    icon: "✓",
+    bannerBg: "#2d7a3a",
+    bannerText: "#ffffff",
+    shieldStroke: "#c8102e",
+    shieldFill: "rgba(200,16,46,0.06)",
+    checkColor: "#c8102e",
+    borderColor: "#c8102e",
+    urlColor: "#c8102e",
   },
   in_progress: {
     label: "IN PROGRESS",
-    color: "#c8102e",
-    bg: "#f8f8f8",
-    badgeBg: "#d97706",
-    badgeText: "#ffffff",
-    icon: "⟳",
+    bannerBg: "#d97706",
+    bannerText: "#ffffff",
+    shieldStroke: "#d97706",
+    shieldFill: "rgba(217,119,6,0.06)",
+    checkColor: "#d97706",
+    borderColor: "#d97706",
+    urlColor: "#d97706",
   },
   not_verified: {
     label: "NOT VERIFIED",
-    color: "#c8102e",
-    bg: "#f8f8f8",
-    badgeBg: "#6b7280",
-    badgeText: "#ffffff",
-    icon: "✕",
+    bannerBg: "#6b7280",
+    bannerText: "#ffffff",
+    shieldStroke: "#9ca3af",
+    shieldFill: "rgba(107,114,128,0.06)",
+    checkColor: "#9ca3af",
+    borderColor: "#9ca3af",
+    urlColor: "#9ca3af",
   },
 };
 
@@ -38,12 +53,15 @@ interface SealPreviewProps {
   tenantUrl?: string;
 }
 
-export function SealPreview({ tenantName = "Spielzeug 3 AG", tenantUrl = "swiss-product-seal.ch" }: SealPreviewProps) {
+export function SealPreview({
+  tenantName = "Spielzeug 3 AG",
+  tenantUrl = "swiss-product-seal.ch",
+}: SealPreviewProps) {
   const [status, setStatus] = useState<SealStatus>("verified");
   const cfg = STATUS_CONFIG[status];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Status-Umschalter */}
       <div className="flex gap-2 flex-wrap">
         {(["verified", "in_progress", "not_verified"] as SealStatus[]).map((s) => (
@@ -59,147 +77,279 @@ export function SealPreview({ tenantName = "Spielzeug 3 AG", tenantUrl = "swiss-
         ))}
       </div>
 
-      {/* Label-Vorschau */}
+      {/* Etikett-Vorschau */}
       <div className="flex justify-center">
         <div
-          className="relative rounded-xl shadow-lg overflow-hidden"
           style={{
-            width: 220,
+            width: 240,
             background: "#ffffff",
-            border: `2.5px solid ${cfg.color}`,
-            borderRadius: 16,
-            padding: "20px 18px 18px",
+            border: `2.5px solid ${cfg.borderColor}`,
+            borderRadius: 18,
+            padding: "24px 20px 20px",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             gap: 0,
+            boxShadow: "0 4px 24px rgba(0,0,0,0.10)",
+            fontFamily: "'Helvetica Neue', Arial, sans-serif",
           }}
         >
-          {/* Schild */}
-          <div style={{ marginBottom: 14 }}>
-            <svg width="110" height="100" viewBox="0 0 110 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-              {/* Schild-Hintergrund */}
+          {/* ===== SCHILD ===== */}
+          <div style={{ marginBottom: 16, position: "relative" }}>
+            <svg
+              width="130"
+              height="128"
+              viewBox="0 0 130 128"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              {/* Äusserer Schild */}
               <path
-                d="M55 4 L98 22 L98 55 C98 76 78 92 55 98 C32 92 12 76 12 55 L12 22 Z"
-                fill={cfg.bg}
-                stroke={cfg.color}
+                d="M65 6 L116 28 L116 68 C116 95 93 114 65 122 C37 114 14 95 14 68 L14 28 Z"
+                fill={cfg.shieldFill}
+                stroke={cfg.shieldStroke}
                 strokeWidth="3.5"
+                strokeLinejoin="round"
               />
-              {/* Innerer Schild-Rand */}
+              {/* Innerer Schild-Rand (dünner, heller) */}
               <path
-                d="M55 11 L91 26 L91 55 C91 73 74 87 55 93 C36 87 19 73 19 55 L19 26 Z"
-                fill="white"
-                stroke={cfg.color}
-                strokeWidth="1.5"
-                opacity="0.4"
+                d="M65 14 L108 33 L108 68 C108 91 87 108 65 116 C43 108 22 91 22 68 L22 33 Z"
+                fill="none"
+                stroke={cfg.shieldStroke}
+                strokeWidth="1.2"
+                opacity="0.35"
+                strokeLinejoin="round"
               />
-              {/* Status-Icon */}
-              <text
-                x="55"
-                y="52"
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fontSize="28"
-                fontWeight="bold"
-                fill={cfg.color}
-                style={{ fontFamily: "sans-serif" }}
-              >
-                {cfg.icon}
-              </text>
+              {/* Grosses Häkchen */}
+              <path
+                d="M42 66 L57 81 L88 50"
+                stroke={cfg.checkColor}
+                strokeWidth="7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
               {/* "SWISS PRODUCT SEAL" Text */}
               <text
-                x="55"
-                y="70"
+                x="65"
+                y="104"
                 textAnchor="middle"
-                fontSize="7"
+                fontSize="7.5"
                 fontWeight="700"
-                fill="#333"
-                letterSpacing="1"
-                style={{ fontFamily: "sans-serif" }}
+                fill="#444"
+                letterSpacing="1.2"
+                style={{ fontFamily: "Arial, sans-serif" }}
               >
                 SWISS PRODUCT SEAL
               </text>
-              {/* Status-Badge */}
-              <rect x="18" y="78" width="74" height="16" rx="4" fill={cfg.badgeBg} />
-              <text
-                x="55"
-                y="87"
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fontSize="8"
-                fontWeight="800"
-                fill={cfg.badgeText}
-                letterSpacing="1.5"
-                style={{ fontFamily: "sans-serif" }}
-              >
-                {cfg.label}
-              </text>
             </svg>
+
+            {/* Status-Banner – überlappt den unteren Schild-Rand */}
+            <div
+              style={{
+                position: "absolute",
+                bottom: -2,
+                left: "50%",
+                transform: "translateX(-50%)",
+                background: cfg.bannerBg,
+                color: cfg.bannerText,
+                fontSize: 9,
+                fontWeight: 800,
+                letterSpacing: 2,
+                padding: "4px 18px",
+                borderRadius: 20,
+                whiteSpace: "nowrap",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.18)",
+              }}
+            >
+              {cfg.label}
+            </div>
           </div>
 
-          {/* QR-Code Platzhalter */}
+          {/* Abstand nach Banner */}
+          <div style={{ height: 14 }} />
+
+          {/* ===== QR-CODE PLATZHALTER ===== */}
           <div
             style={{
-              width: 110,
-              height: 110,
+              width: 130,
+              height: 130,
               background: "#f3f4f6",
               border: "1.5px solid #e5e7eb",
-              borderRadius: 8,
+              borderRadius: 10,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              marginBottom: 8,
+              marginBottom: 10,
               position: "relative",
               overflow: "hidden",
             }}
           >
-            {/* QR-Muster-Simulation */}
-            <svg width="90" height="90" viewBox="0 0 90 90" fill="none">
-              {/* Eck-Quadrate */}
-              <rect x="5" y="5" width="22" height="22" rx="3" fill="none" stroke="#111" strokeWidth="3" />
-              <rect x="9" y="9" width="14" height="14" rx="1" fill="#111" />
-              <rect x="63" y="5" width="22" height="22" rx="3" fill="none" stroke="#111" strokeWidth="3" />
-              <rect x="67" y="9" width="14" height="14" rx="1" fill="#111" />
-              <rect x="5" y="63" width="22" height="22" rx="3" fill="none" stroke="#111" strokeWidth="3" />
-              <rect x="9" y="67" width="14" height="14" rx="1" fill="#111" />
-              {/* Datenpunkte simuliert */}
-              {[32,36,40,44,48,52,56,60].map((x) =>
-                [5,9,13,17,21,25,29,33,37,41,45,49,53,57,61,65,69,73,77,81].map((y) =>
-                  Math.sin(x * y * 0.1) > 0.2 ? (
-                    <rect key={`${x}-${y}`} x={x} y={y} width="3" height="3" fill="#111" />
-                  ) : null
-                )
-              )}
-              {/* Schild-Icon in der Mitte */}
+            <svg width="110" height="110" viewBox="0 0 110 110" fill="none">
+              {/* Eck-Finder oben links */}
+              <rect x="6" y="6" width="26" height="26" rx="3" fill="none" stroke="#111" strokeWidth="3.5" />
+              <rect x="11" y="11" width="16" height="16" rx="1.5" fill="#111" />
+              {/* Eck-Finder oben rechts */}
+              <rect x="78" y="6" width="26" height="26" rx="3" fill="none" stroke="#111" strokeWidth="3.5" />
+              <rect x="83" y="11" width="16" height="16" rx="1.5" fill="#111" />
+              {/* Eck-Finder unten links */}
+              <rect x="6" y="78" width="26" height="26" rx="3" fill="none" stroke="#111" strokeWidth="3.5" />
+              <rect x="11" y="83" width="16" height="16" rx="1.5" fill="#111" />
+
+              {/* Datenpunkte – simuliertes QR-Muster */}
+              {/* Reihe 1 */}
+              <rect x="38" y="6" width="4" height="4" fill="#111" />
+              <rect x="44" y="6" width="4" height="4" fill="#111" />
+              <rect x="54" y="6" width="4" height="4" fill="#111" />
+              <rect x="64" y="6" width="4" height="4" fill="#111" />
+              <rect x="70" y="6" width="4" height="4" fill="#111" />
+              {/* Reihe 2 */}
+              <rect x="38" y="12" width="4" height="4" fill="#111" />
+              <rect x="50" y="12" width="4" height="4" fill="#111" />
+              <rect x="60" y="12" width="4" height="4" fill="#111" />
+              <rect x="70" y="12" width="4" height="4" fill="#111" />
+              {/* Reihe 3 */}
+              <rect x="44" y="18" width="4" height="4" fill="#111" />
+              <rect x="54" y="18" width="4" height="4" fill="#111" />
+              <rect x="64" y="18" width="4" height="4" fill="#111" />
+              {/* Reihe 4 */}
+              <rect x="38" y="24" width="4" height="4" fill="#111" />
+              <rect x="50" y="24" width="4" height="4" fill="#111" />
+              <rect x="60" y="24" width="4" height="4" fill="#111" />
+              <rect x="70" y="24" width="4" height="4" fill="#111" />
+              {/* Reihe 5 */}
+              <rect x="44" y="30" width="4" height="4" fill="#111" />
+              <rect x="54" y="30" width="4" height="4" fill="#111" />
+              <rect x="64" y="30" width="4" height="4" fill="#111" />
+              {/* Linke Spalte (Timing) */}
+              <rect x="6" y="38" width="4" height="4" fill="#111" />
+              <rect x="6" y="48" width="4" height="4" fill="#111" />
+              <rect x="6" y="58" width="4" height="4" fill="#111" />
+              <rect x="6" y="68" width="4" height="4" fill="#111" />
+              {/* Obere Zeile (Timing) */}
+              <rect x="38" y="38" width="4" height="4" fill="#111" />
+              <rect x="48" y="38" width="4" height="4" fill="#111" />
+              <rect x="58" y="38" width="4" height="4" fill="#111" />
+              <rect x="68" y="38" width="4" height="4" fill="#111" />
+              <rect x="78" y="38" width="4" height="4" fill="#111" />
+              <rect x="88" y="38" width="4" height="4" fill="#111" />
+              <rect x="100" y="38" width="4" height="4" fill="#111" />
+              {/* Datenpunkte rechts */}
+              <rect x="100" y="44" width="4" height="4" fill="#111" />
+              <rect x="88" y="44" width="4" height="4" fill="#111" />
+              <rect x="78" y="50" width="4" height="4" fill="#111" />
+              <rect x="100" y="50" width="4" height="4" fill="#111" />
+              <rect x="88" y="56" width="4" height="4" fill="#111" />
+              <rect x="78" y="62" width="4" height="4" fill="#111" />
+              <rect x="100" y="62" width="4" height="4" fill="#111" />
+              <rect x="88" y="68" width="4" height="4" fill="#111" />
+              {/* Datenpunkte unten rechts */}
+              <rect x="78" y="78" width="4" height="4" fill="#111" />
+              <rect x="88" y="78" width="4" height="4" fill="#111" />
+              <rect x="100" y="78" width="4" height="4" fill="#111" />
+              <rect x="78" y="88" width="4" height="4" fill="#111" />
+              <rect x="100" y="88" width="4" height="4" fill="#111" />
+              <rect x="88" y="94" width="4" height="4" fill="#111" />
+              <rect x="78" y="100" width="4" height="4" fill="#111" />
+              <rect x="100" y="100" width="4" height="4" fill="#111" />
+              {/* Datenpunkte unten mitte */}
+              <rect x="38" y="78" width="4" height="4" fill="#111" />
+              <rect x="48" y="78" width="4" height="4" fill="#111" />
+              <rect x="58" y="78" width="4" height="4" fill="#111" />
+              <rect x="68" y="78" width="4" height="4" fill="#111" />
+              <rect x="38" y="88" width="4" height="4" fill="#111" />
+              <rect x="58" y="88" width="4" height="4" fill="#111" />
+              <rect x="48" y="94" width="4" height="4" fill="#111" />
+              <rect x="68" y="94" width="4" height="4" fill="#111" />
+              <rect x="38" y="100" width="4" height="4" fill="#111" />
+              <rect x="58" y="100" width="4" height="4" fill="#111" />
+              {/* Datenpunkte mitte */}
+              <rect x="38" y="44" width="4" height="4" fill="#111" />
+              <rect x="48" y="50" width="4" height="4" fill="#111" />
+              <rect x="58" y="44" width="4" height="4" fill="#111" />
+              <rect x="68" y="50" width="4" height="4" fill="#111" />
+              <rect x="38" y="56" width="4" height="4" fill="#111" />
+              <rect x="58" y="56" width="4" height="4" fill="#111" />
+              <rect x="48" y="62" width="4" height="4" fill="#111" />
+              <rect x="68" y="62" width="4" height="4" fill="#111" />
+              <rect x="38" y="68" width="4" height="4" fill="#111" />
+              <rect x="58" y="68" width="4" height="4" fill="#111" />
+
+              {/* Weisser Kreis für Logo-Overlay */}
+              <circle cx="55" cy="55" r="14" fill="white" />
+
+              {/* Kleines Schild-Icon in der Mitte */}
               <path
-                d="M45 36 L54 40 L54 46 C54 51 50 55 45 57 C40 55 36 51 36 46 L36 40 Z"
-                fill={cfg.color}
+                d="M55 43 L64 47 L64 54 C64 60 60 65 55 67 C50 65 46 60 46 54 L46 47 Z"
+                fill={cfg.checkColor}
               />
-              <text x="45" y="49" textAnchor="middle" dominantBaseline="middle" fontSize="8" fill="white" fontWeight="bold">
-                ✓
-              </text>
+              {/* Häkchen im Schild */}
+              <path
+                d="M50 54 L53.5 57.5 L60 51"
+                stroke="white"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </div>
 
           {/* "Scan for compliance info" */}
-          <p style={{ fontSize: 9, color: "#6b7280", marginBottom: 10, textAlign: "center" }}>
+          <p
+            style={{
+              fontSize: 10,
+              color: "#9ca3af",
+              marginBottom: 12,
+              textAlign: "center",
+              letterSpacing: 0.2,
+            }}
+          >
             Scan for compliance info
           </p>
 
           {/* Trennlinie */}
-          <div style={{ width: "100%", height: 1, background: "#e5e7eb", marginBottom: 10 }} />
+          <div style={{ width: "100%", height: 1, background: "#e5e7eb", marginBottom: 12 }} />
 
           {/* Imported by */}
-          <div style={{ textAlign: "center", lineHeight: 1.4 }}>
-            <p style={{ fontSize: 8, color: "#9ca3af", fontStyle: "italic", margin: 0 }}>Imported by</p>
-            <p style={{ fontSize: 10, fontWeight: 700, color: "#111", margin: "2px 0" }}>{tenantName}</p>
-            <p style={{ fontSize: 9, color: cfg.color, fontWeight: 600, margin: 0 }}>{tenantUrl}</p>
+          <div style={{ textAlign: "center", lineHeight: 1.5 }}>
+            <p
+              style={{
+                fontSize: 9,
+                color: "#9ca3af",
+                fontStyle: "italic",
+                margin: 0,
+                letterSpacing: 0.3,
+              }}
+            >
+              Imported by
+            </p>
+            <p
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                color: "#111",
+                margin: "3px 0 2px",
+                letterSpacing: 0.1,
+              }}
+            >
+              {tenantName}
+            </p>
+            <p
+              style={{
+                fontSize: 10,
+                color: cfg.urlColor,
+                fontWeight: 600,
+                margin: 0,
+                letterSpacing: 0.2,
+              }}
+            >
+              {tenantUrl}
+            </p>
           </div>
         </div>
       </div>
 
       <p className="text-xs text-muted-foreground text-center">
-        Vorschau des Etiketts auf einer Produktverpackung · QR-Code wird pro Produkt generiert
+        Vorschau des Etiketts · QR-Code wird pro Produkt individuell generiert
       </p>
     </div>
   );
