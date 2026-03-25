@@ -36,6 +36,13 @@
       "when": 1773931489014,
       "tag": "0004_sweet_iceman",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1774426406679,
+      "tag": "0005_happy_vindicator",
+      "breakpoints": true
     }
   ]
 }

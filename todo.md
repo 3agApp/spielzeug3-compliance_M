@@ -87,3 +87,4 @@
 
 ## Qualitätssicherung
 - [x] Testfall: DB-Funktionen dürfen niemals undefined zurückgeben (null-safety regression test)
+- [x] Neues Produkt anlegen: Kategorie- und Vorlagen-Auswahl im Dialog mit automatischer Anforderungs-Zuweisung

@@ -1,4 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import CreateProductDialog from "@/components/CreateProductDialog";
 import { StatusBadge, CompletenessBar } from "@/components/StatusBadge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ import {
   Bot,
   CheckCircle2,
   Package,
+  Plus,
   Search,
   Sparkles,
   XCircle,
@@ -157,13 +159,16 @@ const STATUS_OPTIONS = [
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function Products() {
   const { user } = useAuth();
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [, setLocation] = useLocation();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
   // Checkbox selection
   const [selected, setSelected] = useState<Set<number>>(new Set());
+
+  // New product dialog state
+  const [newProductOpen, setNewProductOpen] = useState(false);
 
   // AI analysis state
   const [analysisOpen, setAnalysisOpen] = useState(false);
@@ -277,6 +282,17 @@ export default function Products() {
             )}
           </p>
         </div>
+
+        {/* New product button */}
+        {canRunAi && !someSelected && (
+          <Button
+            onClick={() => setNewProductOpen(true)}
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            {lang === "de" ? "Neues Produkt" : "New Product"}
+          </Button>
+        )}
 
         {/* AI analysis button – visible when items are selected */}
         {canRunAi && someSelected && (
@@ -447,6 +463,13 @@ export default function Products() {
           )}
         </CardContent>
       </Card>
+
+      {/* New Product Dialog */}
+      <CreateProductDialog
+        open={newProductOpen}
+        onOpenChange={setNewProductOpen}
+        onSuccess={() => productsQuery.refetch()}
+      />
 
       {/* AI Analysis Progress Dialog */}
       <AnalysisProgressDialog

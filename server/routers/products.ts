@@ -8,6 +8,7 @@ import {
   createNotification,
   createProduct,
   getAllProducts,
+  getDb,
   getMissingRequirementsByProduct,
   getProductById,
   getProductsBySupplier,
@@ -77,6 +78,8 @@ export const productsRouter = router({
         brand: z.string().optional(),
         imageUrl: z.string().optional(),
         kontorId: z.string().optional(),
+        categoryId: z.number().optional(),
+        templateId: z.number().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -85,7 +88,68 @@ export const productsRouter = router({
         "compliance_manager",
         "internal_employee",
       ]);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      // Create the product
       await createProduct({ ...input, status: "open" });
+
+      // If a template was selected, auto-apply its required documents as missing requirements
+      if (input.templateId) {
+        const { productTemplates } = await import("../../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+        const [template] = await db
+          .select()
+          .from(productTemplates)
+          .where(eq(productTemplates.id, input.templateId))
+          .limit(1);
+        if (template) {
+          // Get the newly created product to get its ID
+          const { products: productsTable } = await import("../../drizzle/schema");
+          const { desc } = await import("drizzle-orm");
+          const [newProduct] = await db
+            .select()
+            .from(productsTable)
+            .where(eq(productsTable.supplierId, input.supplierId))
+            .orderBy(desc(productsTable.createdAt))
+            .limit(1);
+          if (newProduct) {
+            const requiredDocs = (template.requiredDocuments as string[]) ?? [];
+            const optionalDocs = (template.optionalDocuments as string[]) ?? [];
+            const validTypes = [
+              "test_report", "declaration_of_conformity", "manual", "certificate",
+              "product_image", "safety_image", "regulatory_document", "safety_text",
+              "warning_text", "age_grading", "material_information", "usage_restrictions",
+              "safety_instructions", "additional_notes",
+            ] as const;
+            for (const doc of requiredDocs) {
+              if (validTypes.includes(doc as any)) {
+                await createMissingRequirement({
+                  productId: newProduct.id,
+                  requirementType: doc as any,
+                  required: true,
+                  isMissing: true,
+                  status: "missing",
+                  sourceSystem: `template:${template.id}`,
+                });
+              }
+            }
+            for (const doc of optionalDocs) {
+              if (validTypes.includes(doc as any)) {
+                await createMissingRequirement({
+                  productId: newProduct.id,
+                  requirementType: doc as any,
+                  required: false,
+                  isMissing: true,
+                  status: "missing",
+                  sourceSystem: `template:${template.id}`,
+                });
+              }
+            }
+          }
+        }
+      }
+
       await createAuditLog({
         entityType: "product",
         action: "created",

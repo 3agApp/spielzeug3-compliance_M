@@ -1,0 +1,8 @@
+{
+  "query": "ALTER TABLE `products` ADD `categoryId` int; ALTER TABLE `products` ADD `templateId` int;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user J1L9FvUd1r4oKv8.75a96d268c41 --database kgkV5LdecSJ3HqPv7WFR7a --execute ALTER TABLE `products` ADD `categoryId` int; ALTER TABLE `products` ADD `templateId` int;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1060 (42S21) at line 1: Duplicate column name 'categoryId'"
+  ]
+}

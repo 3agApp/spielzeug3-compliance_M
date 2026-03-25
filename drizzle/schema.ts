@@ -84,6 +84,8 @@ export const products = mysqlTable("products", {
   rejectedAt: timestamp("rejectedAt"),
   completedAt: timestamp("completedAt"),
   kontorId: varchar("kontorId", { length: 128 }),
+  categoryId: int("categoryId"),
+  templateId: int("templateId"),
   sourceLastSyncAt: timestamp("sourceLastSyncAt"),
   lastUpdatedAt: timestamp("lastUpdatedAt").defaultNow().onUpdateNow().notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
