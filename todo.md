@@ -172,3 +172,9 @@
 - [x] Sichtbarkeits-Toggle (öffentlich/privat) im Siegel-Tab
 - [x] Status-Override-Dropdown im Siegel-Tab (admin only)
 - [x] QR-Code-Download-Buttons (PNG + SVG) im Siegel-Tab
+
+## Batch-Informationen in Produktdetailseite
+- [x] DB: batchInfo JSON-Spalte in products genutzt (batchNumber, productionDate, expiryDate)
+- [x] Backend: updateBatchInfo-Mutation und getBatchInfo-Query im products-Router
+- [x] Frontend: BatchTab in Produktdetailseite (Chargennummer, Produktionsdatum, Ablaufdatum, Importeur-Name)
+- [x] Frontend: Öffentliche Produktlandingpage zeigt strukturierte Batch-Daten mit Ablaufdatum-Warnung

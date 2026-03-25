@@ -412,6 +412,72 @@ export const productsRouter = router({
       return { history, comments };
     }),
 
+  updateBatchInfo: protectedProcedure
+    .input(
+      z.object({
+        productId: z.number(),
+        batchNumber: z.string().max(128).optional(),
+        productionDate: z.string().optional(),
+        expiryDate: z.string().optional(),
+        importerName: z.string().max(255).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      requireRole(ctx.user.complianceRole ?? "", [
+        "compliance_manager",
+        "administrator",
+        "super_admin",
+        "internal_employee",
+      ]);
+      const product = await getProductById(input.productId);
+      if (!product) throw new TRPCError({ code: "NOT_FOUND" });
+
+      const existingBatch = (product.batchInfo ?? {}) as Record<string, unknown>;
+      const batchInfo = {
+        ...existingBatch,
+        batchNumber: input.batchNumber !== undefined ? input.batchNumber : (existingBatch.batchNumber ?? null),
+        productionDate: input.productionDate !== undefined ? input.productionDate : (existingBatch.productionDate ?? null),
+        expiryDate: input.expiryDate !== undefined ? input.expiryDate : (existingBatch.expiryDate ?? null),
+      };
+
+      await updateProduct(input.productId, {
+        batchInfo,
+        ...(input.importerName !== undefined ? { importerName: input.importerName } : {}),
+      });
+
+      await createAuditLog({
+        entityType: "product",
+        entityId: input.productId,
+        action: "updated",
+        performedByUserId: ctx.user.id,
+        payloadSnapshot: { batchInfo } as any,
+      });
+
+      return { success: true };
+    }),
+
+  getBatchInfo: protectedProcedure
+    .input(z.object({ productId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const product = await getProductById(input.productId);
+      if (!product) throw new TRPCError({ code: "NOT_FOUND" });
+      const role = ctx.user.complianceRole ?? "internal_employee";
+      if (role === "supplier" && product.supplierId !== ctx.user.supplierId) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const batch = (product.batchInfo ?? {}) as {
+        batchNumber?: string | null;
+        productionDate?: string | null;
+        expiryDate?: string | null;
+      };
+      return {
+        batchNumber: batch.batchNumber ?? "",
+        productionDate: batch.productionDate ?? "",
+        expiryDate: batch.expiryDate ?? "",
+        importerName: product.importerName ?? "",
+      };
+    }),
+
   getDashboardStats: protectedProcedure.query(async ({ ctx }) => {
     const role = ctx.user.complianceRole ?? "internal_employee";
     if (role === "supplier") {

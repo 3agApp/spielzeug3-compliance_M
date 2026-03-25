@@ -307,7 +307,7 @@ export default function PublicProductPage() {
         )}
 
         {/* Batch / Traceability */}
-        {batchInfo && Object.keys(batchInfo).length > 0 && (
+        {batchInfo && (batchInfo.batchNumber || batchInfo.productionDate || batchInfo.expiryDate) && (
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
@@ -316,12 +316,37 @@ export default function PublicProductPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
-              {Object.entries(batchInfo).map(([key, value]) => (
-                <div key={key} className="flex justify-between">
-                  <span className="text-gray-500 capitalize">{key}</span>
-                  <span className="font-medium text-gray-800 font-mono text-xs">{String(value)}</span>
+              {batchInfo.batchNumber && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500">{lang === "de" ? "Chargennummer" : "Batch Number"}</span>
+                  <span className="font-medium text-gray-800 font-mono text-xs">{batchInfo.batchNumber}</span>
                 </div>
-              ))}
+              )}
+              {batchInfo.productionDate && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500">{lang === "de" ? "Produktionsdatum" : "Production Date"}</span>
+                  <span className="font-medium text-gray-800">{formatDate(batchInfo.productionDate, lang)}</span>
+                </div>
+              )}
+              {batchInfo.expiryDate && (
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-500">{lang === "de" ? "Ablaufdatum" : "Expiry Date"}</span>
+                  <span className={`font-medium ${
+                    new Date(batchInfo.expiryDate) < new Date()
+                      ? "text-red-600"
+                      : new Date(batchInfo.expiryDate) < new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)
+                      ? "text-amber-600"
+                      : "text-gray-800"
+                  }`}>
+                    {formatDate(batchInfo.expiryDate, lang)}
+                    {new Date(batchInfo.expiryDate) < new Date() && (
+                      <span className="ml-2 text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">
+                        {lang === "de" ? "Abgelaufen" : "Expired"}
+                      </span>
+                    )}
+                  </span>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}

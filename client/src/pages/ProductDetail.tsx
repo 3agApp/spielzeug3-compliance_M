@@ -314,9 +314,13 @@ export default function ProductDetail() {
             <FileSignature className="h-4 w-4" />
             Signaturen
           </TabsTrigger>
+          <TabsTrigger value="batch" className="gap-2">
+            <Package className="h-4 w-4" />
+            Chargen-Info
+          </TabsTrigger>
           {isInternalRole && (
             <TabsTrigger value="seal" className="gap-2">
-              <ShieldCheck className="h-4 w-4" />
+              <ShieldCheck className="h-5 w-5" />
               Siegel
             </TabsTrigger>
           )}
@@ -503,6 +507,10 @@ export default function ProductDetail() {
             productName={product.productName}
             canManage={["administrator", "compliance_manager"].includes(role)}
           />
+        </TabsContent>
+        {/* Batch Tab */}
+        <TabsContent value="batch" className="mt-4">
+          <BatchTab productId={productId} canEdit={isInternalRole} />
         </TabsContent>
         {/* Seal Tab */}
         {isInternalRole && (
@@ -992,5 +1000,238 @@ function TimelineCard({ productId, t }: any) {
         )}
       </CardContent>
     </Card>
+  );
+}
+
+// ─── Batch Tab ───────────────────────────────────────────────────────────────
+function BatchTab({
+  productId,
+  canEdit,
+}: {
+  productId: number;
+  canEdit: boolean;
+}) {
+  const batchQuery = trpc.products.getBatchInfo.useQuery({ productId });
+  const updateMutation = trpc.products.updateBatchInfo.useMutation({
+    onSuccess: () => {
+      toast.success("Chargen-Informationen gespeichert.");
+      batchQuery.refetch();
+      setEditing(false);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const [editing, setEditing] = useState(false);
+  const [batchNumber, setBatchNumber] = useState("");
+  const [productionDate, setProductionDate] = useState("");
+  const [expiryDate, setExpiryDate] = useState("");
+  const [importerName, setImporterName] = useState("");
+
+  // Populate form when data loads
+  const batch = batchQuery.data;
+  const initialized = useRef(false);
+  if (batch && !initialized.current) {
+    initialized.current = true;
+    setBatchNumber(batch.batchNumber ?? "");
+    setProductionDate(batch.productionDate ?? "");
+    setExpiryDate(batch.expiryDate ?? "");
+    setImporterName(batch.importerName ?? "");
+  }
+
+  function handleSave() {
+    updateMutation.mutate({
+      productId,
+      batchNumber: batchNumber || undefined,
+      productionDate: productionDate || undefined,
+      expiryDate: expiryDate || undefined,
+      importerName: importerName || undefined,
+    });
+  }
+
+  function handleEdit() {
+    // Re-sync form with latest data
+    if (batch) {
+      setBatchNumber(batch.batchNumber ?? "");
+      setProductionDate(batch.productionDate ?? "");
+      setExpiryDate(batch.expiryDate ?? "");
+      setImporterName(batch.importerName ?? "");
+    }
+    setEditing(true);
+  }
+
+  if (batchQuery.isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="animate-pulse space-y-3">
+            <div className="h-4 bg-muted rounded w-1/3" />
+            <div className="h-8 bg-muted rounded" />
+            <div className="h-8 bg-muted rounded" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-3">
+        <div>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Package className="h-5 w-5 text-[#C8102E]" />
+            Chargen- &amp; Rückverfolgbarkeits-Informationen
+          </CardTitle>
+          <p className="text-sm text-muted-foreground mt-1">
+            Diese Daten erscheinen auf der öffentlichen Produktseite (Swiss Product Seal).
+          </p>
+        </div>
+        {canEdit && !editing && (
+          <Button variant="outline" size="sm" onClick={handleEdit}>
+            Bearbeiten
+          </Button>
+        )}
+      </CardHeader>
+      <CardContent className="space-y-5">
+        {editing ? (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="batchNumber">Chargennummer</Label>
+                <Input
+                  id="batchNumber"
+                  placeholder="z.B. CH-2025-001"
+                  value={batchNumber}
+                  onChange={(e) => setBatchNumber(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">Interne Chargennummer oder Lot-Nummer</p>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="importerName">Importeur-Name (Anzeige)</Label>
+                <Input
+                  id="importerName"
+                  placeholder="z.B. Spielzeug 3 AG"
+                  value={importerName}
+                  onChange={(e) => setImporterName(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">Überschreibt den Standard-Importeur auf der öffentlichen Seite</p>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="productionDate">Produktionsdatum</Label>
+                <Input
+                  id="productionDate"
+                  type="date"
+                  value={productionDate}
+                  onChange={(e) => setProductionDate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="expiryDate">Ablaufdatum / Mindesthaltbarkeit</Label>
+                <Input
+                  id="expiryDate"
+                  type="date"
+                  value={expiryDate}
+                  onChange={(e) => setExpiryDate(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button
+                onClick={handleSave}
+                disabled={updateMutation.isPending}
+                className="bg-[#C8102E] hover:bg-[#a00d25] text-white"
+              >
+                {updateMutation.isPending ? "Speichern..." : "Speichern"}
+              </Button>
+              <Button variant="outline" onClick={() => setEditing(false)}>
+                Abbrechen
+              </Button>
+            </div>
+          </>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <InfoField
+              label="Chargennummer"
+              value={batch?.batchNumber}
+              empty="Nicht angegeben"
+            />
+            <InfoField
+              label="Importeur-Name (Anzeige)"
+              value={batch?.importerName}
+              empty="Standard (aus Mandant)"
+            />
+            <InfoField
+              label="Produktionsdatum"
+              value={batch?.productionDate ? new Date(batch.productionDate).toLocaleDateString("de-CH") : null}
+              empty="Nicht angegeben"
+            />
+            <InfoField
+              label="Ablaufdatum / Mindesthaltbarkeit"
+              value={batch?.expiryDate ? new Date(batch.expiryDate).toLocaleDateString("de-CH") : null}
+              empty="Nicht angegeben"
+              highlight={
+                batch?.expiryDate
+                  ? new Date(batch.expiryDate) < new Date()
+                    ? "expired"
+                    : new Date(batch.expiryDate) < new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)
+                    ? "warning"
+                    : undefined
+                  : undefined
+              }
+            />
+          </div>
+        )}
+
+        {!editing && !batch?.batchNumber && !batch?.productionDate && !batch?.expiryDate && (
+          <div className="text-center py-6 text-muted-foreground">
+            <Package className="h-10 w-10 mx-auto mb-2 opacity-30" />
+            <p className="text-sm">Noch keine Chargen-Informationen hinterlegt.</p>
+            {canEdit && (
+              <Button variant="outline" size="sm" className="mt-3" onClick={handleEdit}>
+                Jetzt hinzufügen
+              </Button>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function InfoField({
+  label,
+  value,
+  empty,
+  highlight,
+}: {
+  label: string;
+  value: string | null | undefined;
+  empty: string;
+  highlight?: "expired" | "warning";
+}) {
+  return (
+    <div className="space-y-1">
+      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</p>
+      {value ? (
+        <p
+          className={`text-sm font-medium ${
+            highlight === "expired"
+              ? "text-red-600"
+              : highlight === "warning"
+              ? "text-amber-600"
+              : "text-foreground"
+          }`}
+        >
+          {value}
+          {highlight === "expired" && (
+            <span className="ml-2 text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">Abgelaufen</span>
+          )}
+          {highlight === "warning" && (
+            <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">Läuft bald ab</span>
+          )}
+        </p>
+      ) : (
+        <p className="text-sm text-muted-foreground italic">{empty}</p>
+      )}
+    </div>
   );
 }
