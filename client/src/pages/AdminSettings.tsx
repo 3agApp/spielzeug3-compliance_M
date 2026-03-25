@@ -1,3 +1,4 @@
+import { SealPreview } from "@/components/SealPreview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -580,6 +581,22 @@ export default function AdminSettings() {
 
         {/* ── Siegel-Einstellungen ── */}
         <TabsContent value="seal" className="space-y-4 mt-4">
+          {/* Siegel-Vorschau */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Shield className="h-4 w-4" />
+                Siegel-Vorschau
+              </CardTitle>
+              <CardDescription>
+                So sieht das Etikett auf einer Produktverpackung aus. Klicken Sie auf die Status-Buttons, um alle Varianten zu sehen.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <SealPreview />
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">

@@ -184,3 +184,8 @@
 - [x] Backend: System-Setting SEAL_AUTO_ACTIVATE (boolean, default true) in AdminSettings
 - [x] Frontend: Siegel-Tab in AdminSettings: Toggle "Siegel bei Genehmigung automatisch aktivieren"
 - [x] Vitest-Test: approve löst activateSeal aus wenn SEAL_AUTO_ACTIVATE = true (in products.test.ts)
+
+## Siegel-Vorschau in Einstellungen
+- [x] SealPreview-Komponente: Live-Vorschau des Siegels mit Status-Umschalter (verified/in_progress/not_verified)
+- [x] QR-Label-Format: Schild + QR-Platzhalter + "Imported by"-Zeilen in Vorschau
+- [x] Siegel-Vorschau in AdminSettings Siegel-Tab integrieren
