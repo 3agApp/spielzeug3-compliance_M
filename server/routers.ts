@@ -16,6 +16,8 @@ import { invitationsRouter } from "./routers/invitations";
 import { templatesRouter } from "./routers/templates";
 import { componentsRouter } from "./routers/components";
 import { bunnydocRouter } from "./routers/bunnydoc";
+import { tenantRouter } from "./routers/tenant";
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -41,6 +43,7 @@ export const appRouter = router({
   templates: templatesRouter,
   components: componentsRouter,
   bunnydoc: bunnydocRouter,
+  tenant: tenantRouter,
 });
 
 export type AppRouter = typeof appRouter;

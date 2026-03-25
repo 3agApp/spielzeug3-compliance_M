@@ -24,9 +24,11 @@ export const users = mysqlTable("users", {
     "internal_employee",
     "compliance_manager",
     "administrator",
+    "super_admin",
   ]).default("internal_employee"),
   languagePreference: mysqlEnum("languagePreference", ["de", "en"]).default("de").notNull(),
   supplierId: int("supplierId"), // FK to suppliers (for supplier users)
+  tenantId: int("tenantId").default(1), // FK to tenants (null = super_admin)
   active: boolean("active").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -87,10 +89,15 @@ export const products = mysqlTable("products", {
   categoryId: int("categoryId"),
   templateId: int("templateId"),
   sourceLastSyncAt: timestamp("sourceLastSyncAt"),
+  // Swiss Product Seal Platform
+  tenantId: int("tenantId").default(1).notNull(),
+  publicUuid: varchar("publicUuid", { length: 36 }).unique(), // UUID for public product page
+  qrCodeUrl: text("qrCodeUrl"),                               // S3 URL of generated QR code PNG
+  qrCodeSvgUrl: text("qrCodeSvgUrl"),                        // S3 URL of generated QR code SVG
+  sealEnabledAt: timestamp("sealEnabledAt"),                  // When seal was first activated
   lastUpdatedAt: timestamp("lastUpdatedAt").defaultNow().onUpdateNow().notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
-
 export type Product = typeof products.$inferSelect;
 export type InsertProduct = typeof products.$inferInsert;
 
@@ -482,6 +489,23 @@ export const componentDocuments = mysqlTable("component_documents", {
 
 export type ComponentDocument = typeof componentDocuments.$inferSelect;
 export type InsertComponentDocument = typeof componentDocuments.$inferInsert;
+
+// ─── Tenants (Multi-Tenant Platform) ────────────────────────────────────────
+export const tenants = mysqlTable("tenants", {
+  id: int("id").autoincrement().primaryKey(),
+  slug: varchar("slug", { length: 64 }).notNull().unique(),
+  name: varchar("name", { length: 255 }).notNull(),
+  plan: mysqlEnum("plan", ["starter", "professional", "enterprise"]).default("starter").notNull(),
+  modulesEnabled: json("modulesEnabled").$type<string[]>().default(["compliance"]).notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  logoUrl: text("logoUrl"),
+  primaryColor: varchar("primaryColor", { length: 7 }).default("#C8102E"),
+  contactEmail: varchar("contactEmail", { length: 320 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Tenant = typeof tenants.$inferSelect;
+export type InsertTenant = typeof tenants.$inferInsert;
 
 // ─── BunnyDoc Signature Requests ─────────────────────────────────────────────
 export const signatureRequests = mysqlTable("signature_requests", {

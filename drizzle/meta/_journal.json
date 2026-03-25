@@ -50,6 +50,13 @@
       "when": 1774427494321,
       "tag": "0006_chemical_payback",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1774433538774,
+      "tag": "0007_optimal_wolfpack",
+      "breakpoints": true
     }
   ]
 }

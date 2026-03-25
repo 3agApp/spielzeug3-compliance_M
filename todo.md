@@ -103,3 +103,32 @@
 ## Signatur-Status-Badge im Produkt-Header
 - [x] tRPC-Query bunnydoc.getLatestByProduct hinzufügen (neueste Signaturanfrage für ein Produkt)
 - [x] Signatur-Status-Badge im Produkt-Header anzeigen (klickbar → springt zum Signaturen-Tab)
+
+## Swiss Product Seal Platform – Multi-Tenant-Transformation
+
+### DB-Migration
+- [x] tenants-Tabelle anlegen (id, slug, name, plan, modules_enabled, logo_url, primary_color)
+- [x] products: publicUuid (UUID, unique) und qrCodeUrl hinzufügen
+- [x] users: tenantId-Spalte hinzufügen (nullable, DEFAULT 1)
+- [x] suppliers: tenantId-Spalte hinzufügen (DEFAULT 1)
+- [x] Spielzeug 3 AG als Tenant 1 eintragen
+
+### Backend
+- [x] super_admin zu complianceRole enum in schema.ts ergänzen
+- [x] tenantProcedure-Guard in server/_core/trpc.ts (in tenant router)
+- [x] tenant tRPC-Router (getCurrent, getBySlug, list, create, update, activateSeal, getSealInfo, getPublicProduct)
+- [x] getSealStatus-Hilfsfunktion (approved → verified, in_progress, not_verified)
+- [x] QR-Code-Generierung bei Produkterstellung (qrcode npm, S3-Upload)
+- [x] publicProcedure: tenant.getPublicProduct (nach publicUuid, nur sichere Felder)
+- [x] DB-Funktionen: getTenantById, getTenantBySlug, createTenant, listTenants, ensureProductPublicUuid
+
+### Frontend – Öffentliche Produktlandingpage
+- [x] Route /p/:uuid in App.tsx (public, kein Login)
+- [x] PublicProductPage.tsx mit Siegel-Badge, Importeur-Info, Status-Erklärung
+- [x] SealBadge.tsx Komponente (verified/in_progress/not_verified mit Siegel-Design + SealStatusPill)
+
+### Frontend – Portal-Erweiterungen
+- [ ] useModules-Hook (hasSeal, hasAdvanced aus tenant.getCurrent) – geplant
+- [x] QR-Code-Download in Produktdetail (PNG + SVG) im Siegel-Tab
+- [ ] Siegel-Status-Spalte in Produktliste – geplant
+- [ ] Super-Admin-Dashboard (/super-admin) mit Tenant-Liste und Metriken – geplant

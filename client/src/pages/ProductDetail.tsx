@@ -15,18 +15,24 @@ import { AiAnalysisCard } from "@/components/AiAnalysisCard";
 import ComponentsTab from "@/components/ComponentsTab";
 import SignatureRequestDialog from "@/components/SignatureRequestDialog";
 import SignatureRequestList from "@/components/SignatureRequestList";
+import { SealStatusPill } from "@/components/SealBadge";
+import type { SealStatus } from "@/components/SealBadge";
 import {
   AlertCircle,
   ArrowLeft,
   Bot,
   CheckCircle2,
   Clock,
+  Download,
+  ExternalLink,
   FileSignature,
   FileText,
   MessageSquare,
   Package,
+  QrCode,
   Send,
   Shield,
+  ShieldCheck,
   Upload,
   XCircle,
 } from "lucide-react";
@@ -53,9 +59,17 @@ export default function ProductDetail() {
   const [activeTab, setActiveTab] = useState("documents");
   const [, setLocation] = useLocation();
   const role = (user as any)?.complianceRole ?? "internal_employee";
+  const isInternalRole = ["administrator", "compliance_manager", "internal_employee", "super_admin"].includes(role);
 
   const productQuery = trpc.products.getById.useQuery({ id: productId });
   const product = productQuery.data as any;
+
+  // Seal info for header badge
+  const sealInfoQuery = trpc.tenant.getSealInfo.useQuery(
+    { productId },
+    { enabled: !productQuery.isLoading && isInternalRole }
+  );
+  const sealInfo = sealInfoQuery.data;
 
   // Signature badge – load latest non-cancelled request for header display
   const latestSigQuery = trpc.bunnydoc.latestByProduct.useQuery(
@@ -130,6 +144,17 @@ export default function ProductDetail() {
             <h1 className="text-2xl font-semibold">{product.productName}</h1>
             <div className="flex items-center gap-3 mt-2 flex-wrap">
               <StatusBadge status={product.status} />
+              {/* Seal status badge */}
+              {isInternalRole && sealInfo?.publicUuid && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("seal")}
+                  title="Zum Siegel-Tab"
+                  className="focus:outline-none focus:ring-2 focus:ring-ring rounded-full"
+                >
+                  <SealStatusPill status={(sealInfo.sealStatus ?? "not_verified") as SealStatus} />
+                </button>
+              )}
               {/* Signature status badge – visible for internal roles */}
               {latestSig && (
                 <button
@@ -289,6 +314,12 @@ export default function ProductDetail() {
             <FileSignature className="h-4 w-4" />
             Signaturen
           </TabsTrigger>
+          {isInternalRole && (
+            <TabsTrigger value="seal" className="gap-2">
+              <ShieldCheck className="h-4 w-4" />
+              Siegel
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* Components Tab */}
@@ -473,6 +504,17 @@ export default function ProductDetail() {
             canManage={["administrator", "compliance_manager"].includes(role)}
           />
         </TabsContent>
+        {/* Seal Tab */}
+        {isInternalRole && (
+          <TabsContent value="seal" className="mt-4">
+            <SealTab
+              productId={productId}
+              productName={product.productName}
+              canManage={["administrator", "compliance_manager", "super_admin"].includes(role)}
+              onSealActivated={() => sealInfoQuery.refetch()}
+            />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
@@ -519,7 +561,137 @@ function SignaturesTab({
   );
 }
 
-// ─── Upload Document Card ────────────────────────────────────────────────────
+//// ─── Seal Tab ───────────────────────────────────────────────────────────────────────────
+function SealTab({
+  productId,
+  productName,
+  canManage,
+  onSealActivated,
+}: {
+  productId: number;
+  productName: string;
+  canManage: boolean;
+  onSealActivated?: () => void;
+}) {
+  const utils = trpc.useUtils();
+  const sealQuery = trpc.tenant.getSealInfo.useQuery({ productId });
+  const seal = sealQuery.data;
+
+  const activateMutation = trpc.tenant.activateSeal.useMutation({
+    onSuccess: () => {
+      toast.success("Siegel aktiviert! QR-Code wurde generiert.");
+      sealQuery.refetch();
+      onSealActivated?.();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const sealStatus = (seal?.sealStatus ?? "not_verified") as SealStatus;
+
+  return (
+    <div className="space-y-4">
+      {/* Status Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <ShieldCheck className="h-5 w-5 text-[#C8102E]" />
+            Swiss Product Seal
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <p className="text-sm text-muted-foreground mb-1">Siegel-Status</p>
+              <SealStatusPill status={sealStatus} />
+            </div>
+            {seal?.sealEnabledAt && (
+              <div>
+                <p className="text-xs text-muted-foreground">Aktiviert am</p>
+                <p className="text-sm font-medium">
+                  {new Date(seal.sealEnabledAt).toLocaleDateString("de-CH")}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {!seal?.publicUuid && canManage && (
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-sm text-amber-800 font-medium mb-2">Siegel noch nicht aktiviert</p>
+              <p className="text-xs text-amber-700 mb-3">
+                Aktivieren Sie das Siegel, um einen QR-Code zu generieren und eine öffentliche Produktseite zu erstellen.
+              </p>
+              <Button
+                size="sm"
+                onClick={() => activateMutation.mutate({ productId })}
+                disabled={activateMutation.isPending}
+                className="bg-[#C8102E] hover:bg-[#a00d24] text-white"
+              >
+                <ShieldCheck className="mr-2 h-4 w-4" />
+                {activateMutation.isPending ? "Wird aktiviert…" : "Siegel aktivieren & QR-Code generieren"}
+              </Button>
+            </div>
+          )}
+
+          {seal?.publicUuid && (
+            <>
+              {/* Public URL */}
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Öffentliche Produktseite</p>
+                <div className="flex items-center gap-2">
+                  <code className="text-xs bg-muted px-2 py-1 rounded flex-1 truncate">
+                    {seal.publicUrl}
+                  </code>
+                  <a href={seal.publicUrl ?? ""} target="_blank" rel="noopener noreferrer">
+                    <Button variant="ghost" size="sm" title="Seite öffnen">
+                      <ExternalLink className="h-4 w-4" />
+                    </Button>
+                  </a>
+                </div>
+              </div>
+
+              {/* QR Code */}
+              {seal.qrCodeUrl && (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-2">QR-Code</p>
+                  <div className="flex items-start gap-4">
+                    <div className="border rounded-lg p-3 bg-white shadow-sm">
+                      <img
+                        src={seal.qrCodeUrl}
+                        alt="QR-Code"
+                        className="w-32 h-32 object-contain"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <a href={seal.qrCodeUrl} download={`qr-${productName}.png`}>
+                        <Button variant="outline" size="sm" className="w-full">
+                          <Download className="mr-2 h-4 w-4" />
+                          PNG herunterladen
+                        </Button>
+                      </a>
+                      {seal.qrCodeSvgUrl && (
+                        <a href={seal.qrCodeSvgUrl} download={`qr-${productName}.svg`}>
+                          <Button variant="outline" size="sm" className="w-full">
+                            <QrCode className="mr-2 h-4 w-4" />
+                            SVG herunterladen
+                          </Button>
+                        </a>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        Druckempfehlung: SVG für Etiketten, PNG für digitale Verwendung
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ─── Upload Document Card ────────────────────────────────────────────
 function UploadDocumentCard({ productId, t, onSuccess }: any) {
   const [open, setOpen] = useState(false);
   const [docType, setDocType] = useState<string>("test_report");
