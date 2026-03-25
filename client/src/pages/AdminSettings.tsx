@@ -16,6 +16,7 @@ import {
   Database,
   Eye,
   EyeOff,
+  FileSignature,
   Globe,
   Key,
   RefreshCw,
@@ -95,7 +96,7 @@ export default function AdminSettings() {
       </div>
 
       <Tabs defaultValue="kontor">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="kontor" className="gap-1.5">
             <Database className="h-3.5 w-3.5" />
             Kontor ERP
@@ -115,6 +116,10 @@ export default function AdminSettings() {
           <TabsTrigger value="ai" className="gap-1.5">
             <Sparkles className="h-3.5 w-3.5" />
             KI-Analyse
+          </TabsTrigger>
+          <TabsTrigger value="bunnydoc" className="gap-1.5">
+            <FileSignature className="h-3.5 w-3.5" />
+            Signaturen
           </TabsTrigger>
         </TabsList>
 
@@ -550,7 +555,143 @@ export default function AdminSettings() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* ── BunnyDoc Digitale Signaturen ── */}
+        <BunnyDocSettingsTab />
       </Tabs>
     </div>
+  );
+}
+
+function BunnyDocSettingsTab() {
+  const settingsQuery = trpc.bunnydoc.getSettings.useQuery();
+  const saveSettingsMutation = trpc.bunnydoc.saveSettings.useMutation({
+    onSuccess: () => {
+      toast.success("BunnyDoc-Einstellungen gespeichert");
+      settingsQuery.refetch();
+      setBunnyApiKey("");
+      setBunnyTemplateId("");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const [bunnyApiKey, setBunnyApiKey] = useState("");
+  const [bunnyTemplateId, setBunnyTemplateId] = useState("");
+  const [showBunnyKey, setShowBunnyKey] = useState(false);
+
+  return (
+    <TabsContent value="bunnydoc" className="space-y-4 mt-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <FileSignature className="h-4 w-4" />
+            BunnyDoc – Digitale Signaturen
+          </CardTitle>
+          <CardDescription>
+            Verbinden Sie BunnyDoc, um Compliance-Dokumente automatisch zur digitalen Unterzeichnung zu versenden.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {/* Status */}
+          <div className="flex items-center gap-3 rounded-lg border p-3 bg-muted/30">
+            <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${
+              settingsQuery.data?.hasApiKey ? "bg-emerald-100" : "bg-amber-100"
+            }`}>
+              <Key className={`h-4 w-4 ${
+                settingsQuery.data?.hasApiKey ? "text-emerald-600" : "text-amber-600"
+              }`} />
+            </div>
+            <div>
+              <p className="text-sm font-medium">
+                {settingsQuery.data?.hasApiKey ? "API-Schlüssel konfiguriert" : "Kein API-Schlüssel hinterlegt"}
+              </p>
+              {settingsQuery.data?.templateId && (
+                <p className="text-xs text-muted-foreground font-mono mt-0.5">
+                  Template-ID: {settingsQuery.data.templateId}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* API Key */}
+          <div className="space-y-1.5">
+            <Label htmlFor="bunny-api-key">
+              {settingsQuery.data?.hasApiKey ? "API-Schlüssel ersetzen" : "API-Schlüssel eingeben"}
+            </Label>
+            <div className="relative">
+              <Input
+                id="bunny-api-key"
+                type={showBunnyKey ? "text" : "password"}
+                value={bunnyApiKey}
+                onChange={(e) => setBunnyApiKey(e.target.value)}
+                placeholder="Ihr BunnyDoc API-Schlüssel"
+                className="pr-10 font-mono text-sm"
+              />
+              <button
+                type="button"
+                onClick={() => setShowBunnyKey(!showBunnyKey)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showBunnyKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Den Schlüssel finden Sie unter{" "}
+              <a href="https://bunnydoc.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                bunnydoc.com
+              </a>{" "}
+              → Einstellungen → API
+            </p>
+          </div>
+
+          {/* Template ID */}
+          <div className="space-y-1.5">
+            <Label htmlFor="bunny-template-id">Template-ID</Label>
+            <Input
+              id="bunny-template-id"
+              value={bunnyTemplateId}
+              onChange={(e) => setBunnyTemplateId(e.target.value)}
+              placeholder={settingsQuery.data?.templateId ?? "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"}
+              className="font-mono text-sm"
+            />
+            <p className="text-xs text-muted-foreground">
+              Die UUID der BunnyDoc-Vorlage, die für Compliance-Dokumente verwendet werden soll.
+            </p>
+          </div>
+
+          <Separator />
+
+          {/* Webhook Info */}
+          <div className="rounded-lg border p-3 bg-muted/20 space-y-1">
+            <p className="text-sm font-medium">Webhook-URL</p>
+            <p className="text-xs text-muted-foreground">
+              Tragen Sie diese URL in Ihrem BunnyDoc-Konto unter Einstellungen → Webhooks ein,
+              damit Signatur-Status-Updates automatisch synchronisiert werden:
+            </p>
+            <code className="block text-xs font-mono bg-background border rounded px-2 py-1 mt-1 break-all">
+              {window.location.origin}/api/webhooks/bunnydoc
+            </code>
+          </div>
+
+          <Button
+            onClick={() => {
+              if (!bunnyApiKey || !bunnyTemplateId) {
+                toast.error("Bitte API-Schlüssel und Template-ID eingeben.");
+                return;
+              }
+              saveSettingsMutation.mutate({ apiKey: bunnyApiKey, templateId: bunnyTemplateId });
+            }}
+            disabled={saveSettingsMutation.isPending}
+          >
+            {saveSettingsMutation.isPending ? (
+              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="mr-2 h-4 w-4" />
+            )}
+            Speichern
+          </Button>
+        </CardContent>
+      </Card>
+    </TabsContent>
   );
 }

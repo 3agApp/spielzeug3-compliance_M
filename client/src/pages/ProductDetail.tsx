@@ -13,12 +13,15 @@ import { useLang } from "@/lib/i18n";
 import { trpc } from "@/lib/trpc";
 import { AiAnalysisCard } from "@/components/AiAnalysisCard";
 import ComponentsTab from "@/components/ComponentsTab";
+import SignatureRequestDialog from "@/components/SignatureRequestDialog";
+import SignatureRequestList from "@/components/SignatureRequestList";
 import {
   AlertCircle,
   ArrowLeft,
   Bot,
   CheckCircle2,
   Clock,
+  FileSignature,
   FileText,
   MessageSquare,
   Package,
@@ -234,6 +237,10 @@ export default function ProductDetail() {
             <Clock className="h-4 w-4" />
             {t.product.timeline}
           </TabsTrigger>
+          <TabsTrigger value="signatures" className="gap-2">
+            <FileSignature className="h-4 w-4" />
+            Signaturen
+          </TabsTrigger>
         </TabsList>
 
         {/* Components Tab */}
@@ -410,7 +417,56 @@ export default function ProductDetail() {
         <TabsContent value="timeline" className="mt-4">
           <TimelineCard productId={productId} t={t} />
         </TabsContent>
+        {/* Signatures Tab */}
+        <TabsContent value="signatures" className="mt-4">
+          <SignaturesTab
+            productId={productId}
+            productName={product.productName}
+            canManage={["administrator", "compliance_manager"].includes(role)}
+          />
+        </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+// ─── Signatures Tab ─────────────────────────────────────────────────────────
+function SignaturesTab({
+  productId,
+  productName,
+  canManage,
+}: {
+  productId: number;
+  productName: string;
+  canManage: boolean;
+}) {
+  const utils = trpc.useUtils();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  return (
+    <div className="space-y-4">
+      {canManage && (
+        <div className="flex justify-end">
+          <Button onClick={() => setDialogOpen(true)} size="sm">
+            <FileSignature className="mr-2 h-4 w-4" />
+            Zur Unterschrift senden
+          </Button>
+        </div>
+      )}
+      <Card>
+        <CardContent className="p-0">
+          <SignatureRequestList
+            productId={productId}
+            canCancel={canManage}
+          />
+        </CardContent>
+      </Card>
+      <SignatureRequestDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        productId={productId}
+        productName={productName}
+        onSuccess={() => utils.bunnydoc.listByProduct.invalidate({ productId })}
+      />
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { registerPdfRoutes } from "../pdfRoutes";
+import { registerWebhookRoutes } from "../webhookRoutes";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -38,6 +39,8 @@ async function startServer() {
   registerOAuthRoutes(app);
   // PDF export routes
   registerPdfRoutes(app);
+  // BunnyDoc webhook handler
+  registerWebhookRoutes(app);
   // tRPC API
   app.use(
     "/api/trpc",

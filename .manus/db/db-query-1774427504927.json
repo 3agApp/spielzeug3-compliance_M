@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `signature_requests` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`productId` int NOT NULL,\n\t`envelopeId` varchar(128),\n\t`title` varchar(512) NOT NULL,\n\t`status` enum('pending','viewed','signed','completed','declined','expired','cancelled') NOT NULL DEFAULT 'pending',\n\t`signerName` varchar(255) NOT NULL,\n\t`signerEmail` varchar(255) NOT NULL,\n\t`signerRole` varchar(128) DEFAULT 'signer',\n\t`signingLink` text,\n\t`emailMessage` text,\n\t`bunnydocTemplateId` varchar(128),\n\t`completedAt` timestamp,\n\t`signedDocumentUrl` text,\n\t`webhookPayload` text,\n\t`createdByUserId` int NOT NULL,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `signature_requests_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user J1L9FvUd1r4oKv8.75a96d268c41 --database kgkV5LdecSJ3HqPv7WFR7a --execute CREATE TABLE `signature_requests` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`productId` int NOT NULL,\n\t`envelopeId` varchar(128),\n\t`title` varchar(512) NOT NULL,\n\t`status` enum('pending','viewed','signed','completed','declined','expired','cancelled') NOT NULL DEFAULT 'pending',\n\t`signerName` varchar(255) NOT NULL,\n\t`signerEmail` varchar(255) NOT NULL,\n\t`signerRole` varchar(128) DEFAULT 'signer',\n\t`signingLink` text,\n\t`emailMessage` text,\n\t`bunnydocTemplateId` varchar(128),\n\t`completedAt` timestamp,\n\t`signedDocumentUrl` text,\n\t`webhookPayload` text,\n\t`createdByUserId` int NOT NULL,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `signature_requests_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 138
+}

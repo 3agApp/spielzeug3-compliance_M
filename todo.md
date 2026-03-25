@@ -88,3 +88,14 @@
 ## Qualitätssicherung
 - [x] Testfall: DB-Funktionen dürfen niemals undefined zurückgeben (null-safety regression test)
 - [x] Neues Produkt anlegen: Kategorie- und Vorlagen-Auswahl im Dialog mit automatischer Anforderungs-Zuweisung
+
+## BunnyDoc-Integration (Digitale Signaturen)
+- [x] DB: signature_requests Tabelle (envelopeId, productId, status, signerEmail, signingLink, completedAt)
+- [x] DB: settings-Tabelle: BUNNYDOC_API_KEY und BUNNYDOC_TEMPLATE_ID speichern
+- [x] Backend: BunnyDoc-API-Wrapper (createSignatureRequest, getEnvelopeStatus)
+- [x] Backend: bunnydoc tRPC-Router (sendForSignature, listSignatureRequests, getStatus)
+- [x] Backend: Webhook-Endpoint POST /api/webhooks/bunnydoc (signatureRequestCompleted → Status-Update)
+- [x] Frontend: Einstellungen-Tab "Digitale Signaturen" (API-Key + Template-ID konfigurieren)
+- [x] Frontend: "Zur Unterschrift senden"-Button in Produktdetailseite (Compliance Manager / Admin)
+- [x] Frontend: Signatur-Status-Badge und Signatur-Historie in Produktdetailseite
+- [x] Frontend: Signatur-Tab in Produktdetailseite mit allen Signaturanfragen

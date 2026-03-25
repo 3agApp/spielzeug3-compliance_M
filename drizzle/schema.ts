@@ -482,3 +482,34 @@ export const componentDocuments = mysqlTable("component_documents", {
 
 export type ComponentDocument = typeof componentDocuments.$inferSelect;
 export type InsertComponentDocument = typeof componentDocuments.$inferInsert;
+
+// ─── BunnyDoc Signature Requests ─────────────────────────────────────────────
+export const signatureRequests = mysqlTable("signature_requests", {
+  id: int("id").autoincrement().primaryKey(),
+  productId: int("productId").notNull(),
+  envelopeId: varchar("envelopeId", { length: 128 }), // BunnyDoc envelope UUID
+  title: varchar("title", { length: 512 }).notNull(),
+  status: mysqlEnum("status", [
+    "pending",       // Sent, waiting for signature
+    "viewed",        // Signer opened the document
+    "signed",        // At least one signer signed
+    "completed",     // All signers completed
+    "declined",      // Signer declined
+    "expired",       // Request expired
+    "cancelled",     // Manually cancelled
+  ]).default("pending").notNull(),
+  signerName: varchar("signerName", { length: 255 }).notNull(),
+  signerEmail: varchar("signerEmail", { length: 255 }).notNull(),
+  signerRole: varchar("signerRole", { length: 128 }).default("signer"),
+  signingLink: text("signingLink"),       // Direct signing URL (if SHOW ME LINKS enabled)
+  emailMessage: text("emailMessage"),
+  bunnydocTemplateId: varchar("bunnydocTemplateId", { length: 128 }),
+  completedAt: timestamp("completedAt"),
+  signedDocumentUrl: text("signedDocumentUrl"), // URL to completed signed PDF
+  webhookPayload: text("webhookPayload"),  // Raw webhook JSON for audit
+  createdByUserId: int("createdByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+export type SignatureRequest = typeof signatureRequests.$inferSelect;
+export type InsertSignatureRequest = typeof signatureRequests.$inferInsert;

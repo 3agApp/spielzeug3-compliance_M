@@ -15,7 +15,7 @@ import { expiryRouter } from "./routers/expiry";
 import { invitationsRouter } from "./routers/invitations";
 import { templatesRouter } from "./routers/templates";
 import { componentsRouter } from "./routers/components";
-
+import { bunnydocRouter } from "./routers/bunnydoc";
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -40,6 +40,7 @@ export const appRouter = router({
   invitations: invitationsRouter,
   templates: templatesRouter,
   components: componentsRouter,
+  bunnydoc: bunnydocRouter,
 });
 
 export type AppRouter = typeof appRouter;

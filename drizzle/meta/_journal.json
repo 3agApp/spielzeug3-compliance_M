@@ -43,6 +43,13 @@
       "when": 1774426406679,
       "tag": "0005_happy_vindicator",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1774427494321,
+      "tag": "0006_chemical_payback",
+      "breakpoints": true
     }
   ]
 }

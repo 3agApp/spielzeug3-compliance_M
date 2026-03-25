@@ -1,0 +1,20 @@
+CREATE TABLE `signature_requests` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`productId` int NOT NULL,
+	`envelopeId` varchar(128),
+	`title` varchar(512) NOT NULL,
+	`status` enum('pending','viewed','signed','completed','declined','expired','cancelled') NOT NULL DEFAULT 'pending',
+	`signerName` varchar(255) NOT NULL,
+	`signerEmail` varchar(255) NOT NULL,
+	`signerRole` varchar(128) DEFAULT 'signer',
+	`signingLink` text,
+	`emailMessage` text,
+	`bunnydocTemplateId` varchar(128),
+	`completedAt` timestamp,
+	`signedDocumentUrl` text,
+	`webhookPayload` text,
+	`createdByUserId` int NOT NULL,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()),
+	CONSTRAINT `signature_requests_id` PRIMARY KEY(`id`)
+);

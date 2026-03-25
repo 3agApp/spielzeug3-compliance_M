@@ -16,6 +16,8 @@ import {
   productSafetyEntries,
   products,
   requirementTypes,
+  signatureRequests,
+  InsertSignatureRequest,
   suppliers,
   systemSettings,
   users,
@@ -579,4 +581,71 @@ export async function updateComponentDocumentReview(
     .update(componentDocuments)
     .set({ reviewStatus, reviewNote, reviewedByUserId, reviewedAt: new Date() })
     .where(eq(componentDocuments.id, id));
+}
+
+// ─── Signature Requests (BunnyDoc) ───────────────────────────────────────────
+export async function createSignatureRequest(data: InsertSignatureRequest) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  return db.insert(signatureRequests).values(data);
+}
+
+export async function getSignatureRequestsByProduct(productId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(signatureRequests)
+    .where(eq(signatureRequests.productId, productId))
+    .orderBy(desc(signatureRequests.createdAt));
+}
+
+export async function getSignatureRequestById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db
+    .select()
+    .from(signatureRequests)
+    .where(eq(signatureRequests.id, id))
+    .limit(1);
+  return result[0] ?? null;
+}
+
+export async function getSignatureRequestByEnvelopeId(envelopeId: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db
+    .select()
+    .from(signatureRequests)
+    .where(eq(signatureRequests.envelopeId, envelopeId))
+    .limit(1);
+  return result[0] ?? null;
+}
+
+export async function updateSignatureRequestStatus(
+  id: number,
+  status: "pending" | "viewed" | "signed" | "completed" | "declined" | "expired" | "cancelled",
+  extra?: { completedAt?: Date; signedDocumentUrl?: string; webhookPayload?: string }
+) {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .update(signatureRequests)
+    .set({
+      status,
+      updatedAt: new Date(),
+      ...(extra?.completedAt ? { completedAt: extra.completedAt } : {}),
+      ...(extra?.signedDocumentUrl ? { signedDocumentUrl: extra.signedDocumentUrl } : {}),
+      ...(extra?.webhookPayload ? { webhookPayload: extra.webhookPayload } : {}),
+    })
+    .where(eq(signatureRequests.id, id));
+}
+
+export async function cancelSignatureRequest(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .update(signatureRequests)
+    .set({ status: "cancelled", updatedAt: new Date() })
+    .where(eq(signatureRequests.id, id));
 }
