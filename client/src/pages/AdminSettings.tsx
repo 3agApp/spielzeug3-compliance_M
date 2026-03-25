@@ -45,6 +45,21 @@ export default function AdminSettings() {
   const [notifyOnClarification, setNotifyOnClarification] = useState(true);
 
   // AI settings
+  // Seal auto-activate setting
+  const [sealAutoActivate, setSealAutoActivate] = useState(true);
+  const [sealAutoActivateLoaded, setSealAutoActivateLoaded] = useState(false);
+  const sealSettingQuery = trpc.admin.getSystemSetting.useQuery({ key: "SEAL_AUTO_ACTIVATE" });
+  const saveSealSettingMutation = trpc.admin.setSystemSetting.useMutation({
+    onSuccess: () => toast.success("Siegel-Einstellungen gespeichert"),
+    onError: (e: any) => toast.error(e.message),
+  });
+  // Sync state when query resolves (only once on first load)
+  const sealSettingValue = sealSettingQuery.data?.settingValue;
+  if (!sealAutoActivateLoaded && sealSettingValue !== null && sealSettingValue !== undefined) {
+    setSealAutoActivate(sealSettingValue !== "false" && sealSettingValue !== "0");
+    setSealAutoActivateLoaded(true);
+  }
+
   const [openAiKey, setOpenAiKey] = useState("");
   const [showKey, setShowKey] = useState(false);
   const [testResult, setTestResult] = useState<"idle" | "success" | "error">("idle");
@@ -96,7 +111,7 @@ export default function AdminSettings() {
       </div>
 
       <Tabs defaultValue="kontor">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="kontor" className="gap-1.5">
             <Database className="h-3.5 w-3.5" />
             Kontor ERP
@@ -120,6 +135,10 @@ export default function AdminSettings() {
           <TabsTrigger value="bunnydoc" className="gap-1.5">
             <FileSignature className="h-3.5 w-3.5" />
             Signaturen
+          </TabsTrigger>
+          <TabsTrigger value="seal" className="gap-1.5">
+            <Shield className="h-3.5 w-3.5" />
+            Siegel
           </TabsTrigger>
         </TabsList>
 
@@ -558,6 +577,68 @@ export default function AdminSettings() {
 
         {/* ── BunnyDoc Digitale Signaturen ── */}
         <BunnyDocSettingsTab />
+
+        {/* ── Siegel-Einstellungen ── */}
+        <TabsContent value="seal" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Shield className="h-4 w-4" />
+                Swiss Product Seal – Automatisierung
+              </CardTitle>
+              <CardDescription>
+                Steuern Sie, wann das Siegel und der QR-Code automatisch generiert werden.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="flex items-center justify-between py-2">
+                <div>
+                  <p className="text-sm font-medium">Siegel bei Genehmigung automatisch aktivieren</p>
+                  <p className="text-xs text-muted-foreground">
+                    Wenn ein Produkt genehmigt wird, wird das Siegel und der QR-Code automatisch
+                    generiert – ohne manuellen Schritt im Siegel-Tab.
+                  </p>
+                </div>
+                <Switch
+                  checked={sealAutoActivate}
+                  onCheckedChange={setSealAutoActivate}
+                  disabled={sealSettingQuery.isLoading}
+                />
+              </div>
+
+              <div className="rounded-lg border p-3 bg-muted/20 text-sm text-muted-foreground">
+                <p className="font-medium text-foreground mb-1">Wie funktioniert das?</p>
+                <p>
+                  Sobald ein Compliance Manager oder Administrator ein Produkt genehmigt,
+                  wird automatisch ein eindeutiger QR-Code generiert und auf der öffentlichen
+                  Produktlandingpage unter{" "}
+                  <code className="font-mono text-xs bg-background border rounded px-1">
+                    {window.location.origin}/p/:uuid
+                  </code>{" "}
+                  veröffentlicht. Das Siegel kann jederzeit im Siegel-Tab des Produkts
+                  manuell deaktiviert werden.
+                </p>
+              </div>
+
+              <Button
+                onClick={() =>
+                  saveSealSettingMutation.mutate({
+                    key: "SEAL_AUTO_ACTIVATE",
+                    value: sealAutoActivate ? "true" : "false",
+                  })
+                }
+                disabled={saveSealSettingMutation.isPending}
+              >
+                {saveSealSettingMutation.isPending ? (
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
+                Speichern
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );

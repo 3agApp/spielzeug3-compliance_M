@@ -6,8 +6,10 @@ import {
   getAllRequirementTypes,
   getAllUsers,
   getAuditLogs,
+  getSystemSetting,
   updateRequirementType,
   updateUser,
+  upsertSystemSetting,
 } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
 
@@ -109,6 +111,28 @@ export const adminRouter = router({
     .input(z.object({ language: z.enum(["de", "en"]) }))
     .mutation(async ({ ctx, input }) => {
       await updateUser(ctx.user.id, { languagePreference: input.language });
+      return { success: true };
+    }),
+
+  // ─── System Settings ──────────────────────────────────────────────────────
+  getSystemSetting: protectedProcedure
+    .input(z.object({ key: z.string() }))
+    .query(async ({ ctx, input }) => {
+      requireManagerOrAdmin(ctx.user.complianceRole ?? "");
+      return getSystemSetting(input.key);
+    }),
+
+  setSystemSetting: protectedProcedure
+    .input(z.object({ key: z.string(), value: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      requireAdmin(ctx.user.complianceRole ?? "");
+      await upsertSystemSetting(input.key, input.value, false, ctx.user.id);
+      await createAuditLog({
+        entityType: "system_setting",
+        action: "updated",
+        performedByUserId: ctx.user.id,
+        payloadSnapshot: { key: input.key } as any,
+      });
       return { success: true };
     }),
 });

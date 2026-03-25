@@ -12,9 +12,11 @@ import {
   getMissingRequirementsByProduct,
   getProductById,
   getProductsBySupplier,
+  getSystemSetting,
   updateMissingRequirement,
   updateProduct,
 } from "../db";
+import { ensureProductPublicUuid, getTenantById } from "../tenantDb";
 import { protectedProcedure, router } from "../_core/trpc";
 
 function requireRole(role: string, allowed: string[]) {
@@ -308,7 +310,31 @@ export const productsRouter = router({
           relatedProductId: input.productId,
         });
       }
-      return { success: true };
+      // Auto-activate seal if SEAL_AUTO_ACTIVATE is enabled (default: true)
+      let sealActivated = false;
+      try {
+        const autoActivateSetting = await getSystemSetting("SEAL_AUTO_ACTIVATE");
+        const settingValue = autoActivateSetting?.settingValue ?? null;
+        const shouldActivate =
+          settingValue === null ||
+          settingValue === "true" ||
+          settingValue === "1";
+        if (shouldActivate) {
+          const tenantId = ctx.user.tenantId ?? 1;
+          const tenant = await getTenantById(tenantId);
+          if (tenant) {
+            const modules = (tenant.modulesEnabled as string[]) ?? [];
+            const hasSeal = modules.includes("seal") || ctx.user.complianceRole === "super_admin";
+            if (hasSeal) {
+              await ensureProductPublicUuid(input.productId, tenant.slug);
+              sealActivated = true;
+            }
+          }
+        }
+      } catch {
+        // Seal activation is best-effort – do not fail the approval
+      }
+      return { success: true, sealActivated };
     }),
 
   reject: protectedProcedure

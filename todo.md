@@ -178,3 +178,9 @@
 - [x] Backend: updateBatchInfo-Mutation und getBatchInfo-Query im products-Router
 - [x] Frontend: BatchTab in Produktdetailseite (Chargennummer, Produktionsdatum, Ablaufdatum, Importeur-Name)
 - [x] Frontend: Öffentliche Produktlandingpage zeigt strukturierte Batch-Daten mit Ablaufdatum-Warnung
+
+## Auto-Siegel-Aktivierung bei Genehmigung
+- [x] Backend: activateSeal in approve-Mutation integrieren (products-Router oder workflow-Router)
+- [x] Backend: System-Setting SEAL_AUTO_ACTIVATE (boolean, default true) in AdminSettings
+- [x] Frontend: Siegel-Tab in AdminSettings: Toggle "Siegel bei Genehmigung automatisch aktivieren"
+- [x] Vitest-Test: approve löst activateSeal aus wenn SEAL_AUTO_ACTIVATE = true (in products.test.ts)
