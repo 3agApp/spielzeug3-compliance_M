@@ -99,3 +99,7 @@
 - [x] Frontend: "Zur Unterschrift senden"-Button in Produktdetailseite (Compliance Manager / Admin)
 - [x] Frontend: Signatur-Status-Badge und Signatur-Historie in Produktdetailseite
 - [x] Frontend: Signatur-Tab in Produktdetailseite mit allen Signaturanfragen
+
+## Signatur-Status-Badge im Produkt-Header
+- [x] tRPC-Query bunnydoc.getLatestByProduct hinzufügen (neueste Signaturanfrage für ein Produkt)
+- [x] Signatur-Status-Badge im Produkt-Header anzeigen (klickbar → springt zum Signaturen-Tab)

@@ -48,12 +48,31 @@ export const bunnydocRouter = router({
       return { success: true };
     }),
 
-  // ── Signature Requests ───────────────────────────────────────────────────
+  // ── Signature Requests ───────────────────  /** Returns the most recent (non-cancelled) signature request for a product – used for the header badge. */
+  latestByProduct: protectedProcedure
+    .input(z.object({ productId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const role = ctx.user.complianceRole ?? "";
+      if (![
+        "administrator",
+        "compliance_manager",
+        "internal_employee",
+      ].includes(role)) {
+        return null; // silently return null for supplier / unknown roles
+      }
+      const all = await getSignatureRequestsByProduct(input.productId);
+      // Return the first non-cancelled request (list is already sorted newest-first)
+      return all.find((r) => r.status !== "cancelled") ?? all[0] ?? null;
+    }),
   listByProduct: protectedProcedure
     .input(z.object({ productId: z.number() }))
     .query(async ({ ctx, input }) => {
       const role = ctx.user.complianceRole ?? "";
-      if (!["administrator", "compliance_manager", "internal_employee"].includes(role)) {
+      if (![
+        "administrator",
+        "compliance_manager",
+        "internal_employee",
+      ].includes(role)) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       return getSignatureRequestsByProduct(input.productId);

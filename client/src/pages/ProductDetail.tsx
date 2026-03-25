@@ -50,11 +50,19 @@ export default function ProductDetail() {
   const productId = parseInt(id ?? "0");
   const { user } = useAuth();
   const { t } = useLang();
+  const [activeTab, setActiveTab] = useState("documents");
   const [, setLocation] = useLocation();
   const role = (user as any)?.complianceRole ?? "internal_employee";
 
   const productQuery = trpc.products.getById.useQuery({ id: productId });
   const product = productQuery.data as any;
+
+  // Signature badge – load latest non-cancelled request for header display
+  const latestSigQuery = trpc.bunnydoc.latestByProduct.useQuery(
+    { productId },
+    { enabled: !productQuery.isLoading && ["administrator", "compliance_manager", "internal_employee"].includes(role) }
+  );
+  const latestSig = latestSigQuery.data;
 
   const documentsQuery = trpc.documents.listByProduct.useQuery({ productId });
   const documents = documentsQuery.data ?? [];
@@ -122,6 +130,46 @@ export default function ProductDetail() {
             <h1 className="text-2xl font-semibold">{product.productName}</h1>
             <div className="flex items-center gap-3 mt-2 flex-wrap">
               <StatusBadge status={product.status} />
+              {/* Signature status badge – visible for internal roles */}
+              {latestSig && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("signatures")}
+                  className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-ring"
+                  title="Zum Signaturen-Tab"
+                  style={{
+                    backgroundColor:
+                      latestSig.status === "completed" ? "#d1fae5" :
+                      latestSig.status === "signed"    ? "#d1fae5" :
+                      latestSig.status === "viewed"    ? "#dbeafe" :
+                      latestSig.status === "declined"  ? "#fee2e2" :
+                      latestSig.status === "expired"   ? "#f3f4f6" :
+                                                         "#fef3c7",
+                    color:
+                      latestSig.status === "completed" ? "#065f46" :
+                      latestSig.status === "signed"    ? "#065f46" :
+                      latestSig.status === "viewed"    ? "#1e40af" :
+                      latestSig.status === "declined"  ? "#991b1b" :
+                      latestSig.status === "expired"   ? "#4b5563" :
+                                                         "#92400e",
+                    borderColor:
+                      latestSig.status === "completed" ? "#6ee7b7" :
+                      latestSig.status === "signed"    ? "#6ee7b7" :
+                      latestSig.status === "viewed"    ? "#93c5fd" :
+                      latestSig.status === "declined"  ? "#fca5a5" :
+                      latestSig.status === "expired"   ? "#d1d5db" :
+                                                         "#fcd34d",
+                  }}
+                >
+                  <FileSignature className="h-3 w-3" />
+                  {latestSig.status === "completed" ? "Signiert" :
+                   latestSig.status === "signed"    ? "Unterzeichnet" :
+                   latestSig.status === "viewed"    ? "Geöffnet" :
+                   latestSig.status === "declined"  ? "Abgelehnt" :
+                   latestSig.status === "expired"   ? "Abgelaufen" :
+                                                      "Signatur ausstehend"}
+                </button>
+              )}
               {product.internalArticleNumber && (
                 <span className="text-sm text-muted-foreground">
                   {t.product.internalArticleNumber}: {product.internalArticleNumber}
@@ -211,7 +259,7 @@ export default function ProductDetail() {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="documents">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="components" className="gap-2">
             <Package className="h-4 w-4" />
