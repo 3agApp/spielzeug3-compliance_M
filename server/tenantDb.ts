@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { getDb } from "./db";
-import { tenants, products } from "../drizzle/schema";
+import { tenants, products, suppliers, users } from "../drizzle/schema";
 import type { InsertTenant } from "../drizzle/schema";
 import { randomUUID } from "crypto";
 import { generateAndStoreQrCode } from "./sealUtils";
@@ -48,16 +48,26 @@ export async function updateTenant(
 
 export async function getTenantStats(tenantId: number) {
   const db = await getDb();
-  if (!db) return { productCount: 0, verifiedCount: 0 };
+  if (!db) return { productCount: 0, verifiedCount: 0, supplierCount: 0, userCount: 0 };
   const allProducts = await db
     .select({ status: products.status, completenessScore: products.completenessScore })
     .from(products)
     .where(eq(products.tenantId, tenantId));
   const productCount = allProducts.length;
-  const verifiedCount = allProducts.filter(
-    (p) => p.status === "approved" && Number(p.completenessScore ?? 0) >= 100
-  ).length;
-  return { productCount, verifiedCount };
+  const verifiedCount = allProducts.filter((p) => p.status === "approved").length;
+  // Count suppliers for this tenant
+  const allSuppliers = await db
+    .select({ id: suppliers.id })
+    .from(suppliers)
+    .where(eq(suppliers.tenantId, tenantId));
+  const supplierCount = allSuppliers.length;
+  // Count users for this tenant
+  const allUsers = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.tenantId, tenantId));
+  const userCount = allUsers.length;
+  return { productCount, verifiedCount, supplierCount, userCount };
 }
 
 // ─── QR Code Generation for Product ──────────────────────────────────────────

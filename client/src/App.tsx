@@ -27,6 +27,7 @@ import InvitationsManager from "./pages/InvitationsManager";
 import TemplatesManager from "./pages/TemplatesManager";
 import AcceptInvite from "./pages/AcceptInvite";
 import PublicProductPage from "./pages/PublicProductPage";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 
 // Wrapper that applies the ComplianceLayout to protected routes
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
@@ -94,6 +95,11 @@ function Router() {
       <Route path="/admin/templates">
         {() => <ProtectedRoute component={TemplatesManager} />}
       </Route>
+      {/* Super-Admin */}
+      <Route path="/super-admin">
+        {() => <ProtectedRoute component={SuperAdminDashboard} />}
+      </Route>
+
       {/* Public invite accept page */}
       <Route path="/invite/accept" component={AcceptInvite} />
       {/* Public product seal page (no auth) */}

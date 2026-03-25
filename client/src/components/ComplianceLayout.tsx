@@ -42,6 +42,7 @@ import {
   Users,
   Activity,
   RefreshCw,
+  Crown,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -53,7 +54,7 @@ const DEFAULT_WIDTH = 260;
 const MIN_WIDTH = 200;
 const MAX_WIDTH = 380;
 
-type ComplianceRole = "supplier" | "internal_employee" | "compliance_manager" | "administrator";
+type ComplianceRole = "supplier" | "internal_employee" | "compliance_manager" | "administrator" | "super_admin";
 
 function getMenuItems(role: ComplianceRole, t: any) {
   const supplier = [
@@ -99,11 +100,20 @@ function getMenuItems(role: ComplianceRole, t: any) {
     { icon: Bell, label: t.nav.notifications, path: "/notifications" },
   ];
 
+  const superAdmin = [
+    { icon: Crown, label: "Super-Admin", path: "/super-admin" },
+    { icon: LayoutDashboard, label: t.nav.dashboard, path: "/dashboard" },
+    { icon: Package, label: t.nav.products, path: "/products" },
+    { icon: Building2, label: t.nav.suppliers, path: "/suppliers" },
+    { icon: Settings, label: t.nav.settings, path: "/admin/settings" },
+  ];
+
   switch (role) {
     case "supplier": return supplier;
     case "internal_employee": return internal;
     case "compliance_manager": return compliance;
     case "administrator": return admin;
+    case "super_admin": return superAdmin;
     default: return internal;
   }
 }

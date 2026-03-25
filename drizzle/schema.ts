@@ -49,6 +49,7 @@ export const suppliers = mysqlTable("suppliers", {
   phone: varchar("phone", { length: 64 }),
   active: boolean("active").default(true).notNull(),
   kontorId: varchar("kontorId", { length: 128 }), // ERP reference
+  tenantId: int("tenantId").default(1).notNull(), // FK to tenants
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

@@ -131,4 +131,13 @@
 - [ ] useModules-Hook (hasSeal, hasAdvanced aus tenant.getCurrent) – geplant
 - [x] QR-Code-Download in Produktdetail (PNG + SVG) im Siegel-Tab
 - [ ] Siegel-Status-Spalte in Produktliste – geplant
-- [ ] Super-Admin-Dashboard (/super-admin) mit Tenant-Liste und Metriken – geplant
+- [x] Super-Admin-Dashboard (/super-admin) mit Tenant-Liste und Metriken
+
+## Super-Admin-Dashboard
+- [x] SuperAdminDashboard.tsx: Tenant-Liste mit Metriken (Produkte, Lieferanten, Nutzer)
+- [x] Tenant-Anlegen-Dialog (Slug, Name, Plan, Module, Kontakt-E-Mail, Primärfarbe, Tarif)
+- [x] Tenant-Bearbeiten-Dialog (Plan, Module, Status aktiv/inaktiv)
+- [x] Plan-Badge und Modul-Chips pro Tenant
+- [x] Navigation: super_admin-Eintrag in ComplianceLayout-Sidebar (Crown-Icon)
+- [x] Route /super-admin in App.tsx mit super_admin-Guard
+- [x] Vitest-Tests für super_admin-Guard und tenant.create/update (in tenant.test.ts)
