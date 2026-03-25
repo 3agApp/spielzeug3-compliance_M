@@ -7,6 +7,8 @@ import {
   getSupplierById,
 } from "./db";
 import { generateAiAnalysisPdf } from "./pdfGenerator";
+import { generateSealLabelPdf, type SealLabelStatus } from "./sealLabelPdf";
+import { getTenantById } from "./tenantDb";
 
 export function registerPdfRoutes(app: Express) {
   /**
@@ -98,6 +100,60 @@ export function registerPdfRoutes(app: Express) {
       res.send(pdfBuffer);
     } catch (err: any) {
       console.error("[PDF] Generation failed:", err);
+      res.status(500).json({ error: "PDF-Generierung fehlgeschlagen", details: err.message });
+    }
+  });
+
+  /**
+   * GET /api/reports/seal-label
+   * Generates a print-ready A6 PDF of the Swiss Product Seal label.
+   * Query params:
+   *   status=verified|in_progress|not_verified  (default: verified)
+   *   tenantId=1                                 (default: 1)
+   * Authentication: required (session cookie).
+   */
+  app.get("/api/reports/seal-label", async (req, res) => {
+    try {
+      // Authenticate
+      try {
+        await sdk.authenticateRequest(req);
+      } catch {
+        res.status(401).json({ error: "Nicht authentifiziert" });
+        return;
+      }
+
+      // Parse params
+      const rawStatus = String(req.query.status ?? "verified");
+      const allowedStatuses: SealLabelStatus[] = ["verified", "in_progress", "not_verified"];
+      const status: SealLabelStatus = allowedStatuses.includes(rawStatus as SealLabelStatus)
+        ? (rawStatus as SealLabelStatus)
+        : "verified";
+
+      const tenantId = parseInt(String(req.query.tenantId ?? "1"));
+
+      // Load tenant info
+      const tenant = await getTenantById(isNaN(tenantId) ? 1 : tenantId);
+      const tenantName = tenant?.name ?? "Swiss Product Seal";
+      const tenantUrl = (tenant as any)?.contactEmail
+        ? (tenant as any).contactEmail.replace(/^.*@/, "")
+        : "swiss-product-seal.ch";
+
+      // Generate PDF
+      const pdfBuffer = await generateSealLabelPdf({
+        status,
+        tenantName,
+        tenantUrl,
+      });
+
+      const statusSlug = status.replace(/_/g, "-");
+      const filename = `Swiss-Product-Seal_${statusSlug}_${new Date().toISOString().slice(0, 10)}.pdf`;
+
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      res.setHeader("Content-Length", pdfBuffer.length);
+      res.send(pdfBuffer);
+    } catch (err: any) {
+      console.error("[PDF] Seal label generation failed:", err);
       res.status(500).json({ error: "PDF-Generierung fehlgeschlagen", details: err.message });
     }
   });

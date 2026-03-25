@@ -189,3 +189,9 @@
 - [x] SealPreview-Komponente: Live-Vorschau des Siegels mit Status-Umschalter (verified/in_progress/not_verified)
 - [x] QR-Label-Format: Schild + QR-Platzhalter + "Imported by"-Zeilen in Vorschau
 - [x] Siegel-Vorschau in AdminSettings Siegel-Tab integrieren
+
+## Siegel-Etikett PDF-Export
+- [x] Server-Endpoint GET /api/reports/seal-label?status=verified&tenantId=1 generiert druckfertiges PDF
+- [x] PDF enthält Schild, Status-Banner, QR-Code-Platzhalter und Imported-by-Sektion (A6-Format)
+- [x] Download-Button in SealPreview mit aktuellem Status
+- [x] Vitest-Test für PDF-Export-Endpoint (6 Tests, alle grün)

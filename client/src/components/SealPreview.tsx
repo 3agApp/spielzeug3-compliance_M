@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Download, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 type SealStatus = "verified" | "in_progress" | "not_verified";
 
@@ -51,30 +53,80 @@ const STATUS_CONFIG: Record<
 interface SealPreviewProps {
   tenantName?: string;
   tenantUrl?: string;
+  tenantId?: number;
 }
 
 export function SealPreview({
   tenantName = "Spielzeug 3 AG",
   tenantUrl = "swiss-product-seal.ch",
+  tenantId = 1,
 }: SealPreviewProps) {
   const [status, setStatus] = useState<SealStatus>("verified");
+  const [downloading, setDownloading] = useState(false);
   const cfg = STATUS_CONFIG[status];
+
+  async function handleDownload() {
+    setDownloading(true);
+    try {
+      const url = `/api/reports/seal-label?status=${status}&tenantId=${tenantId}`;
+      const response = await fetch(url, { credentials: "include" });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error((err as any).error ?? `HTTP ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      const statusSlug = status.replace(/_/g, "-");
+      a.download = `Swiss-Product-Seal_${statusSlug}_${new Date().toISOString().slice(0, 10)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(objectUrl);
+
+      toast.success("PDF heruntergeladen", { description: "Das Etikett wurde als PDF exportiert." });
+    } catch (err: any) {
+      toast.error("Download fehlgeschlagen", { description: err.message ?? "Unbekannter Fehler" });
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   return (
     <div className="space-y-5">
-      {/* Status-Umschalter */}
-      <div className="flex gap-2 flex-wrap">
-        {(["verified", "in_progress", "not_verified"] as SealStatus[]).map((s) => (
-          <Button
-            key={s}
-            size="sm"
-            variant={status === s ? "default" : "outline"}
-            onClick={() => setStatus(s)}
-            className="text-xs"
-          >
-            {s === "verified" ? "✓ Verified" : s === "in_progress" ? "⟳ In Progress" : "✕ Not Verified"}
-          </Button>
-        ))}
+      {/* Status-Umschalter + Download-Button */}
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap">
+          {(["verified", "in_progress", "not_verified"] as SealStatus[]).map((s) => (
+            <Button
+              key={s}
+              size="sm"
+              variant={status === s ? "default" : "outline"}
+              onClick={() => setStatus(s)}
+              className="text-xs"
+            >
+              {s === "verified" ? "✓ Verified" : s === "in_progress" ? "⟳ In Progress" : "✕ Not Verified"}
+            </Button>
+          ))}
+        </div>
+
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleDownload}
+          disabled={downloading}
+          className="gap-1.5 text-xs"
+        >
+          {downloading ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Download className="h-3.5 w-3.5" />
+          )}
+          {downloading ? "Generiere PDF…" : "PDF herunterladen"}
+        </Button>
       </div>
 
       {/* Etikett-Vorschau */}
@@ -196,36 +248,29 @@ export function SealPreview({
               <rect x="11" y="83" width="16" height="16" rx="1.5" fill="#111" />
 
               {/* Datenpunkte – simuliertes QR-Muster */}
-              {/* Reihe 1 */}
               <rect x="38" y="6" width="4" height="4" fill="#111" />
               <rect x="44" y="6" width="4" height="4" fill="#111" />
               <rect x="54" y="6" width="4" height="4" fill="#111" />
               <rect x="64" y="6" width="4" height="4" fill="#111" />
               <rect x="70" y="6" width="4" height="4" fill="#111" />
-              {/* Reihe 2 */}
               <rect x="38" y="12" width="4" height="4" fill="#111" />
               <rect x="50" y="12" width="4" height="4" fill="#111" />
               <rect x="60" y="12" width="4" height="4" fill="#111" />
               <rect x="70" y="12" width="4" height="4" fill="#111" />
-              {/* Reihe 3 */}
               <rect x="44" y="18" width="4" height="4" fill="#111" />
               <rect x="54" y="18" width="4" height="4" fill="#111" />
               <rect x="64" y="18" width="4" height="4" fill="#111" />
-              {/* Reihe 4 */}
               <rect x="38" y="24" width="4" height="4" fill="#111" />
               <rect x="50" y="24" width="4" height="4" fill="#111" />
               <rect x="60" y="24" width="4" height="4" fill="#111" />
               <rect x="70" y="24" width="4" height="4" fill="#111" />
-              {/* Reihe 5 */}
               <rect x="44" y="30" width="4" height="4" fill="#111" />
               <rect x="54" y="30" width="4" height="4" fill="#111" />
               <rect x="64" y="30" width="4" height="4" fill="#111" />
-              {/* Linke Spalte (Timing) */}
               <rect x="6" y="38" width="4" height="4" fill="#111" />
               <rect x="6" y="48" width="4" height="4" fill="#111" />
               <rect x="6" y="58" width="4" height="4" fill="#111" />
               <rect x="6" y="68" width="4" height="4" fill="#111" />
-              {/* Obere Zeile (Timing) */}
               <rect x="38" y="38" width="4" height="4" fill="#111" />
               <rect x="48" y="38" width="4" height="4" fill="#111" />
               <rect x="58" y="38" width="4" height="4" fill="#111" />
@@ -233,7 +278,6 @@ export function SealPreview({
               <rect x="78" y="38" width="4" height="4" fill="#111" />
               <rect x="88" y="38" width="4" height="4" fill="#111" />
               <rect x="100" y="38" width="4" height="4" fill="#111" />
-              {/* Datenpunkte rechts */}
               <rect x="100" y="44" width="4" height="4" fill="#111" />
               <rect x="88" y="44" width="4" height="4" fill="#111" />
               <rect x="78" y="50" width="4" height="4" fill="#111" />
@@ -242,7 +286,6 @@ export function SealPreview({
               <rect x="78" y="62" width="4" height="4" fill="#111" />
               <rect x="100" y="62" width="4" height="4" fill="#111" />
               <rect x="88" y="68" width="4" height="4" fill="#111" />
-              {/* Datenpunkte unten rechts */}
               <rect x="78" y="78" width="4" height="4" fill="#111" />
               <rect x="88" y="78" width="4" height="4" fill="#111" />
               <rect x="100" y="78" width="4" height="4" fill="#111" />
@@ -251,7 +294,6 @@ export function SealPreview({
               <rect x="88" y="94" width="4" height="4" fill="#111" />
               <rect x="78" y="100" width="4" height="4" fill="#111" />
               <rect x="100" y="100" width="4" height="4" fill="#111" />
-              {/* Datenpunkte unten mitte */}
               <rect x="38" y="78" width="4" height="4" fill="#111" />
               <rect x="48" y="78" width="4" height="4" fill="#111" />
               <rect x="58" y="78" width="4" height="4" fill="#111" />
@@ -262,7 +304,6 @@ export function SealPreview({
               <rect x="68" y="94" width="4" height="4" fill="#111" />
               <rect x="38" y="100" width="4" height="4" fill="#111" />
               <rect x="58" y="100" width="4" height="4" fill="#111" />
-              {/* Datenpunkte mitte */}
               <rect x="38" y="44" width="4" height="4" fill="#111" />
               <rect x="48" y="50" width="4" height="4" fill="#111" />
               <rect x="58" y="44" width="4" height="4" fill="#111" />
@@ -349,7 +390,7 @@ export function SealPreview({
       </div>
 
       <p className="text-xs text-muted-foreground text-center">
-        Vorschau des Etiketts · QR-Code wird pro Produkt individuell generiert
+        Vorschau des Etiketts · QR-Code wird pro Produkt individuell generiert · PDF-Export im A6-Format (druckfertig)
       </p>
     </div>
   );
