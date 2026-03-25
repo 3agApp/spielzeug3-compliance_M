@@ -9,6 +9,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { registerPdfRoutes } from "../pdfRoutes";
 import { registerWebhookRoutes } from "../webhookRoutes";
+import { registerPublicApiRoutes } from "../publicApiRoutes";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -41,6 +42,8 @@ async function startServer() {
   registerPdfRoutes(app);
   // BunnyDoc webhook handler
   registerWebhookRoutes(app);
+  // Public REST API (WooCommerce / external integrations)
+  registerPublicApiRoutes(app);
   // tRPC API
   app.use(
     "/api/trpc",

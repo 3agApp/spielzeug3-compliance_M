@@ -96,6 +96,10 @@ export const products = mysqlTable("products", {
   qrCodeUrl: text("qrCodeUrl"),                               // S3 URL of generated QR code PNG
   qrCodeSvgUrl: text("qrCodeSvgUrl"),                        // S3 URL of generated QR code SVG
   sealEnabledAt: timestamp("sealEnabledAt"),                  // When seal was first activated
+  publicVisible: boolean("publicVisible").default(true).notNull(), // Toggle: public landing page on/off
+  sealStatusOverride: mysqlEnum("sealStatusOverride", ["verified", "in_progress", "not_verified"]), // Admin override
+  batchInfo: json("batchInfo"),                               // Batch/traceability info (JSON)
+  importerName: varchar("importerName", { length: 255 }),     // Override importer display name
   lastUpdatedAt: timestamp("lastUpdatedAt").defaultNow().onUpdateNow().notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });

@@ -1,0 +1,9 @@
+{
+  "query": "\nALTER TABLE products \n  ADD COLUMN IF NOT EXISTS publicVisible BOOLEAN NOT NULL DEFAULT TRUE,\n  ADD COLUMN IF NOT EXISTS sealStatusOverride ENUM('verified','in_progress','not_verified') NULL,\n  ADD COLUMN IF NOT EXISTS batchInfo JSON NULL,\n  ADD COLUMN IF NOT EXISTS importerName VARCHAR(255) NULL;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user J1L9FvUd1r4oKv8.75a96d268c41 --database kgkV5LdecSJ3HqPv7WFR7a --execute \nALTER TABLE products \n  ADD COLUMN IF NOT EXISTS publicVisible BOOLEAN NOT NULL DEFAULT TRUE,\n  ADD COLUMN IF NOT EXISTS sealStatusOverride ENUM('verified','in_progress','not_verified') NULL,\n  ADD COLUMN IF NOT EXISTS batchInfo JSON NULL,\n  ADD COLUMN IF NOT EXISTS importerName VARCHAR(255) NULL;\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1635
+}

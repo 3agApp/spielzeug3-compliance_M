@@ -145,12 +145,56 @@ export async function getAllProducts(filters?: {
       )
     );
   }
-  const query = db
+  const rows = await db
     .select()
     .from(products)
+    .leftJoin(suppliers, eq(products.supplierId, suppliers.id))
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(desc(products.lastUpdatedAt));
-  return query;
+
+  // Compute missingCount, latestAiScore and sealStatus per product via separate queries
+  const productIds = rows.map((r) => r.products.id);
+  if (productIds.length === 0) return [];
+
+  // Get missing counts
+  const missingRows = productIds.length > 0
+    ? await db.execute(
+        sql`SELECT productId, COUNT(*) as cnt FROM missing_requirements WHERE productId IN (${sql.join(productIds.map((id) => sql`${id}`), sql`, `)}) AND status = 'missing' GROUP BY productId`
+      )
+    : { rows: [] };
+  const missingMap: Record<number, number> = {};
+  for (const row of (missingRows as any).rows ?? missingRows) {
+    missingMap[Number((row as any).productId)] = Number((row as any).cnt);
+  }
+
+  // Get latest AI scores
+  const aiRows = productIds.length > 0
+    ? await db.execute(
+        sql`SELECT productId, overallScore FROM ai_analysis_results WHERE id IN (SELECT MAX(id) FROM ai_analysis_results WHERE productId IN (${sql.join(productIds.map((id) => sql`${id}`), sql`, `)}) GROUP BY productId)`
+      )
+    : { rows: [] };
+  const aiMap: Record<number, number | null> = {};
+  for (const row of (aiRows as any).rows ?? aiRows) {
+    aiMap[Number((row as any).productId)] = (row as any).overallScore != null ? Number((row as any).overallScore) : null;
+  }
+
+  return rows.map(({ products: p, suppliers: s }) => {
+    let sealStatus: 'verified' | 'in_progress' | 'not_verified' = 'not_verified';
+    if (p.sealStatusOverride) {
+      sealStatus = p.sealStatusOverride as any;
+    } else if (p.status === 'approved' || p.status === 'completed') {
+      sealStatus = 'verified';
+    } else if (p.status === 'in_progress' || p.status === 'submitted' || p.status === 'under_review') {
+      sealStatus = 'in_progress';
+    }
+    return {
+      ...p,
+      supplierName: s?.name ?? null,
+      missingCount: missingMap[p.id] ?? 0,
+      latestAiScore: aiMap[p.id] ?? null,
+      sealStatus,
+    };
+  });
 }
 
 export async function getProductById(id: number) {

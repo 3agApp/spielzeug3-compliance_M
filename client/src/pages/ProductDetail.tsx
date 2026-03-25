@@ -511,6 +511,7 @@ export default function ProductDetail() {
               productId={productId}
               productName={product.productName}
               canManage={["administrator", "compliance_manager", "super_admin"].includes(role)}
+              isAdmin={["administrator", "super_admin"].includes(role)}
               onSealActivated={() => sealInfoQuery.refetch()}
             />
           </TabsContent>
@@ -561,16 +562,18 @@ function SignaturesTab({
   );
 }
 
-//// ─── Seal Tab ───────────────────────────────────────────────────────────────────────────
+// ─── Seal Tab ───────────────────────────────────────────────────────────────────────────────────────
 function SealTab({
   productId,
   productName,
   canManage,
+  isAdmin,
   onSealActivated,
 }: {
   productId: number;
   productName: string;
   canManage: boolean;
+  isAdmin: boolean;
   onSealActivated?: () => void;
 }) {
   const utils = trpc.useUtils();
@@ -586,8 +589,23 @@ function SealTab({
     onError: (e) => toast.error(e.message),
   });
 
-  const sealStatus = (seal?.sealStatus ?? "not_verified") as SealStatus;
+  const setVisibleMutation = trpc.tenant.setPublicVisible.useMutation({
+    onSuccess: (_, vars) => {
+      toast.success(vars.visible ? "Produktseite ist jetzt öffentlich sichtbar." : "Produktseite ist jetzt privat (nicht öffentlich).");
+      sealQuery.refetch();
+    },
+    onError: (e) => toast.error(e.message),
+  });
 
+  const setOverrideMutation = trpc.tenant.setSealStatusOverride.useMutation({
+    onSuccess: () => {
+      toast.success("Siegel-Status-Override gespeichert.");
+      sealQuery.refetch();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const sealStatus = (seal?.sealStatus ?? "not_verified") as SealStatus;
   return (
     <div className="space-y-4">
       {/* Status Card */}
@@ -634,9 +652,33 @@ function SealTab({
 
           {seal?.publicUuid && (
             <>
-              {/* Public URL */}
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">Öffentliche Produktseite</p>
+              {/* Public URL + Visibility Toggle */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">Öffentliche Produktseite</p>
+                  {canManage && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">
+                        {seal.publicVisible !== false ? "Öffentlich" : "Privat"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setVisibleMutation.mutate({ productId, visible: !(seal.publicVisible !== false) })}
+                        disabled={setVisibleMutation.isPending}
+                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-ring ${
+                          seal.publicVisible !== false ? "bg-green-500" : "bg-gray-300"
+                        }`}
+                        title={seal.publicVisible !== false ? "Klicken um privat zu schalten" : "Klicken um öffentlich zu schalten"}
+                      >
+                        <span
+                          className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                            seal.publicVisible !== false ? "translate-x-4" : "translate-x-0.5"
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <div className="flex items-center gap-2">
                   <code className="text-xs bg-muted px-2 py-1 rounded flex-1 truncate">
                     {seal.publicUrl}
@@ -648,6 +690,35 @@ function SealTab({
                   </a>
                 </div>
               </div>
+
+              {/* Admin: Status Override */}
+              {isAdmin && (
+                <div className="p-3 bg-muted/50 rounded-lg border">
+                  <p className="text-xs font-medium mb-2 text-muted-foreground">Admin: Siegel-Status manuell überschreiben</p>
+                  <Select
+                    value={seal.sealStatusOverride ?? "__auto"}
+                    onValueChange={(val) =>
+                      setOverrideMutation.mutate({
+                        productId,
+                        override: val === "__auto" ? null : (val as any),
+                      })
+                    }
+                  >
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__auto">Automatisch (aus Produktstatus)</SelectItem>
+                      <SelectItem value="verified">Verifiziert (VERIFIED)</SelectItem>
+                      <SelectItem value="in_progress">In Bearbeitung (IN PROGRESS)</SelectItem>
+                      <SelectItem value="not_verified">Nicht verifiziert (NOT VERIFIED)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {seal.sealStatusOverride && (
+                    <p className="text-xs text-amber-600 mt-1">⚠️ Override aktiv – automatische Berechnung ist deaktiviert</p>
+                  )}
+                </div>
+              )}
 
               {/* QR Code */}
               {seal.qrCodeUrl && (
@@ -677,9 +748,10 @@ function SealTab({
                         </a>
                       )}
                       <p className="text-xs text-muted-foreground">
-                        Druckempfehlung: SVG für Etiketten, PNG für digitale Verwendung
+                        Druckempfehlung: SVG für Etiketten, PNG für digitale Verwendung
                       </p>
                     </div>
+
                   </div>
                 </div>
               )}

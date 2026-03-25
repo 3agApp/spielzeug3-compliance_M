@@ -384,6 +384,7 @@ export default function Products() {
                       </span>
                     </th>
                     <th>{t.product.missingRequirements}</th>
+                    <th className="whitespace-nowrap">Siegel</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -447,6 +448,25 @@ export default function Products() {
                             <Badge variant="outline" className="text-emerald-700 border-emerald-300 bg-emerald-50">
                               OK
                             </Badge>
+                          )}
+                        </td>
+                        <td onClick={(e) => e.stopPropagation()}>
+                          {p.publicUuid ? (
+                            p.sealStatus === 'verified' ? (
+                              <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded px-1.5 py-0.5">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                                Verified
+                              </span>
+                            ) : p.sealStatus === 'in_progress' ? (
+                              <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                In Progress
+                              </span>
+                            ) : (
+                              <span className="text-xs text-gray-400">–</span>
+                            )
+                          ) : (
+                            <span className="text-xs text-gray-300">–</span>
                           )}
                         </td>
                         <td>

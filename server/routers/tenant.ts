@@ -12,7 +12,7 @@ import {
 } from "../tenantDb";
 import { getSealStatus, getPublicProductUrl } from "../sealUtils";
 import { getDb } from "../db";
-import { products, suppliers } from "../../drizzle/schema";
+import { products, suppliers, productSafetyEntries } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 
 // Helper: require super_admin
@@ -133,6 +133,9 @@ export const tenantRouter = router({
           status: products.status,
           completenessScore: products.completenessScore,
           tenantId: products.tenantId,
+          publicVisible: products.publicVisible,
+          sealStatusOverride: products.sealStatusOverride,
+          importerName: products.importerName,
         })
         .from(products)
         .where(eq(products.id, input.productId))
@@ -167,6 +170,12 @@ export const tenantRouter = router({
           sealEnabledAt: products.sealEnabledAt,
           tenantId: products.tenantId,
           approvedAt: products.approvedAt,
+          publicVisible: products.publicVisible,
+          sealStatusOverride: products.sealStatusOverride,
+          importerName: products.importerName,
+          batchInfo: products.batchInfo,
+          supplierId: products.supplierId,
+          internalArticleNumber: products.internalArticleNumber,
         })
         .from(products)
         .where(eq(products.publicUuid, input.uuid))
@@ -175,14 +184,25 @@ export const tenantRouter = router({
       const product = result[0];
       if (!product) throw new TRPCError({ code: "NOT_FOUND", message: "Product not found" });
 
+      // Respect publicVisible toggle
+      if (!product.publicVisible) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "This product page is not publicly available" });
+      }
+
       // Get tenant info (importer)
       const tenant = await getTenantById(product.tenantId);
 
-      // Get supplier info
-      const supplierResult = await db
-        .select({ id: suppliers.id, name: suppliers.name, country: suppliers.country })
-        .from(suppliers)
-        .where(eq(suppliers.id, product.tenantId)) // Note: we use tenantId as proxy; real FK is supplierId
+      // Get safety info
+      const safetyResult = await db
+        .select({
+          safetyText: productSafetyEntries.safetyText,
+          warningText: productSafetyEntries.warningText,
+          ageGrading: productSafetyEntries.ageGrading,
+          materialInformation: productSafetyEntries.materialInformation,
+          usageRestrictions: productSafetyEntries.usageRestrictions,
+        })
+        .from(productSafetyEntries)
+        .where(eq(productSafetyEntries.productId, product.id))
         .limit(1);
 
       const sealStatus = getSealStatus(product);
@@ -191,17 +211,57 @@ export const tenantRouter = router({
         productName: product.productName,
         brand: product.brand,
         ean: product.ean,
+        internalArticleNumber: product.internalArticleNumber,
         imageUrl: product.imageUrl,
         sealStatus,
         approvedAt: product.approvedAt,
         sealEnabledAt: product.sealEnabledAt,
         completenessScore: Number(product.completenessScore ?? 0),
+        batchInfo: product.batchInfo as Record<string, string> | null,
+        importerName: product.importerName,
+        safety: safetyResult[0] ?? null,
         tenant: tenant ? {
           name: tenant.name,
           slug: tenant.slug,
           logoUrl: tenant.logoUrl,
           primaryColor: tenant.primaryColor,
+          contactEmail: (tenant as any).contactEmail ?? null,
         } : null,
       };
+    }),
+
+  // ── Toggle public visibility of product landing page ─────────────────────
+  setPublicVisible: protectedProcedure
+    .input(z.object({ productId: z.number(), visible: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const role = ctx.user.complianceRole;
+      if (role !== "administrator" && role !== "compliance_manager" && role !== "super_admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Insufficient permissions" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await db.update(products)
+        .set({ publicVisible: input.visible })
+        .where(eq(products.id, input.productId));
+      return { success: true };
+    }),
+
+  // ── Override seal status (admin only) ────────────────────────────────────
+  setSealStatusOverride: protectedProcedure
+    .input(z.object({
+      productId: z.number(),
+      override: z.enum(["verified", "in_progress", "not_verified"]).nullable(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const role = ctx.user.complianceRole;
+      if (role !== "administrator" && role !== "super_admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await db.update(products)
+        .set({ sealStatusOverride: input.override as any })
+        .where(eq(products.id, input.productId));
+      return { success: true };
     }),
 });

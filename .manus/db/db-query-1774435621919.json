@@ -1,0 +1,16 @@
+{
+  "query": "SELECT id, name, email, complianceRole FROM users ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user J1L9FvUd1r4oKv8.75a96d268c41 --database kgkV5LdecSJ3HqPv7WFR7a --execute SELECT id, name, email, complianceRole FROM users ORDER BY id;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "sascha",
+      "email": "sascha@3ag.ch",
+      "complianceRole": "administrator"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\tcomplianceRole\n1\tsascha\tsascha@3ag.ch\tadministrator\n",
+  "stderr": "",
+  "execution_time_ms": 178
+}

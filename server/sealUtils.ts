@@ -6,7 +6,11 @@ import type { Product } from "../drizzle/schema";
 
 export type SealStatus = "verified" | "in_progress" | "not_verified";
 
-export function getSealStatus(product: Pick<Product, "status" | "completenessScore">): SealStatus {
+export function getSealStatus(product: Pick<Product, "status" | "completenessScore" | "sealStatusOverride">): SealStatus {
+  // Admin override takes precedence over automatic logic
+  if (product.sealStatusOverride) {
+    return product.sealStatusOverride as SealStatus;
+  }
   const score = Number(product.completenessScore ?? 0);
   // Approved = fully verified (regardless of score)
   if (product.status === "approved") {

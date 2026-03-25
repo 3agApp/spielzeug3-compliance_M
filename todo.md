@@ -130,7 +130,7 @@
 ### Frontend – Portal-Erweiterungen
 - [ ] useModules-Hook (hasSeal, hasAdvanced aus tenant.getCurrent) – geplant
 - [x] QR-Code-Download in Produktdetail (PNG + SVG) im Siegel-Tab
-- [ ] Siegel-Status-Spalte in Produktliste – geplant
+- [x] Siegel-Status-Spalte in Produktliste
 - [x] Super-Admin-Dashboard (/super-admin) mit Tenant-Liste und Metriken
 
 ## Super-Admin-Dashboard
@@ -141,3 +141,34 @@
 - [x] Navigation: super_admin-Eintrag in ComplianceLayout-Sidebar (Crown-Icon)
 - [x] Route /super-admin in App.tsx mit super_admin-Guard
 - [x] Vitest-Tests für super_admin-Guard und tenant.create/update (in tenant.test.ts)
+
+## Product Compliance Transparency & Verification System
+
+### DB-Schema-Erweiterungen
+- [x] products: publicVisible (boolean, default true), sealStatusOverride (enum: null/verified/in_progress/not_verified), batchInfo (text, JSON), importerName (varchar)
+- [ ] system_settings: SEAL_VERIFIED_THRESHOLD (Schwellenwert für Auto-Verified), SEAL_REQUIRE_APPROVED (boolean)
+
+### Backend
+- [ ] tenant.getPublicProduct: Safety-Daten, Sicherheitstext, Altersangabe einbeziehen
+- [ ] tenant.getPublicProduct: publicVisible prüfen (wenn false → 404)
+- [ ] tenant.getSealInfo: sealStatusOverride zurückgeben
+- [ ] tenant.setPublicVisible: Sichtbarkeits-Toggle (admin/compliance_manager)
+- [ ] tenant.setSealStatusOverride: Status-Override (admin only)
+- [x] getSealStatus: sealStatusOverride berücksichtigen (Override hat Vorrang)
+- [x] WooCommerce-API: GET /api/v1/products/:uuid (Status, Landing-Page-URL, QR-URL)
+- [x] WooCommerce-API: GET /api/v1/products/by-ean/:ean (Suche per EAN)
+
+### Frontend – Öffentliche Produktlandingpage
+- [x] Sprach-Umschalter DE/EN auf PublicProductPage (localStorage-Persistenz)
+- [x] Sicherheitsinfo-Sektion (safetyText, warningText, ageGrading, materialInformation)
+- [x] Batch-/Rückverfolgbarkeits-Sektion (batchInfo, optional)
+- [x] Kontakt/Support-Sektion (Importeur-Kontakt)
+- [x] Öffentliche Erklärungsseite /about-seal (Was bedeutet dieses Siegel?)
+- [x] Link zur Erklärungsseite auf jeder Produktlandingpage
+
+### Frontend – Admin-Erweiterungen (Produktliste & Produktdetail)
+- [x] Siegel-Status-Spalte in Produktliste (Icon + Status-Pill)
+- [x] "Landingpage anzeigen"-Button in Produktdetail-Header (ExternalLink im Siegel-Tab)
+- [x] Sichtbarkeits-Toggle (öffentlich/privat) im Siegel-Tab
+- [x] Status-Override-Dropdown im Siegel-Tab (admin only)
+- [x] QR-Code-Download-Buttons (PNG + SVG) im Siegel-Tab
