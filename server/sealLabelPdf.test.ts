@@ -79,4 +79,32 @@ describe("generateSealLabelPdf", () => {
     expect(buf.length).toBeGreaterThan(1000);
     expect(buf.slice(0, 4).toString("ascii")).toBe("%PDF");
   });
+
+  it("PDF with qrCodeBuffer is larger than PDF without (real QR code adds content)", async () => {
+    // Generate a real QR code PNG to use as qrCodeBuffer
+    const QRCode = await import("qrcode");
+    const qrPng = await QRCode.default.toBuffer("https://swiss-product-seal.ch/p/test-uuid", {
+      type: "png",
+      width: 400,
+      errorCorrectionLevel: "H",
+    });
+
+    const withQr = await generateSealLabelPdf({
+      status: "verified",
+      tenantName: "Spielzeug 3 AG",
+      tenantUrl: "spielzeug3.ch",
+      qrCodeBuffer: qrPng,
+    });
+    const withoutQr = await generateSealLabelPdf({
+      status: "verified",
+      tenantName: "Spielzeug 3 AG",
+      tenantUrl: "spielzeug3.ch",
+    });
+
+    // Both must be valid PDFs
+    expect(withQr.slice(0, 4).toString("ascii")).toBe("%PDF");
+    expect(withoutQr.slice(0, 4).toString("ascii")).toBe("%PDF");
+    // PDF with embedded image should be larger
+    expect(withQr.length).toBeGreaterThan(withoutQr.length);
+  }, 15_000);
 });

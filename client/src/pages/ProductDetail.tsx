@@ -27,6 +27,7 @@ import {
   ExternalLink,
   FileSignature,
   FileText,
+  Loader2,
   MessageSquare,
   Package,
   QrCode,
@@ -758,8 +759,8 @@ function SealTab({
                       <p className="text-xs text-muted-foreground">
                         Druckempfehlung: SVG für Etiketten, PNG für digitale Verwendung
                       </p>
+                      <SealLabelDownloadButton productId={productId} sealStatus={sealStatus} />
                     </div>
-
                   </div>
                 </div>
               )}
@@ -768,6 +769,61 @@ function SealTab({
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+// ─── Seal Label Download Button ─────────────────────────────────────
+function SealLabelDownloadButton({
+  productId,
+  sealStatus,
+}: {
+  productId: number;
+  sealStatus: SealStatus;
+}) {
+  const [downloading, setDownloading] = useState(false);
+
+  async function handleDownload() {
+    setDownloading(true);
+    try {
+      const url = `/api/reports/seal-label?status=${sealStatus}&productId=${productId}`;
+      const response = await fetch(url, { credentials: "include" });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error((err as any).error ?? `HTTP ${response.status}`);
+      }
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      const statusSlug = sealStatus.replace(/_/g, "-");
+      a.download = `Swiss-Product-Seal_${statusSlug}_${new Date().toISOString().slice(0, 10)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(objectUrl);
+      toast.success("Etikett heruntergeladen", { description: "Das Siegel-Etikett wurde als druckfertiges A6-PDF exportiert." });
+    } catch (err: any) {
+      toast.error("Download fehlgeschlagen", { description: err.message ?? "Unbekannter Fehler" });
+    } finally {
+      setDownloading(false);
+    }
+  }
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      className="w-full"
+      onClick={handleDownload}
+      disabled={downloading}
+    >
+      {downloading ? (
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+      ) : (
+        <FileText className="mr-2 h-4 w-4" />
+      )}
+      {downloading ? "Generiere PDF…" : "Etikett drucken (PDF)"}
+    </Button>
   );
 }
 

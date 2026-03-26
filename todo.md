@@ -195,3 +195,10 @@
 - [x] PDF enthält Schild, Status-Banner, QR-Code-Platzhalter und Imported-by-Sektion (A6-Format)
 - [x] Download-Button in SealPreview mit aktuellem Status
 - [x] Vitest-Test für PDF-Export-Endpoint (6 Tests, alle grün)
+
+## QR-Code im Siegel-Etikett PDF
+- [x] Endpoint /api/reports/seal-label: optionaler productId-Parameter, QR-Code-PNG aus S3 laden
+- [x] sealLabelPdf.ts: echtes QR-Code-PNG einbetten statt Platzhalter
+- [x] SealPreview: Download-Button übergibt productId wenn vorhanden (aus Einstellungen)
+- [x] Produktdetailseite Siegel-Tab: "Etikett drucken"-Button mit echtem QR-Code
+- [x] Tests für QR-Code-Einbettung aktualisiert (7 Tests, alle grün)

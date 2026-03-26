@@ -110,6 +110,7 @@ export function registerPdfRoutes(app: Express) {
    * Query params:
    *   status=verified|in_progress|not_verified  (default: verified)
    *   tenantId=1                                 (default: 1)
+   *   productId=N                                (optional – embeds the real QR code from S3)
    * Authentication: required (session cookie).
    */
   app.get("/api/reports/seal-label", async (req, res) => {
@@ -130,6 +131,7 @@ export function registerPdfRoutes(app: Express) {
         : "verified";
 
       const tenantId = parseInt(String(req.query.tenantId ?? "1"));
+      const productIdParam = req.query.productId ? parseInt(String(req.query.productId)) : null;
 
       // Load tenant info
       const tenant = await getTenantById(isNaN(tenantId) ? 1 : tenantId);
@@ -138,15 +140,41 @@ export function registerPdfRoutes(app: Express) {
         ? (tenant as any).contactEmail.replace(/^.*@/, "")
         : "swiss-product-seal.ch";
 
+      // Optionally load real QR code from S3
+      let qrCodeBuffer: Buffer | undefined;
+      let productName: string | undefined;
+      if (productIdParam && !isNaN(productIdParam)) {
+        const product = await getProductById(productIdParam);
+        if (product) {
+          productName = (product as any).productName ?? undefined;
+          const qrUrl: string | null = (product as any).qrCodeUrl ?? null;
+          if (qrUrl) {
+            try {
+              const response = await fetch(qrUrl);
+              if (response.ok) {
+                const arrayBuf = await response.arrayBuffer();
+                qrCodeBuffer = Buffer.from(arrayBuf);
+              }
+            } catch (fetchErr) {
+              console.warn("[PDF] Could not fetch QR code from S3, using placeholder:", fetchErr);
+            }
+          }
+        }
+      }
+
       // Generate PDF
       const pdfBuffer = await generateSealLabelPdf({
         status,
         tenantName,
         tenantUrl,
+        qrCodeBuffer,
       });
 
       const statusSlug = status.replace(/_/g, "-");
-      const filename = `Swiss-Product-Seal_${statusSlug}_${new Date().toISOString().slice(0, 10)}.pdf`;
+      const safeName = productName
+        ? `_${productName.replace(/[^a-zA-Z0-9äöüÄÖÜß\-_]/g, "_").slice(0, 40)}`
+        : "";
+      const filename = `Swiss-Product-Seal${safeName}_${statusSlug}_${new Date().toISOString().slice(0, 10)}.pdf`;
 
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);

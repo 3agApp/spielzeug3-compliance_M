@@ -54,12 +54,15 @@ interface SealPreviewProps {
   tenantName?: string;
   tenantUrl?: string;
   tenantId?: number;
+  /** If provided, the real QR code of this product is embedded in the PDF */
+  productId?: number;
 }
 
 export function SealPreview({
   tenantName = "Spielzeug 3 AG",
   tenantUrl = "swiss-product-seal.ch",
   tenantId = 1,
+  productId,
 }: SealPreviewProps) {
   const [status, setStatus] = useState<SealStatus>("verified");
   const [downloading, setDownloading] = useState(false);
@@ -68,7 +71,8 @@ export function SealPreview({
   async function handleDownload() {
     setDownloading(true);
     try {
-      const url = `/api/reports/seal-label?status=${status}&tenantId=${tenantId}`;
+      const productParam = productId ? `&productId=${productId}` : "";
+      const url = `/api/reports/seal-label?status=${status}&tenantId=${tenantId}${productParam}`;
       const response = await fetch(url, { credentials: "include" });
 
       if (!response.ok) {
