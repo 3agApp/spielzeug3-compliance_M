@@ -28,6 +28,9 @@ import {
   ArrowRight,
   Bot,
   CheckCircle2,
+  Download,
+  FileArchive,
+  Loader2,
   Package,
   Plus,
   Search,
@@ -174,6 +177,9 @@ export default function Products() {
   const [analysisOpen, setAnalysisOpen] = useState(false);
   const [progress, setProgress] = useState<AnalysisProgress | null>(null);
 
+  // Batch export state
+  const [batchExporting, setBatchExporting] = useState(false);
+
   // AI scores cache: productId → score
   const [aiScores, setAiScores] = useState<Record<number, number>>({});
 
@@ -262,6 +268,46 @@ export default function Products() {
     setSelected(new Set());
   };
 
+  // ── Batch seal label export ────────────────────────────────────────────────
+  const runBatchExport = async () => {
+    const ids = Array.from(selected);
+    if (ids.length === 0) return;
+
+    setBatchExporting(true);
+    try {
+      const response = await fetch("/api/reports/seal-labels-batch", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productIds: ids }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error((err as any).error ?? `HTTP ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = `Swiss-Product-Seal_Etiketten_${new Date().toISOString().slice(0, 10)}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(objectUrl);
+
+      toast.success(`${ids.length} Etikett${ids.length !== 1 ? "en" : ""} exportiert`, {
+        description: "Die Siegel-Etiketten wurden als ZIP-Archiv heruntergeladen.",
+      });
+      setSelected(new Set());
+    } catch (err: any) {
+      toast.error("Export fehlgeschlagen", { description: err.message ?? "Unbekannter Fehler" });
+    } finally {
+      setBatchExporting(false);
+    }
+  };
+
   const handleCloseDialog = () => {
     setAnalysisOpen(false);
     setProgress(null);
@@ -294,16 +340,36 @@ export default function Products() {
           </Button>
         )}
 
-        {/* AI analysis button – visible when items are selected */}
+        {/* Action buttons – visible when items are selected */}
         {canRunAi && someSelected && (
-          <Button
-            onClick={runAiAnalysis}
-            disabled={analyzeProductMutation.isPending}
-            className="gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-md"
-          >
-            <Sparkles className="h-4 w-4" />
-            KI-Analyse starten ({selected.size})
-          </Button>
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* AI analysis */}
+            <Button
+              onClick={runAiAnalysis}
+              disabled={analyzeProductMutation.isPending || batchExporting}
+              variant="outline"
+              className="gap-2 border-violet-300 text-violet-700 hover:bg-violet-50"
+            >
+              <Sparkles className="h-4 w-4" />
+              KI-Analyse ({selected.size})
+            </Button>
+
+            {/* Batch label export */}
+            <Button
+              onClick={runBatchExport}
+              disabled={batchExporting || analyzeProductMutation.isPending}
+              className="gap-2 bg-[#C8102E] hover:bg-[#a00d24] text-white shadow-sm"
+            >
+              {batchExporting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <FileArchive className="h-4 w-4" />
+              )}
+              {batchExporting
+                ? "Exportiere…"
+                : `Etiketten exportieren (${selected.size})`}
+            </Button>
+          </div>
         )}
       </div>
 
@@ -333,11 +399,11 @@ export default function Products() {
               </SelectContent>
             </Select>
 
-            {/* AI hint when nothing selected */}
+            {/* Hint when nothing selected */}
             {canRunAi && !someSelected && products.length > 0 && (
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap">
-                <Bot className="h-3.5 w-3.5" />
-                Produkte auswählen für KI-Analyse
+                <Download className="h-3.5 w-3.5" />
+                Produkte auswählen für KI-Analyse oder Etikett-Export
               </div>
             )}
           </div>

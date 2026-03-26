@@ -202,3 +202,11 @@
 - [x] SealPreview: Download-Button übergibt productId wenn vorhanden (aus Einstellungen)
 - [x] Produktdetailseite Siegel-Tab: "Etikett drucken"-Button mit echtem QR-Code
 - [x] Tests für QR-Code-Einbettung aktualisiert (7 Tests, alle grün)
+
+## Batch-Export Siegel-Etiketten (Produktliste)
+- [x] archiver-Paket installiert (ZIP-Generierung serverseitig)
+- [x] Server: POST /api/reports/seal-labels-batch – nimmt productIds[], generiert PDFs, liefert ZIP
+- [x] Frontend: Checkboxen in Produktliste (Zeile auswählen + "Alle auswählen")
+- [x] Frontend: "Etiketten exportieren"-Button neben KI-Analyse-Button (erscheint bei Auswahl)
+- [x] Frontend: Download-Logik (Blob → ZIP-Datei)
+- [x] Tests für Batch-Export (7 Tests, alle grün)

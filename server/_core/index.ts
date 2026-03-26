@@ -8,6 +8,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { registerPdfRoutes } from "../pdfRoutes";
+import { registerSealBatchExportRoute } from "../sealBatchExport";
 import { registerWebhookRoutes } from "../webhookRoutes";
 import { registerPublicApiRoutes } from "../publicApiRoutes";
 
@@ -40,6 +41,7 @@ async function startServer() {
   registerOAuthRoutes(app);
   // PDF export routes
   registerPdfRoutes(app);
+  registerSealBatchExportRoute(app);
   // BunnyDoc webhook handler
   registerWebhookRoutes(app);
   // Public REST API (WooCommerce / external integrations)
