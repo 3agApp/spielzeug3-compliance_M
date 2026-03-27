@@ -50,6 +50,10 @@ export default function AdminSettings() {
   const [sealAutoActivate, setSealAutoActivate] = useState(true);
   const [sealAutoActivateLoaded, setSealAutoActivateLoaded] = useState(false);
   const sealSettingQuery = trpc.admin.getSystemSetting.useQuery({ key: "SEAL_AUTO_ACTIVATE" });
+  const tenantQuery = trpc.tenant.getCurrent.useQuery();
+  const tenantName = (tenantQuery.data as any)?.name ?? "Spielzeug 3 AG";
+  const tenantSlug = (tenantQuery.data as any)?.slug ?? "swiss-product-seal.ch";
+  const tenantId = (tenantQuery.data as any)?.id ?? 1;
   const saveSealSettingMutation = trpc.admin.setSystemSetting.useMutation({
     onSuccess: () => toast.success("Siegel-Einstellungen gespeichert"),
     onError: (e: any) => toast.error(e.message),
@@ -593,7 +597,11 @@ export default function AdminSettings() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <SealPreview />
+              <SealPreview
+                tenantName={tenantName}
+                tenantUrl={tenantSlug}
+                tenantId={tenantId}
+              />
             </CardContent>
           </Card>
 

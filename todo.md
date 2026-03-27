@@ -280,3 +280,14 @@
 - [x] bunnydoc.ts Router dünn gemacht
 - [x] UserContext um id-Feld erweitert für Service-Kompatibilität
 - [x] 0 TypeScript-Fehler, 149 Tests grün
+
+## Siegel-Redesign und HTML-Embed-Widget
+- [x] SealPreview komplett neu gestaltet: sauberes, professionelles Layout ohne Verschiebungen
+- [x] Siegel: korrektes Schild-SVG, QR-Code zentriert, Status-Banner korrekt positioniert
+- [x] Siegel: Imported-by-Sektion sauber und lesbar
+- [x] HTML-Embed-Widget: generierbarer <script>-Tag + <div> Snippet
+- [x] HTML-Widget: zeigt Siegel-Badge mit QR-Code, Status und Firmenname
+- [x] HTML-Widget: Copy-to-Clipboard-Button im Siegel-Tab
+- [x] HTML-Widget: Anleitung für WooCommerce, Shopify und normale Webseiten
+- [x] Tenant-Name und URL aus Datenbank in SealPreview eingebunden
+- [x] 0 TypeScript-Fehler, 149 Tests grün
