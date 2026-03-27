@@ -272,3 +272,11 @@
 - [x] safety.ts → safetyService (getByProduct, upsert)
 - [x] comments.ts → commentsService (list, create, delete)
 - [x] 0 TypeScript-Fehler, alle 149 Tests grün
+
+## Router-Refactoring: tenant.ts und bunnydoc.ts
+- [x] tenantService.ts um getSealInfo, getPublicProduct, activateSeal, setPublicVisible, setSealStatusOverride erweitert
+- [x] tenant.ts Router dünn gemacht (nur Input-Validierung + Service-Aufrufe)
+- [x] bunnydocService.ts erstellt (getSettings, saveSettings, send, cancel, latestByProduct, listByProduct)
+- [x] bunnydoc.ts Router dünn gemacht
+- [x] UserContext um id-Feld erweitert für Service-Kompatibilität
+- [x] 0 TypeScript-Fehler, 149 Tests grün

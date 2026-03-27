@@ -1,53 +1,39 @@
-import { z } from "zod";
-import { TRPCError } from "@trpc/server";
-import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
-import {
-  getTenantById,
-  getTenantBySlug,
-  listTenants,
-  createTenant,
-  updateTenant,
-  getTenantStats,
-  ensureProductPublicUuid,
-} from "../tenantDb";
-import { getSealStatus, getPublicProductUrl } from "../sealUtils";
-import { getDb } from "../db";
-import { products, suppliers, productSafetyEntries, documents } from "../../drizzle/schema";
-import { eq } from "drizzle-orm";
+/**
+ * server/routers/tenant.ts
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Thin tRPC router for the Tenant + Seal domain.
+ * All business logic lives in server/domains/tenants/tenantService.ts.
+ */
 
-// Helper: require super_admin
-function requireSuperAdmin(complianceRole: string | null | undefined) {
-  if (complianceRole !== "super_admin") {
-    throw new TRPCError({ code: "FORBIDDEN", message: "Super admin access required" });
-  }
-}
+import { z } from "zod";
+import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+import { tenantService } from "../domains/tenants/tenantService";
+import { toTRPCError } from "../shared/errors";
 
 export const tenantRouter = router({
   // ── Get current tenant for logged-in user ──────────────────────────────────
   getCurrent: protectedProcedure.query(async ({ ctx }) => {
-    const tenantId = ctx.user.tenantId ?? 1;
-    return getTenantById(tenantId);
+    try {
+      return await tenantService.getCurrent(ctx.user as any);
+    } catch (err) {
+      throw toTRPCError(err);
+    }
   }),
 
-  // ── Get tenant by slug (public, for public product pages) ─────────────────
+  // ── Get tenant by slug (public) ───────────────────────────────────────────
   getBySlug: publicProcedure
     .input(z.object({ slug: z.string() }))
     .query(async ({ input }) => {
-      return getTenantBySlug(input.slug);
+      return tenantService.getBySlug(input.slug);
     }),
 
-  // ── List all tenants (super_admin only) ───────────────────────────────────
+  // ── List all tenants with stats (super_admin only) ────────────────────────
   list: protectedProcedure.query(async ({ ctx }) => {
-    requireSuperAdmin(ctx.user.complianceRole);
-    const allTenants = await listTenants();
-    // Attach stats
-    const withStats = await Promise.all(
-      allTenants.map(async (t) => {
-        const stats = await getTenantStats(t.id);
-        return { ...t, ...stats };
-      })
-    );
-    return withStats;
+    try {
+      return await tenantService.list(ctx.user as any);
+    } catch (err) {
+      throw toTRPCError(err);
+    }
   }),
 
   // ── Create tenant (super_admin only) ──────────────────────────────────────
@@ -61,17 +47,20 @@ export const tenantRouter = router({
       primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).default("#C8102E"),
     }))
     .mutation(async ({ ctx, input }) => {
-      requireSuperAdmin(ctx.user.complianceRole);
-      return createTenant({
-        slug: input.slug,
-        name: input.name,
-        plan: input.plan,
-        modulesEnabled: input.modulesEnabled,
-        contactEmail: input.contactEmail ?? null,
-        primaryColor: input.primaryColor,
-        isActive: true,
-        logoUrl: null,
-      });
+      try {
+        return await tenantService.create(ctx.user as any, {
+          slug: input.slug,
+          name: input.name,
+          plan: input.plan,
+          modulesEnabled: input.modulesEnabled,
+          contactEmail: input.contactEmail ?? null,
+          primaryColor: input.primaryColor,
+          isActive: true,
+          logoUrl: null,
+        });
+      } catch (err) {
+        throw toTRPCError(err);
+      }
     }),
 
   // ── Update tenant (super_admin only) ──────────────────────────────────────
@@ -86,192 +75,55 @@ export const tenantRouter = router({
       primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      requireSuperAdmin(ctx.user.complianceRole);
-      const { id, ...data } = input;
-      await updateTenant(id, data);
-      return getTenantById(id);
+      try {
+        return await tenantService.update(ctx.user as any, input);
+      } catch (err) {
+        throw toTRPCError(err);
+      }
     }),
 
   // ── Activate seal for a product (generate UUID + QR code) ─────────────────
   activateSeal: protectedProcedure
     .input(z.object({ productId: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const role = ctx.user.complianceRole;
-      if (role !== "administrator" && role !== "compliance_manager" && role !== "super_admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Insufficient permissions" });
+      try {
+        return await tenantService.activateSeal(ctx.user as any, input.productId);
+      } catch (err) {
+        throw toTRPCError(err);
       }
-      const tenantId = ctx.user.tenantId ?? 1;
-      const tenant = await getTenantById(tenantId);
-      if (!tenant) throw new TRPCError({ code: "NOT_FOUND", message: "Tenant not found" });
-
-      // Check seal module is enabled
-      const modules = (tenant.modulesEnabled as string[]) ?? [];
-      if (!modules.includes("seal") && role !== "super_admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Seal module not enabled for this tenant" });
-      }
-
-      const result = await ensureProductPublicUuid(input.productId, tenant.slug);
-      return {
-        ...result,
-        publicUrl: getPublicProductUrl(result.publicUuid),
-      };
     }),
 
   // ── Get seal info for a product ───────────────────────────────────────────
   getSealInfo: protectedProcedure
     .input(z.object({ productId: z.number() }))
-    .query(async ({ input }) => {
-      const db = await getDb();
-      if (!db) return null;
-      const result = await db
-        .select({
-          id: products.id,
-          publicUuid: products.publicUuid,
-          qrCodeUrl: products.qrCodeUrl,
-          qrCodeSvgUrl: products.qrCodeSvgUrl,
-          sealEnabledAt: products.sealEnabledAt,
-          status: products.status,
-          completenessScore: products.completenessScore,
-          tenantId: products.tenantId,
-          publicVisible: products.publicVisible,
-          sealStatusOverride: products.sealStatusOverride,
-          importerName: products.importerName,
-        })
-        .from(products)
-        .where(eq(products.id, input.productId))
-        .limit(1);
-      const product = result[0];
-      if (!product) return null;
-      const sealStatus = getSealStatus(product);
-      return {
-        ...product,
-        sealStatus,
-        publicUrl: product.publicUuid ? getPublicProductUrl(product.publicUuid) : null,
-      };
+    .query(async ({ ctx, input }) => {
+      try {
+        return await tenantService.getSealInfo(ctx.user as any, input.productId);
+      } catch (err) {
+        throw toTRPCError(err);
+      }
     }),
 
   // ── Public product page data (no auth required) ───────────────────────────
   getPublicProduct: publicProcedure
     .input(z.object({ uuid: z.string().uuid() }))
     .query(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-
-      const result = await db
-        .select({
-          id: products.id,
-          productName: products.productName,
-          brand: products.brand,
-          ean: products.ean,
-          imageUrl: products.imageUrl,
-          status: products.status,
-          completenessScore: products.completenessScore,
-          publicUuid: products.publicUuid,
-          sealEnabledAt: products.sealEnabledAt,
-          tenantId: products.tenantId,
-          approvedAt: products.approvedAt,
-          publicVisible: products.publicVisible,
-          sealStatusOverride: products.sealStatusOverride,
-          importerName: products.importerName,
-          batchInfo: products.batchInfo,
-          supplierId: products.supplierId,
-          internalArticleNumber: products.internalArticleNumber,
-          supplierConfirmedAt: products.supplierConfirmedAt,
-          supplierConfirmedBy: products.supplierConfirmedBy,
-        })
-        .from(products)
-        .where(eq(products.publicUuid, input.uuid))
-        .limit(1);
-
-      const product = result[0];
-      if (!product) throw new TRPCError({ code: "NOT_FOUND", message: "Product not found" });
-
-      // Respect publicVisible toggle
-      if (!product.publicVisible) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "This product page is not publicly available" });
+      try {
+        return await tenantService.getPublicProduct(input.uuid);
+      } catch (err) {
+        throw toTRPCError(err);
       }
-
-      // Get tenant info (importer)
-      const tenant = await getTenantById(product.tenantId);
-
-      // Get safety info
-      const safetyResult = await db
-        .select({
-          safetyText: productSafetyEntries.safetyText,
-          warningText: productSafetyEntries.warningText,
-          ageGrading: productSafetyEntries.ageGrading,
-          materialInformation: productSafetyEntries.materialInformation,
-          usageRestrictions: productSafetyEntries.usageRestrictions,
-        })
-        .from(productSafetyEntries)
-        .where(eq(productSafetyEntries.productId, product.id))
-        .limit(1);
-
-      // Get documents overview (only approved/pending, no file URLs for privacy)
-      const docsResult = await db
-        .select({
-          documentType: documents.documentType,
-          reviewStatus: documents.reviewStatus,
-          uploadedAt: documents.uploadedAt,
-        })
-        .from(documents)
-        .where(eq(documents.productId, product.id));
-
-      // Aggregate: count by type and status
-      const docSummary = docsResult.reduce((acc, doc) => {
-        const key = doc.documentType;
-        if (!acc[key]) acc[key] = { type: key, total: 0, approved: 0, pending: 0, rejected: 0 };
-        acc[key].total++;
-        if (doc.reviewStatus === "approved") acc[key].approved++;
-        else if (doc.reviewStatus === "rejected") acc[key].rejected++;
-        else acc[key].pending++;
-        return acc;
-      }, {} as Record<string, { type: string; total: number; approved: number; pending: number; rejected: number }>);
-
-      const sealStatus = getSealStatus(product);
-
-      return {
-        productName: product.productName,
-        brand: product.brand,
-        ean: product.ean,
-        internalArticleNumber: product.internalArticleNumber,
-        imageUrl: product.imageUrl,
-        sealStatus,
-        approvedAt: product.approvedAt,
-        sealEnabledAt: product.sealEnabledAt,
-        completenessScore: Number(product.completenessScore ?? 0),
-        batchInfo: product.batchInfo as Record<string, string> | null,
-        importerName: product.importerName,
-        supplierConfirmedAt: product.supplierConfirmedAt,
-        supplierConfirmedBy: product.supplierConfirmedBy,
-        documentSummary: Object.values(docSummary),
-        totalDocuments: docsResult.length,
-        approvedDocuments: docsResult.filter(d => d.reviewStatus === "approved").length,
-        safety: safetyResult[0] ?? null,
-        tenant: tenant ? {
-          name: tenant.name,
-          slug: tenant.slug,
-          logoUrl: tenant.logoUrl,
-          primaryColor: tenant.primaryColor,
-          contactEmail: (tenant as any).contactEmail ?? null,
-        } : null,
-      };
     }),
 
-  // ── Toggle public visibility of product landing page ─────────────────────
+  // ── Toggle public visibility ──────────────────────────────────────────────
   setPublicVisible: protectedProcedure
     .input(z.object({ productId: z.number(), visible: z.boolean() }))
     .mutation(async ({ ctx, input }) => {
-      const role = ctx.user.complianceRole;
-      if (role !== "administrator" && role !== "compliance_manager" && role !== "super_admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Insufficient permissions" });
+      try {
+        return await tenantService.setPublicVisible(ctx.user as any, input.productId, input.visible);
+      } catch (err) {
+        throw toTRPCError(err);
       }
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await db.update(products)
-        .set({ publicVisible: input.visible })
-        .where(eq(products.id, input.productId));
-      return { success: true };
     }),
 
   // ── Override seal status (admin only) ────────────────────────────────────
@@ -281,15 +133,14 @@ export const tenantRouter = router({
       override: z.enum(["verified", "in_progress", "not_verified"]).nullable(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const role = ctx.user.complianceRole;
-      if (role !== "administrator" && role !== "super_admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+      try {
+        return await tenantService.setSealStatusOverride(
+          ctx.user as any,
+          input.productId,
+          input.override
+        );
+      } catch (err) {
+        throw toTRPCError(err);
       }
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await db.update(products)
-        .set({ sealStatusOverride: input.override as any })
-        .where(eq(products.id, input.productId));
-      return { success: true };
     }),
 });

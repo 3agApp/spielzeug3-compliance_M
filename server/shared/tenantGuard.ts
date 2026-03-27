@@ -63,6 +63,7 @@ export function requireRole(
  * Matches the shape of ctx.user in tRPC procedures.
  */
 export interface UserContext {
+  id?: number | string | null;
   complianceRole?: string | null;
   supplierId?: number | null;
   tenantId?: number | null;
