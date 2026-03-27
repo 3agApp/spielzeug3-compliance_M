@@ -300,3 +300,11 @@
 - [x] Kopieren-Button mit Toast-Bestätigung
 - [x] Anleitungen für WooCommerce, Shopify und Webseiten
 - [x] 0 TypeScript-Fehler, 149 Tests grün
+
+## Live-Vorschau im Einbettungscode-Block
+- [x] ProductEmbedCode: Live-Vorschau-Sektion unter dem Code-Block
+- [x] Vorschau rendert das Widget isoliert (srcdoc-iframe, sandbox=allow-same-origin)
+- [x] Vorschau aktualisiert sich beim Wechsel der Variante (key=currentCode erzwingt Re-Render)
+- [x] Iframe-Höhe passt sich automatisch dem Inhalt an (onLoad-Handler)
+- [x] Ein-/Ausblenden-Toggle mit Pfeil-Indikator
+- [x] 0 TypeScript-Fehler, 149 Tests grün

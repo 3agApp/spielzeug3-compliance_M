@@ -1020,6 +1020,7 @@ function ProductEmbedCode({
 }) {
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<"badge" | "widget" | "minimal">("widget");
+  const [showPreview, setShowPreview] = useState(true);
 
   const statusLabel = sealStatus === "verified" ? "Verifiziert" : sealStatus === "in_progress" ? "In Prüfung" : "Nicht verifiziert";
   const statusColor = sealStatus === "verified" ? "#16a34a" : sealStatus === "in_progress" ? "#d97706" : "#6b7280";
@@ -1058,6 +1059,20 @@ function ProductEmbedCode({
 
   const codes: Record<string, string> = { widget: widgetCode, badge: badgeCode, minimal: minimalCode };
   const currentCode = codes[activeTab];
+
+  // srcdoc für die isolierte Vorschau – umhüllt den Widget-Code in ein minimales HTML-Dokument
+  const previewHtml = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body { margin: 0; padding: 20px; background: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100px; box-sizing: border-box; font-family: system-ui, sans-serif; }
+</style>
+</head>
+<body>
+${currentCode.replace(/<!--.*?-->/g, "").trim()}
+</body>
+</html>`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(currentCode).then(() => {
@@ -1104,6 +1119,39 @@ function ProductEmbedCode({
         <pre className="p-4 text-xs font-mono bg-[#0f172a] text-[#e2e8f0] overflow-x-auto leading-relaxed whitespace-pre-wrap break-all">
           <code>{currentCode}</code>
         </pre>
+      </div>
+
+      {/* Live-Vorschau */}
+      <div className="border-t">
+        <button
+          onClick={() => setShowPreview((v) => !v)}
+          className="w-full flex items-center justify-between px-4 py-2.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
+        >
+          <span className="flex items-center gap-1.5">
+            <ExternalLink className="h-3.5 w-3.5" />
+            Vorschau
+          </span>
+          <span className="text-[10px] text-muted-foreground">{showPreview ? "▲ ausblenden" : "▼ einblenden"}</span>
+        </button>
+        {showPreview && (
+          <div className="border-t bg-[#f8fafc] px-4 py-4 flex items-center justify-center min-h-[100px]">
+            <iframe
+              key={currentCode}
+              srcDoc={previewHtml}
+              sandbox="allow-same-origin"
+              title="Widget-Vorschau"
+              className="w-full border-0 rounded-lg"
+              style={{ minHeight: activeTab === "widget" ? 100 : 60, maxHeight: 140 }}
+              onLoad={(e) => {
+                const iframe = e.currentTarget;
+                try {
+                  const body = iframe.contentDocument?.body;
+                  if (body) iframe.style.height = Math.max(body.scrollHeight + 8, 60) + "px";
+                } catch {}
+              }}
+            />
+          </div>
+        )}
       </div>
 
       {/* Integration Hints */}
