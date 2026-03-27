@@ -14,7 +14,8 @@ describe("generateSealLabelPdf", () => {
     };
     const buf = await generateSealLabelPdf(opts);
     expect(buf).toBeInstanceOf(Buffer);
-    expect(buf.length).toBeGreaterThan(1000);
+    // SVG-embedded PDF is larger than the old inline-drawn version
+    expect(buf.length).toBeGreaterThan(5000);
   });
 
   it("returns a non-empty Buffer for status=in_progress", async () => {

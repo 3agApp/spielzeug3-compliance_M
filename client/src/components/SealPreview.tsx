@@ -5,41 +5,20 @@ import { toast } from "sonner";
 
 type SealStatus = "verified" | "in_progress" | "not_verified";
 
-const STATUS_CONFIG: Record<
-  SealStatus,
-  {
-    label: string;
-    labelDe: string;
-    bannerBg: string;
-    accentColor: string;
-    checkColor: string;
-    badgeBg: string;
-  }
-> = {
-  verified: {
-    label: "VERIFIED",
-    labelDe: "Verifiziert",
-    bannerBg: "#1a7a3a",
-    accentColor: "#c8102e",
-    checkColor: "#c8102e",
-    badgeBg: "#e8f5ec",
-  },
-  in_progress: {
-    label: "IN PROGRESS",
-    labelDe: "In Bearbeitung",
-    bannerBg: "#b45309",
-    accentColor: "#d97706",
-    checkColor: "#d97706",
-    badgeBg: "#fef3c7",
-  },
-  not_verified: {
-    label: "NOT VERIFIED",
-    labelDe: "Nicht verifiziert",
-    bannerBg: "#4b5563",
-    accentColor: "#9ca3af",
-    checkColor: "#9ca3af",
-    badgeBg: "#f3f4f6",
-  },
+// CDN-URLs der professionellen SVG-Siegel-Grafiken
+const SEAL_IMAGES: Record<SealStatus, string> = {
+  verified:
+    "https://d2xsxph8kpxj0f.cloudfront.net/310519663310227526/kgkV5LdecSJ3HqPv7WFR7a/seal-verified_2d6f9454.svg",
+  in_progress:
+    "https://d2xsxph8kpxj0f.cloudfront.net/310519663310227526/kgkV5LdecSJ3HqPv7WFR7a/seal-in-progress_12797c74.svg",
+  not_verified:
+    "https://d2xsxph8kpxj0f.cloudfront.net/310519663310227526/kgkV5LdecSJ3HqPv7WFR7a/seal-not-verified_70d2c824.svg",
+};
+
+const STATUS_CONFIG: Record<SealStatus, { label: string; borderColor: string; accentColor: string }> = {
+  verified: { label: "VERIFIED", borderColor: "#16a34a", accentColor: "#16a34a" },
+  in_progress: { label: "IN PRÜFUNG", borderColor: "#d97706", accentColor: "#d97706" },
+  not_verified: { label: "NICHT VERIFIZIERT", borderColor: "#9ca3af", accentColor: "#6b7280" },
 };
 
 interface SealPreviewProps {
@@ -91,16 +70,17 @@ export function SealPreview({
 
   function getEmbedCode() {
     const publicUrl = `${window.location.origin}/product/${productId ?? "PRODUCT_ID"}`;
+    const sealImgUrl = SEAL_IMAGES[status];
+    const qrSrc = qrCodeUrl ?? "";
     return `<!-- Swiss Product Seal Widget -->
-<div id="swiss-product-seal" style="display:inline-block;font-family:Arial,sans-serif;text-align:center;width:160px;border:2px solid ${cfg.accentColor};border-radius:12px;padding:16px 12px 12px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
-  <svg width="72" height="72" viewBox="0 0 130 128" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M65 6 L116 28 L116 68 C116 95 93 114 65 122 C37 114 14 95 14 68 L14 28 Z" fill="rgba(200,16,46,0.06)" stroke="${cfg.accentColor}" stroke-width="3.5" stroke-linejoin="round"/>
-    <path d="M42 66 L57 81 L88 50" stroke="${cfg.checkColor}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
-  </svg>
-  <div style="background:${cfg.bannerBg};color:#fff;font-size:9px;font-weight:800;letter-spacing:2px;padding:3px 12px;border-radius:20px;margin:6px auto 10px;display:inline-block;">${cfg.label}</div>
-  <div style="font-size:9px;color:#6b7280;margin-bottom:4px;">Swiss Product Seal</div>
-  <a href="${publicUrl}" target="_blank" rel="noopener" style="display:block;font-size:10px;font-weight:700;color:${cfg.accentColor};text-decoration:none;margin-bottom:8px;">${tenantName}</a>
-  <div style="font-size:8px;color:#9ca3af;">${tenantUrl}</div>
+<div style="display:inline-block;font-family:'Helvetica Neue',Arial,sans-serif;text-align:center;width:180px;border:2px solid ${cfg.borderColor};border-radius:14px;padding:16px 14px 14px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+  <img src="${sealImgUrl}" alt="Swiss Product Seal – ${cfg.label}" width="120" height="132" style="display:block;margin:0 auto 10px;" />
+${qrSrc ? `  <img src="${qrSrc}" alt="QR-Code" width="100" height="100" style="display:block;margin:0 auto 6px;border-radius:6px;" />` : ""}
+  <p style="font-size:9px;color:#9ca3af;margin:0 0 8px;">Scan for compliance info</p>
+  <hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 8px;" />
+  <p style="font-size:8px;color:#9ca3af;font-style:italic;margin:0 0 2px;">Imported by</p>
+  <p style="font-size:11px;font-weight:700;color:#111;margin:0 0 2px;">${tenantName}</p>
+  <a href="https://${tenantUrl}" target="_blank" rel="noopener noreferrer" style="font-size:9px;color:${cfg.accentColor};font-weight:600;text-decoration:none;">${tenantUrl}</a>
 </div>
 <!-- End Swiss Product Seal Widget -->`;
   }
@@ -108,7 +88,9 @@ export function SealPreview({
   function handleCopyEmbed() {
     navigator.clipboard.writeText(getEmbedCode()).then(() => {
       setCopied(true);
-      toast.success("HTML-Code kopiert", { description: "Fügen Sie den Code in Ihre Webseite, WooCommerce oder Shopify ein." });
+      toast.success("HTML-Code kopiert", {
+        description: "Fügen Sie den Code in Ihre Webseite, WooCommerce oder Shopify ein.",
+      });
       setTimeout(() => setCopied(false), 2500);
     });
   }
@@ -126,7 +108,7 @@ export function SealPreview({
               onClick={() => setStatus(s)}
               className="text-xs h-8"
             >
-              {s === "verified" ? "✓ Verified" : s === "in_progress" ? "⟳ In Progress" : "✕ Not Verified"}
+              {s === "verified" ? "✓ Verified" : s === "in_progress" ? "⟳ In Prüfung" : "✕ Nicht verifiziert"}
             </Button>
           ))}
         </div>
@@ -154,130 +136,105 @@ export function SealPreview({
             style={{
               width: 200,
               background: "#ffffff",
-              border: `2px solid ${cfg.accentColor}`,
+              border: `2px solid ${cfg.borderColor}`,
               borderRadius: 16,
               padding: "20px 16px 16px",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              boxShadow: "0 4px 20px rgba(0,0,0,0.10)",
+              boxShadow: "0 4px 24px rgba(0,0,0,0.10)",
               fontFamily: "'Helvetica Neue', Arial, sans-serif",
-              gap: 0,
             }}
           >
-            {/* Shield */}
-            <svg
-              width="100"
-              height="96"
-              viewBox="0 0 130 128"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              style={{ display: "block", marginBottom: 8 }}
-            >
-              {/* Outer shield */}
-              <path
-                d="M65 6 L116 28 L116 68 C116 95 93 114 65 122 C37 114 14 95 14 68 L14 28 Z"
-                fill={cfg.badgeBg}
-                stroke={cfg.accentColor}
-                strokeWidth="3.5"
-                strokeLinejoin="round"
-              />
-              {/* Inner shield ring */}
-              <path
-                d="M65 14 L108 33 L108 68 C108 91 87 108 65 116 C43 108 22 91 22 68 L22 33 Z"
-                fill="none"
-                stroke={cfg.accentColor}
-                strokeWidth="1"
-                opacity="0.3"
-                strokeLinejoin="round"
-              />
-              {/* Checkmark */}
-              <path
-                d="M42 66 L57 81 L88 50"
-                stroke={cfg.checkColor}
-                strokeWidth="7"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              {/* "SWISS PRODUCT SEAL" label */}
-              <text
-                x="65"
-                y="107"
-                textAnchor="middle"
-                fontSize="7"
-                fontWeight="700"
-                fill="#555"
-                letterSpacing="1.2"
-                style={{ fontFamily: "Arial, sans-serif" }}
-              >
-                SWISS PRODUCT SEAL
-              </text>
-            </svg>
-
-            {/* Status banner */}
-            <div
-              style={{
-                background: cfg.bannerBg,
-                color: "#ffffff",
-                fontSize: 9,
-                fontWeight: 800,
-                letterSpacing: 2,
-                padding: "4px 16px",
-                borderRadius: 20,
-                whiteSpace: "nowrap",
-                marginBottom: 14,
-              }}
-            >
-              {cfg.label}
-            </div>
+            {/* Seal graphic – CDN SVG */}
+            <img
+              src={SEAL_IMAGES[status]}
+              alt={`Swiss Product Seal – ${cfg.label}`}
+              width={130}
+              height={143}
+              style={{ display: "block", marginBottom: 14 }}
+            />
 
             {/* QR code area */}
             <div
               style={{
-                width: 108,
-                height: 108,
+                width: 112,
+                height: 112,
                 background: "#f9fafb",
                 border: "1.5px solid #e5e7eb",
                 borderRadius: 8,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                marginBottom: 8,
+                marginBottom: 6,
                 overflow: "hidden",
-                position: "relative",
               }}
             >
               {qrCodeUrl ? (
-                <img src={qrCodeUrl} alt="QR Code" style={{ width: 100, height: 100, objectFit: "contain" }} />
+                <img
+                  src={qrCodeUrl}
+                  alt="QR Code"
+                  style={{ width: 104, height: 104, objectFit: "contain" }}
+                />
               ) : (
-                /* Placeholder QR pattern */
-                <svg width="90" height="90" viewBox="0 0 90 90" fill="none">
+                /* Clean placeholder – no logo overlay */
+                <svg width="88" height="88" viewBox="0 0 88 88" fill="none" xmlns="http://www.w3.org/2000/svg">
                   {/* Top-left finder */}
-                  <rect x="4" y="4" width="22" height="22" rx="2.5" fill="none" stroke="#111" strokeWidth="3" />
-                  <rect x="9" y="9" width="12" height="12" rx="1" fill="#111" />
+                  <rect x="4" y="4" width="22" height="22" rx="2.5" fill="none" stroke="#1f2937" strokeWidth="3" />
+                  <rect x="9" y="9" width="12" height="12" rx="1" fill="#1f2937" />
                   {/* Top-right finder */}
-                  <rect x="64" y="4" width="22" height="22" rx="2.5" fill="none" stroke="#111" strokeWidth="3" />
-                  <rect x="69" y="9" width="12" height="12" rx="1" fill="#111" />
+                  <rect x="62" y="4" width="22" height="22" rx="2.5" fill="none" stroke="#1f2937" strokeWidth="3" />
+                  <rect x="67" y="9" width="12" height="12" rx="1" fill="#1f2937" />
                   {/* Bottom-left finder */}
-                  <rect x="4" y="64" width="22" height="22" rx="2.5" fill="none" stroke="#111" strokeWidth="3" />
-                  <rect x="9" y="69" width="12" height="12" rx="1" fill="#111" />
-                  {/* Data dots – centre area */}
-                  {[32,38,44,50,56].map(x => [32,38,44,50,56].map(y =>
-                    (x + y) % 8 === 0 ? <rect key={`${x}-${y}`} x={x} y={y} width="4" height="4" fill="#111" /> : null
-                  ))}
-                  {/* Logo circle */}
-                  <circle cx="45" cy="45" r="10" fill="white" />
-                  <path
-                    d="M45 36 L52 39.5 L52 45 C52 49.5 49 53 45 54.5 C41 53 38 49.5 38 45 L38 39.5 Z"
-                    fill={cfg.accentColor}
-                  />
-                  <path d="M41 45 L43.5 47.5 L49 42" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  <rect x="4" y="62" width="22" height="22" rx="2.5" fill="none" stroke="#1f2937" strokeWidth="3" />
+                  <rect x="9" y="67" width="12" height="12" rx="1" fill="#1f2937" />
+                  {/* Data dots */}
+                  <rect x="30" y="4" width="4" height="4" fill="#1f2937" />
+                  <rect x="36" y="4" width="4" height="4" fill="#1f2937" />
+                  <rect x="30" y="10" width="4" height="4" fill="#1f2937" />
+                  <rect x="36" y="16" width="4" height="4" fill="#1f2937" />
+                  <rect x="4" y="30" width="4" height="4" fill="#1f2937" />
+                  <rect x="10" y="36" width="4" height="4" fill="#1f2937" />
+                  <rect x="4" y="36" width="4" height="4" fill="#1f2937" />
+                  <rect x="30" y="30" width="4" height="4" fill="#1f2937" />
+                  <rect x="36" y="30" width="4" height="4" fill="#1f2937" />
+                  <rect x="42" y="30" width="4" height="4" fill="#1f2937" />
+                  <rect x="30" y="36" width="4" height="4" fill="#1f2937" />
+                  <rect x="42" y="36" width="4" height="4" fill="#1f2937" />
+                  <rect x="30" y="42" width="4" height="4" fill="#1f2937" />
+                  <rect x="36" y="42" width="4" height="4" fill="#1f2937" />
+                  <rect x="42" y="42" width="4" height="4" fill="#1f2937" />
+                  <rect x="62" y="30" width="4" height="4" fill="#1f2937" />
+                  <rect x="68" y="30" width="4" height="4" fill="#1f2937" />
+                  <rect x="62" y="36" width="4" height="4" fill="#1f2937" />
+                  <rect x="74" y="36" width="4" height="4" fill="#1f2937" />
+                  <rect x="30" y="62" width="4" height="4" fill="#1f2937" />
+                  <rect x="36" y="62" width="4" height="4" fill="#1f2937" />
+                  <rect x="30" y="68" width="4" height="4" fill="#1f2937" />
+                  <rect x="42" y="68" width="4" height="4" fill="#1f2937" />
+                  <rect x="30" y="74" width="4" height="4" fill="#1f2937" />
+                  <rect x="36" y="80" width="4" height="4" fill="#1f2937" />
+                  <rect x="48" y="48" width="4" height="4" fill="#1f2937" />
+                  <rect x="54" y="54" width="4" height="4" fill="#1f2937" />
+                  <rect x="60" y="48" width="4" height="4" fill="#1f2937" />
+                  <rect x="48" y="60" width="4" height="4" fill="#1f2937" />
+                  <rect x="60" y="60" width="4" height="4" fill="#1f2937" />
+                  <rect x="66" y="48" width="4" height="4" fill="#1f2937" />
+                  <rect x="72" y="54" width="4" height="4" fill="#1f2937" />
+                  <rect x="66" y="60" width="4" height="4" fill="#1f2937" />
+                  <rect x="48" y="66" width="4" height="4" fill="#1f2937" />
+                  <rect x="54" y="72" width="4" height="4" fill="#1f2937" />
+                  <rect x="60" y="66" width="4" height="4" fill="#1f2937" />
+                  <rect x="72" y="66" width="4" height="4" fill="#1f2937" />
+                  <rect x="66" y="72" width="4" height="4" fill="#1f2937" />
+                  <rect x="72" y="78" width="4" height="4" fill="#1f2937" />
+                  <rect x="78" y="72" width="4" height="4" fill="#1f2937" />
                 </svg>
               )}
             </div>
 
             {/* Scan hint */}
-            <p style={{ fontSize: 9, color: "#9ca3af", margin: "0 0 10px", textAlign: "center", letterSpacing: 0.2 }}>
+            <p style={{ fontSize: 9, color: "#9ca3af", margin: "0 0 10px", textAlign: "center" }}>
               Scan for compliance info
             </p>
 
@@ -285,13 +242,13 @@ export function SealPreview({
             <div style={{ width: "100%", height: 1, background: "#e5e7eb", marginBottom: 10 }} />
 
             {/* Imported by */}
-            <p style={{ fontSize: 8, color: "#9ca3af", fontStyle: "italic", margin: "0 0 3px", letterSpacing: 0.3, textAlign: "center" }}>
+            <p style={{ fontSize: 8, color: "#9ca3af", fontStyle: "italic", margin: "0 0 3px", textAlign: "center" }}>
               Imported by
             </p>
-            <p style={{ fontSize: 11, fontWeight: 700, color: "#111", margin: "0 0 2px", letterSpacing: 0.1, textAlign: "center" }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: "#111827", margin: "0 0 2px", textAlign: "center" }}>
               {tenantName}
             </p>
-            <p style={{ fontSize: 9, color: cfg.accentColor, fontWeight: 600, margin: 0, letterSpacing: 0.2, textAlign: "center" }}>
+            <p style={{ fontSize: 9, color: cfg.accentColor, fontWeight: 600, margin: 0, textAlign: "center" }}>
               {tenantUrl}
             </p>
           </div>

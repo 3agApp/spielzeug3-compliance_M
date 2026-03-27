@@ -321,3 +321,12 @@
 - [x] Live-Vorschau zeigt auch die dynamische Variante korrekt (allow-scripts im iframe)
 - [x] 11 neue Tests für den öffentlichen Endpoint (publicApiRoutes.test.ts), alle grün
 - [x] 0 TypeScript-Fehler, 160 Tests grün
+
+## Siegel-Redesign: Professionelle SVG-Grafiken (konsistent HTML + PDF)
+- [x] Drei hochwertige SVG-Siegel-Grafiken erstellt (verified/in_progress/not_verified)
+- [x] SVGs als CDN-Assets hochgeladen
+- [x] SealPreview-Komponente auf neue SVG-Assets umgestellt (CDN-img statt inline-SVG)
+- [x] sealLabelPdf.ts auf neue SVG-Assets umgestellt (sharp SVG→PNG, pixel-identisch mit HTML)
+- [x] QR-Code-Platzhalter ohne Logo-Overlay (sauber lesbar)
+- [x] Embed-Widget-Code nutzt CDN-SVG-URL
+- [x] 160 Tests grün, 0 TypeScript-Fehler
