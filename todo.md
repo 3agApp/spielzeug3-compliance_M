@@ -339,3 +339,17 @@
 - [x] SealPreview lädt aktuelle Grafik aus DB via trpc.sealAssets.getActive (Fallback auf CDN-PNG)
 - [x] PDF-Generator lädt aktuelle Grafik aus DB via getActiveSealUrl (3-stufiger Fallback)
 - [x] 160 Tests grün, 0 TypeScript-Fehler
+
+## Siegel-Grafik Upload-Validierung
+- [x] Client: Dateityp-Prüfung (PNG/JPG/SVG/WebP)
+- [x] Client: Dateigröße max. 5 MB
+- [x] Client: Mindestauflösung 300×300 px via Image-Objekt (SVG übersprungen)
+- [x] Client: Seitenverhältnis 0.75–1.25 mit verständlicher Fehlermeldung
+- [x] Client: Vorschau-Bild erst nach bestandener Validierung anzeigen
+- [x] Client: Inline-Fehlermeldung in der Karte (AlertCircle + Titel + Beschreibung)
+- [x] Client: Anforderungen-Hinweis-Box in jeder Status-Karte
+- [x] Server: sharp-basierte Auflösungsprüfung (≥300×300 px)
+- [x] Server: Seitenverhältnis-Prüfung (0.70–1.30, etwas toleranter als Client)
+- [x] Server: TRPCError BAD_REQUEST mit präziser Fehlermeldung (Ist-Wert + Soll-Wert)
+- [x] 12 neue Tests (sealAssets.validation.test.ts): Auflösung, Verhältnis, SVG-Skip, korrupt
+- [x] 172 Tests grün (14 Testdateien), 0 TypeScript-Fehler

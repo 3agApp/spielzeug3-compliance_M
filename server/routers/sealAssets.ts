@@ -11,6 +11,52 @@ import { getDb } from "../db";
 import { sealAssets } from "../../drizzle/schema";
 import { storagePut } from "../storage";
 import { eq, and, desc } from "drizzle-orm";
+import sharp from "sharp";
+
+// ─── Server-side image validation constants ───────────────────────────────────
+const SRV_MIN_WIDTH = 300;
+const SRV_MIN_HEIGHT = 300;
+const SRV_MIN_RATIO = 0.70;  // slightly more tolerant than client (0.75)
+const SRV_MAX_RATIO = 1.30;
+
+/**
+ * Validate image dimensions and aspect ratio using sharp.
+ * SVGs are skipped (resolution-independent).
+ * Throws TRPCError with code BAD_REQUEST on failure.
+ */
+async function validateImageDimensions(buffer: Buffer, mimeType: string): Promise<void> {
+  if (mimeType === "image/svg+xml") return; // SVG: no pixel checks
+
+  let metadata: sharp.Metadata;
+  try {
+    metadata = await sharp(buffer).metadata();
+  } catch {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Das Bild konnte nicht gelesen werden. Bitte prüfen Sie, ob die Datei beschädigt ist.",
+    });
+  }
+
+  const { width = 0, height = 0 } = metadata;
+
+  if (width < SRV_MIN_WIDTH || height < SRV_MIN_HEIGHT) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: `Auflösung zu gering: Mindestauflösung ist ${SRV_MIN_WIDTH}×${SRV_MIN_HEIGHT} px. ` +
+               `Hochgeladene Grafik: ${width}×${height} px.`,
+    });
+  }
+
+  const ratio = width / height;
+  if (ratio < SRV_MIN_RATIO || ratio > SRV_MAX_RATIO) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: `Falsches Seitenverhältnis: Das Siegel benötigt ein annähernd quadratisches Format ` +
+               `(Verhältnis 0.70–1.30). Hochgeladene Grafik: ${width}×${height} px ` +
+               `(Verhältnis ${(ratio).toFixed(2)}).`,
+    });
+  }
+}
 
 // ─── Default CDN fallbacks ────────────────────────────────────────────────────
 export const DEFAULT_SEAL_URLS: Record<"verified" | "in_progress" | "not_verified", string> = {
@@ -85,11 +131,14 @@ export const sealAssetsRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Datenbankverbindung nicht verfügbar." });
 
-      // Decode base64 and upload to S3
+      // Decode base64
       const fileBuffer = Buffer.from(input.fileBase64, "base64");
+
+      // ── Server-side validation ──────────────────────────────────────────────
       if (fileBuffer.length > 5 * 1024 * 1024) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Datei zu groß (max. 5 MB)." });
       }
+      await validateImageDimensions(fileBuffer, input.mimeType);
 
       const ext = input.mimeType === "image/svg+xml" ? "svg" : input.mimeType.split("/")[1];
       const randomSuffix = Math.random().toString(36).slice(2, 10);
