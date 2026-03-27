@@ -353,3 +353,10 @@
 - [x] Server: TRPCError BAD_REQUEST mit präziser Fehlermeldung (Ist-Wert + Soll-Wert)
 - [x] 12 neue Tests (sealAssets.validation.test.ts): Auflösung, Verhältnis, SVG-Skip, korrupt
 - [x] 172 Tests grün (14 Testdateien), 0 TypeScript-Fehler
+
+## Bugfix: Siegel-Etikett – tenantUrl statt Slug anzeigen
+- [x] DB-Schema: websiteUrl-Feld zur tenants-Tabelle hinzugefügt (Default: swiss-product-seal.ch)
+- [x] SealPreview.tsx: tenantWebsiteUrl aus DB statt Slug übergeben
+- [x] pdfRoutes.ts: tenantUrl aus websiteUrl-Feld (statt contactEmail-Ableitung)
+- [x] tenantDb.ts: updateTenant um websiteUrl-Feld erweitert
+- [x] 172 Tests grün, 0 TypeScript-Fehler

@@ -136,9 +136,7 @@ export function registerPdfRoutes(app: Express) {
       // Load tenant info
       const tenant = await getTenantById(isNaN(tenantId) ? 1 : tenantId);
       const tenantName = tenant?.name ?? "Swiss Product Seal";
-      const tenantUrl = (tenant as any)?.contactEmail
-        ? (tenant as any).contactEmail.replace(/^.*@/, "")
-        : "swiss-product-seal.ch";
+      const tenantUrl = (tenant as any)?.websiteUrl ?? "swiss-product-seal.ch";
 
       // Optionally load real QR code from S3
       let qrCodeBuffer: Buffer | undefined;

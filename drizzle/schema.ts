@@ -509,6 +509,7 @@ export const tenants = mysqlTable("tenants", {
   logoUrl: text("logoUrl"),
   primaryColor: varchar("primaryColor", { length: 7 }).default("#C8102E"),
   contactEmail: varchar("contactEmail", { length: 320 }),
+  websiteUrl: varchar("websiteUrl", { length: 255 }).default("swiss-product-seal.ch"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

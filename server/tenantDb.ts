@@ -37,7 +37,7 @@ export async function createTenant(data: Omit<InsertTenant, "id" | "createdAt" |
 
 export async function updateTenant(
   id: number,
-  data: Partial<Pick<InsertTenant, "name" | "plan" | "modulesEnabled" | "isActive" | "logoUrl" | "primaryColor" | "contactEmail">>
+  data: Partial<Pick<InsertTenant, "name" | "plan" | "modulesEnabled" | "isActive" | "logoUrl" | "primaryColor" | "contactEmail" | "websiteUrl">>
 ) {
   const db = await getDb();
   if (!db) return;

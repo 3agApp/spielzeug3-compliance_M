@@ -71,6 +71,13 @@
       "when": 1774615193902,
       "tag": "0009_swift_brother_voodoo",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1774626867017,
+      "tag": "0010_bouncy_tinkerer",
+      "breakpoints": true
     }
   ]
 }

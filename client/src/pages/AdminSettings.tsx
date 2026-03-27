@@ -54,6 +54,7 @@ export default function AdminSettings() {
   const tenantQuery = trpc.tenant.getCurrent.useQuery();
   const tenantName = (tenantQuery.data as any)?.name ?? "Spielzeug 3 AG";
   const tenantSlug = (tenantQuery.data as any)?.slug ?? "swiss-product-seal.ch";
+  const tenantWebsiteUrl = (tenantQuery.data as any)?.websiteUrl ?? "swiss-product-seal.ch";
   const tenantId = (tenantQuery.data as any)?.id ?? 1;
   const saveSealSettingMutation = trpc.admin.setSystemSetting.useMutation({
     onSuccess: () => toast.success("Siegel-Einstellungen gespeichert"),
@@ -616,7 +617,7 @@ export default function AdminSettings() {
             <CardContent>
               <SealPreview
                 tenantName={tenantName}
-                tenantUrl={tenantSlug}
+                tenantUrl={tenantWebsiteUrl}
                 tenantId={tenantId}
               />
             </CardContent>
