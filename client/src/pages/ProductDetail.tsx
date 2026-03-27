@@ -1019,8 +1019,11 @@ function ProductEmbedCode({
   sealStatus: SealStatus;
 }) {
   const [copied, setCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState<"badge" | "widget" | "minimal">("widget");
+  const [activeTab, setActiveTab] = useState<"dynamic" | "badge" | "widget" | "minimal">("dynamic");
   const [showPreview, setShowPreview] = useState(true);
+
+  // Basis-URL des aktuellen Servers für den API-Aufruf im Widget-Script
+  const apiBase = window.location.origin;
 
   const statusLabel = sealStatus === "verified" ? "Verifiziert" : sealStatus === "in_progress" ? "In Prüfung" : "Nicht verifiziert";
   const statusColor = sealStatus === "verified" ? "#16a34a" : sealStatus === "in_progress" ? "#d97706" : "#6b7280";
@@ -1057,10 +1060,42 @@ function ProductEmbedCode({
   <img src="${qrCodeUrl}" alt="Swiss Product Seal QR-Code" width="80" height="80" style="border-radius:8px;" />
 </a>`;
 
-  const codes: Record<string, string> = { widget: widgetCode, badge: badgeCode, minimal: minimalCode };
+  // Dynamisches JS-Widget: lädt Status per fetch() zur Laufzeit, zeigt immer aktuellen Prüfstatus
+  const dynamicCode = `<!-- Swiss Product Seal – Dynamisches Widget (Status wird live geladen) -->
+<div id="sps-widget-${publicUuid}"></div>
+<script>
+(function() {
+  var uuid = "${publicUuid}";
+  var apiUrl = "${apiBase}/api/v1/products/" + uuid;
+  var el = document.getElementById("sps-widget-" + uuid);
+  if (!el) return;
+  el.innerHTML = '<span style="font-size:12px;color:#9ca3af;">Swiss Product Seal wird geladen…</span>';
+  fetch(apiUrl)
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var colors = { verified: { bg: "#f0fdf4", border: "#86efac", text: "#16a34a", label: "Verifiziert" }, in_progress: { bg: "#fffbeb", border: "#fcd34d", text: "#d97706", label: "In Pr\u00fcfung" }, not_verified: { bg: "#f9fafb", border: "#e5e7eb", text: "#6b7280", label: "Nicht verifiziert" } };
+      var c = colors[d.sealStatus] || colors.not_verified;
+      var qr = d.qrCodeUrl ? '<img src="' + d.qrCodeUrl + '" alt="QR" width="64" height="64" style="border-radius:6px;flex-shrink:0;" />' : '';
+      el.innerHTML = '<a href="' + d.landingPageUrl + '" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:12px;padding:12px 16px;border:1px solid ' + c.border + ';border-radius:12px;background:' + c.bg + ';text-decoration:none;color:inherit;max-width:320px;font-family:system-ui,sans-serif;">'
+        + qr
+        + '<div><div style="font-size:11px;color:#6b7280;margin-bottom:2px;">Swiss Product Seal</div>'
+        + '<div style="font-size:13px;font-weight:600;color:#111827;margin-bottom:4px;">' + d.productName + '</div>'
+        + '<div style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;color:' + c.text + ';background:white;border:1px solid ' + c.border + ';border-radius:20px;padding:2px 8px;">'
+        + '<span style="width:6px;height:6px;border-radius:50%;background:' + c.text + ';display:inline-block;"></span>' + c.label
+        + '</div></div></a>';
+    })
+    .catch(function() {
+      el.innerHTML = '<a href="${publicUrl}" target="_blank" rel="noopener noreferrer" style="font-size:12px;color:#6b7280;text-decoration:none;">Swiss Product Seal →</a>';
+    });
+})();
+<\/script>
+<noscript><a href="${publicUrl}" target="_blank" rel="noopener noreferrer">Swiss Product Seal</a></noscript>`;
+
+  const codes: Record<string, string> = { dynamic: dynamicCode, widget: widgetCode, badge: badgeCode, minimal: minimalCode };
   const currentCode = codes[activeTab];
 
-  // srcdoc für die isolierte Vorschau – umhüllt den Widget-Code in ein minimales HTML-Dokument
+  // srcdoc für die isolierte Vorschau
+  // Bei der dynamischen Variante: Script-Tag wird ausgeführt (allow-scripts), lädt echte API
   const previewHtml = `<!DOCTYPE html>
 <html>
 <head>
@@ -1070,7 +1105,7 @@ function ProductEmbedCode({
 </style>
 </head>
 <body>
-${currentCode.replace(/<!--.*?-->/g, "").trim()}
+${currentCode.replace(/<!--.*?-->/g, "").replace(/<\/script>/g, "</script>").trim()}
 </body>
 </html>`;
 
@@ -1098,18 +1133,23 @@ ${currentCode.replace(/<!--.*?-->/g, "").trim()}
       </div>
 
       {/* Variant Tabs */}
-      <div className="flex border-b bg-muted/20">
-        {(["widget", "badge", "minimal"] as const).map((tab) => (
+      <div className="flex border-b bg-muted/20 overflow-x-auto">
+        {(["dynamic", "widget", "badge", "minimal"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 text-xs font-medium transition-colors ${
+            className={`px-4 py-2 text-xs font-medium whitespace-nowrap transition-colors ${
               activeTab === tab
                 ? "border-b-2 border-primary text-primary bg-background"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            {tab === "widget" ? "Widget (QR + Status)" : tab === "badge" ? "Badge (Text)" : "Minimal (nur QR)"}
+            {tab === "dynamic" ? (
+              <span className="flex items-center gap-1">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                Dynamisch (empfohlen)
+              </span>
+            ) : tab === "widget" ? "Widget (QR + Status)" : tab === "badge" ? "Badge (Text)" : "Minimal (nur QR)"}
           </button>
         ))}
       </div>

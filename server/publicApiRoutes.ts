@@ -50,10 +50,25 @@ function buildProductResponse(product: {
   };
 }
 
+/** CORS-Middleware für alle öffentlichen API-Routen – erlaubt Cross-Origin-Zugriff aus Onlineshops */
+function withCors(res: import("express").Response) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+}
+
 export function registerPublicApiRoutes(app: Express) {
+  // OPTIONS preflight für alle /api/v1/* Routen
+  app.options("/api/v1/*", (_req, res) => {
+    withCors(res);
+    res.sendStatus(204);
+  });
+
   // GET /api/v1/products/:uuid
   app.get("/api/v1/products/:uuid", async (req, res) => {
     try {
+      withCors(res);
       const { uuid } = req.params;
       if (!uuid || !/^[0-9a-f-]{36}$/i.test(uuid)) {
         return res.status(400).json({ error: "Invalid UUID format" });
@@ -98,6 +113,7 @@ export function registerPublicApiRoutes(app: Express) {
   // GET /api/v1/products/by-ean/:ean
   app.get("/api/v1/products/by-ean/:ean", async (req, res) => {
     try {
+      withCors(res);
       const { ean } = req.params;
       if (!ean || ean.length < 8 || ean.length > 20) {
         return res.status(400).json({ error: "Invalid EAN format" });

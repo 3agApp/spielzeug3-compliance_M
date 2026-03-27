@@ -308,3 +308,16 @@
 - [x] Iframe-Höhe passt sich automatisch dem Inhalt an (onLoad-Handler)
 - [x] Ein-/Ausblenden-Toggle mit Pfeil-Indikator
 - [x] 0 TypeScript-Fehler, 149 Tests grün
+
+## Dynamisches Widget (API-basiert, Laufzeit-Status)
+- [x] Öffentlicher Endpoint GET /api/v1/products/:uuid → JSON (sealStatus, productName, qrCodeUrl, landingPageUrl, importer)
+- [x] Öffentlicher Endpoint GET /api/v1/products/by-ean/:ean → JSON (EAN-Suche)
+- [x] CORS-Header für Cross-Origin-Zugriff aus Onlineshops (Access-Control-Allow-Origin: *)
+- [x] OPTIONS-Preflight-Handler für /api/v1/*
+- [x] Cache-Control: public, max-age=60, stale-while-revalidate=300
+- [x] Dynamisches JS-Widget-Snippet: lädt Status per fetch(), rendert Widget selbst in den DOM
+- [x] Statischer Fallback im <noscript>-Tag
+- [x] Neue Variante "Dynamisch (empfohlen)" im Einbettungscode-Block (neben Widget/Badge/Minimal)
+- [x] Live-Vorschau zeigt auch die dynamische Variante korrekt (allow-scripts im iframe)
+- [x] 11 neue Tests für den öffentlichen Endpoint (publicApiRoutes.test.ts), alle grün
+- [x] 0 TypeScript-Fehler, 160 Tests grün
