@@ -47,6 +47,13 @@ export interface UpdateTenantInput {
   logoUrl?: string | null;
   primaryColor?: string;
   contactEmail?: string | null;
+  websiteUrl?: string | null;
+}
+
+export interface UpdateMyTenantInput {
+  name?: string;
+  websiteUrl?: string | null;
+  contactEmail?: string | null;
 }
 
 // ─── Service ──────────────────────────────────────────────────────────────────
@@ -113,6 +120,14 @@ export const tenantService = {
     const { id, ...data } = input;
     await updateTenant(id, data as any);
     return getTenantById(id);
+  },
+
+  /** Update own tenant's portal settings (admin / compliance_manager / super_admin). */
+  async updateMyTenant(user: UserContext, input: UpdateMyTenantInput) {
+    requireRole(user.complianceRole, ["super_admin", "administrator", "compliance_manager"]);
+    const tenantId = user.tenantId ?? 1;
+    await updateTenant(tenantId, input as any);
+    return getTenantById(tenantId);
   },
 
   /** Get aggregated stats for a tenant (super_admin only). */

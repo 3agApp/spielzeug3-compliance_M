@@ -73,10 +73,26 @@ export const tenantRouter = router({
       isActive: z.boolean().optional(),
       contactEmail: z.string().email().optional().nullable(),
       primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+      websiteUrl: z.string().max(255).optional().nullable(),
     }))
     .mutation(async ({ ctx, input }) => {
       try {
         return await tenantService.update(ctx.user as any, input);
+      } catch (err) {
+        throw toTRPCError(err);
+      }
+    }),
+
+  // ── Update own tenant portal settings (admin / compliance_manager) ────────
+  updateMyTenant: protectedProcedure
+    .input(z.object({
+      name: z.string().min(1).max(255).optional(),
+      websiteUrl: z.string().max(255).optional().nullable(),
+      contactEmail: z.string().email().optional().nullable(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        return await tenantService.updateMyTenant(ctx.user as any, input);
       } catch (err) {
         throw toTRPCError(err);
       }

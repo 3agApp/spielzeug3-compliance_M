@@ -56,6 +56,26 @@ export default function AdminSettings() {
   const tenantSlug = (tenantQuery.data as any)?.slug ?? "swiss-product-seal.ch";
   const tenantWebsiteUrl = (tenantQuery.data as any)?.websiteUrl ?? "swiss-product-seal.ch";
   const tenantId = (tenantQuery.data as any)?.id ?? 1;
+
+  // Portal settings state (editable)
+  const [portalName, setPortalName] = useState("");
+  const [portalWebsiteUrl, setPortalWebsiteUrl] = useState("");
+  const [portalContactEmail, setPortalContactEmail] = useState("");
+  const [portalLoaded, setPortalLoaded] = useState(false);
+  if (!portalLoaded && tenantQuery.data) {
+    setPortalName((tenantQuery.data as any).name ?? "");
+    setPortalWebsiteUrl((tenantQuery.data as any).websiteUrl ?? "swiss-product-seal.ch");
+    setPortalContactEmail((tenantQuery.data as any).contactEmail ?? "");
+    setPortalLoaded(true);
+  }
+  const utils = trpc.useUtils();
+  const updateMyTenantMutation = trpc.tenant.updateMyTenant.useMutation({
+    onSuccess: () => {
+      toast.success("Portal-Einstellungen gespeichert");
+      utils.tenant.getCurrent.invalidate();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
   const saveSealSettingMutation = trpc.admin.setSystemSetting.useMutation({
     onSuccess: () => toast.success("Siegel-Einstellungen gespeichert"),
     onError: (e: any) => toast.error(e.message),
@@ -316,15 +336,44 @@ export default function AdminSettings() {
                 <Building2 className="h-4 w-4" />
                 Portal-Einstellungen
               </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Diese Angaben erscheinen auf dem Siegel-Etikett (HTML-Vorschau &amp; PDF-Ausdruck).
+              </p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-1.5">
-                <Label>Unternehmensname</Label>
-                <Input defaultValue="spielzeug3 AG" />
+                <Label htmlFor="portal-name">Unternehmensname</Label>
+                <Input
+                  id="portal-name"
+                  value={portalName}
+                  onChange={(e) => setPortalName(e.target.value)}
+                  placeholder="z. B. Spielzeug 3 AG"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Erscheint als „Imported by“ auf dem Siegel-Etikett.
+                </p>
               </div>
               <div className="space-y-1.5">
-                <Label>Portal-Titel</Label>
-                <Input defaultValue="Supplier Compliance Portal" />
+                <Label htmlFor="portal-website">Website-URL (Siegel-Etikett)</Label>
+                <Input
+                  id="portal-website"
+                  value={portalWebsiteUrl}
+                  onChange={(e) => setPortalWebsiteUrl(e.target.value)}
+                  placeholder="z. B. swiss-product-seal.ch"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Diese URL erscheint unter dem Unternehmensnamen auf dem Siegel-Etikett.
+                </p>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="portal-email">Kontakt-E-Mail</Label>
+                <Input
+                  id="portal-email"
+                  type="email"
+                  value={portalContactEmail}
+                  onChange={(e) => setPortalContactEmail(e.target.value)}
+                  placeholder="z. B. compliance@spielzeug3.ch"
+                />
               </div>
               <Separator />
               <div className="space-y-1.5">
@@ -347,9 +396,18 @@ export default function AdminSettings() {
                 </div>
               </div>
               <div className="pt-2">
-                <Button onClick={() => toast.success("Portal-Einstellungen gespeichert")}>
+                <Button
+                  onClick={() =>
+                    updateMyTenantMutation.mutate({
+                      name: portalName || undefined,
+                      websiteUrl: portalWebsiteUrl || null,
+                      contactEmail: portalContactEmail || null,
+                    })
+                  }
+                  disabled={updateMyTenantMutation.isPending}
+                >
                   <Save className="mr-2 h-4 w-4" />
-                  Speichern
+                  {updateMyTenantMutation.isPending ? "Wird gespeichert…" : "Speichern"}
                 </Button>
               </div>
             </CardContent>

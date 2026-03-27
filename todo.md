@@ -360,3 +360,13 @@
 - [x] pdfRoutes.ts: tenantUrl aus websiteUrl-Feld (statt contactEmail-Ableitung)
 - [x] tenantDb.ts: updateTenant um websiteUrl-Feld erweitert
 - [x] 172 Tests grün, 0 TypeScript-Fehler
+
+## Portal-Tab: Website-URL des Mandanten editierbar
+- [x] Backend: neue updateMyTenant-Prozedur (admin/compliance_manager) mit websiteUrl, name, contactEmail
+- [x] tenantService.updateMyTenant: Mandanten-eigene Einstellungen ohne super_admin-Rechte änderbar
+- [x] tenant-Router: updateMyTenant-Endpoint registriert
+- [x] Frontend: Eingabefelder für Unternehmensname, Website-URL und Kontakt-E-Mail im Portal-Tab
+- [x] Felder werden beim Laden aus DB befüllt (einmalig via portalLoaded-Flag)
+- [x] Speichern-Button mit tRPC-Mutation, Loading-State und Toast-Feedback
+- [x] Hinweistexte unter jedem Feld erklären wo der Wert erscheint
+- [x] 172 Tests grün, 0 TypeScript-Fehler
