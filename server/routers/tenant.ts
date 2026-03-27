@@ -12,7 +12,7 @@ import {
 } from "../tenantDb";
 import { getSealStatus, getPublicProductUrl } from "../sealUtils";
 import { getDb } from "../db";
-import { products, suppliers, productSafetyEntries } from "../../drizzle/schema";
+import { products, suppliers, productSafetyEntries, documents } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 
 // Helper: require super_admin
@@ -176,6 +176,8 @@ export const tenantRouter = router({
           batchInfo: products.batchInfo,
           supplierId: products.supplierId,
           internalArticleNumber: products.internalArticleNumber,
+          supplierConfirmedAt: products.supplierConfirmedAt,
+          supplierConfirmedBy: products.supplierConfirmedBy,
         })
         .from(products)
         .where(eq(products.publicUuid, input.uuid))
@@ -205,6 +207,27 @@ export const tenantRouter = router({
         .where(eq(productSafetyEntries.productId, product.id))
         .limit(1);
 
+      // Get documents overview (only approved/pending, no file URLs for privacy)
+      const docsResult = await db
+        .select({
+          documentType: documents.documentType,
+          reviewStatus: documents.reviewStatus,
+          uploadedAt: documents.uploadedAt,
+        })
+        .from(documents)
+        .where(eq(documents.productId, product.id));
+
+      // Aggregate: count by type and status
+      const docSummary = docsResult.reduce((acc, doc) => {
+        const key = doc.documentType;
+        if (!acc[key]) acc[key] = { type: key, total: 0, approved: 0, pending: 0, rejected: 0 };
+        acc[key].total++;
+        if (doc.reviewStatus === "approved") acc[key].approved++;
+        else if (doc.reviewStatus === "rejected") acc[key].rejected++;
+        else acc[key].pending++;
+        return acc;
+      }, {} as Record<string, { type: string; total: number; approved: number; pending: number; rejected: number }>);
+
       const sealStatus = getSealStatus(product);
 
       return {
@@ -219,6 +242,11 @@ export const tenantRouter = router({
         completenessScore: Number(product.completenessScore ?? 0),
         batchInfo: product.batchInfo as Record<string, string> | null,
         importerName: product.importerName,
+        supplierConfirmedAt: product.supplierConfirmedAt,
+        supplierConfirmedBy: product.supplierConfirmedBy,
+        documentSummary: Object.values(docSummary),
+        totalDocuments: docsResult.length,
+        approvedDocuments: docsResult.filter(d => d.reviewStatus === "approved").length,
         safety: safetyResult[0] ?? null,
         tenant: tenant ? {
           name: tenant.name,

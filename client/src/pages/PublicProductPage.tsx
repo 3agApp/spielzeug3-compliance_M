@@ -6,7 +6,8 @@ import type { SealStatus } from "@/components/SealBadge";
 import {
   ShieldCheck, ShieldAlert, ShieldOff, Package, Calendar,
   Globe, CheckCircle2, Clock, AlertTriangle, Info, Mail,
-  ChevronRight, Layers, Tag, Hash, Barcode,
+  ChevronRight, Layers, Tag, Hash, Barcode, FileText,
+  BadgeCheck, ClipboardCheck, XCircle, AlertCircle, FileCheck2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -46,6 +47,24 @@ const T: Record<Lang, Record<string, string>> = {
     sendEmail: "E-Mail senden",
     learnMore: "Was bedeutet dieses Siegel?",
     poweredBy: "Powered by",
+    documents: "Geprüfte Unterlagen",
+    documentsDesc: "Folgende Unterlagen wurden eingereicht und geprüft:",
+    docsApproved: "Geprüft",
+    docsPending: "Ausstehend",
+    docsRejected: "Abgelehnt",
+    supplierDeclaration: "Lieferantenerklärung",
+    supplierConfirmed: "Vollständigkeit bestätigt",
+    supplierConfirmedBy: "Bestätigt von",
+    supplierConfirmedOn: "am",
+    trustIndicators: "Vertrauensindikatoren",
+    docType_test_report: "Prüfbericht",
+    docType_declaration_of_conformity: "Konformitätserklärung",
+    docType_manual: "Bedienungsanleitung",
+    docType_certificate: "Zertifikat",
+    docType_product_image: "Produktbild",
+    docType_safety_image: "Sicherheitsbild",
+    docType_regulatory_document: "Regulatorisches Dokument",
+    docType_other: "Sonstiges Dokument",
   },
   en: {
     loading: "Loading product information…",
@@ -77,6 +96,24 @@ const T: Record<Lang, Record<string, string>> = {
     sendEmail: "Send Email",
     learnMore: "What does this seal mean?",
     poweredBy: "Powered by",
+    documents: "Verified Documents",
+    documentsDesc: "The following documents have been submitted and reviewed:",
+    docsApproved: "Approved",
+    docsPending: "Pending",
+    docsRejected: "Rejected",
+    supplierDeclaration: "Supplier Declaration",
+    supplierConfirmed: "Completeness confirmed",
+    supplierConfirmedBy: "Confirmed by",
+    supplierConfirmedOn: "on",
+    trustIndicators: "Trust Indicators",
+    docType_test_report: "Test Report",
+    docType_declaration_of_conformity: "Declaration of Conformity",
+    docType_manual: "Manual",
+    docType_certificate: "Certificate",
+    docType_product_image: "Product Image",
+    docType_safety_image: "Safety Image",
+    docType_regulatory_document: "Regulatory Document",
+    docType_other: "Other Document",
   },
 };
 
@@ -134,9 +171,9 @@ export default function PublicProductPage() {
 
   const sealStatus = (product.sealStatus ?? "not_verified") as SealStatus;
   const statusConfig = {
-    verified:     { icon: ShieldCheck, color: "text-[#2E7D32]", bg: "bg-green-50 border-green-200" },
-    in_progress:  { icon: ShieldAlert, color: "text-amber-600", bg: "bg-amber-50 border-amber-200" },
-    not_verified: { icon: ShieldOff,   color: "text-gray-500",  bg: "bg-gray-50 border-gray-200" },
+    verified:     { icon: ShieldCheck, color: "text-[#2E7D32]", bg: "bg-green-50 border-green-200", bannerBg: "bg-green-600" },
+    in_progress:  { icon: ShieldAlert, color: "text-amber-600", bg: "bg-amber-50 border-amber-200", bannerBg: "bg-amber-500" },
+    not_verified: { icon: ShieldOff,   color: "text-gray-500",  bg: "bg-gray-50 border-gray-200",   bannerBg: "bg-gray-400" },
   }[sealStatus];
   const StatusIcon = statusConfig.icon;
 
@@ -150,6 +187,46 @@ export default function PublicProductPage() {
     usageRestrictions?: string | null;
   } | null;
   const batchInfo = product.batchInfo as Record<string, string> | null;
+  const docSummary = (product as any).documentSummary as Array<{
+    type: string; total: number; approved: number; pending: number; rejected: number;
+  }> ?? [];
+  const totalDocs = (product as any).totalDocuments as number ?? 0;
+  const approvedDocs = (product as any).approvedDocuments as number ?? 0;
+  const supplierConfirmedAt = (product as any).supplierConfirmedAt as string | null;
+  const supplierConfirmedBy = (product as any).supplierConfirmedBy as string | null;
+
+  // Trust indicators
+  const trustItems = [
+    {
+      key: "docs",
+      met: totalDocs > 0,
+      icon: FileCheck2,
+      labelDe: `${approvedDocs} von ${totalDocs} Dokument${totalDocs !== 1 ? "en" : ""} geprüft`,
+      labelEn: `${approvedDocs} of ${totalDocs} document${totalDocs !== 1 ? "s" : ""} reviewed`,
+    },
+    {
+      key: "supplier",
+      met: !!supplierConfirmedAt,
+      icon: ClipboardCheck,
+      labelDe: supplierConfirmedAt
+        ? `Lieferant hat Vollständigkeit bestätigt (${new Date(supplierConfirmedAt).toLocaleDateString("de-CH")})`
+        : "Lieferant hat noch nicht bestätigt",
+      labelEn: supplierConfirmedAt
+        ? `Supplier confirmed completeness (${new Date(supplierConfirmedAt).toLocaleDateString("en-GB")})`
+        : "Supplier has not yet confirmed",
+    },
+    {
+      key: "approved",
+      met: sealStatus === "verified",
+      icon: BadgeCheck,
+      labelDe: sealStatus === "verified"
+        ? `Compliance-Prüfung abgeschlossen am ${formatDate(product.approvedAt, "de")}`
+        : "Compliance-Prüfung noch nicht abgeschlossen",
+      labelEn: sealStatus === "verified"
+        ? `Compliance review completed on ${formatDate(product.approvedAt, "en")}`
+        : "Compliance review not yet completed",
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -174,32 +251,144 @@ export default function PublicProductPage() {
 
       <main className="max-w-2xl mx-auto px-4 py-8 space-y-5">
 
-        {/* Seal Badge + Status */}
-        <div className={`rounded-xl border-2 p-6 text-center space-y-4 ${statusConfig.bg}`}>
-          <div className="flex justify-center">
-            <SealBadge status={sealStatus} size="lg" />
-          </div>
-          <div>
-            <h1 className={`text-xl font-bold ${statusConfig.color}`}>
-              {t[`sealTitle_${sealStatus}` as keyof typeof t]}
-            </h1>
-            <p className="text-gray-600 text-sm mt-1 max-w-sm mx-auto">
-              {t[`sealDesc_${sealStatus}` as keyof typeof t]}
-            </p>
-          </div>
-          {sealStatus === "verified" && product.approvedAt && (
-            <div className="flex items-center justify-center gap-1.5 text-xs text-green-700">
-              <CheckCircle2 size={13} />
-              <span>{t.approvedOn}: {formatDate(product.approvedAt, lang)}</span>
+        {/* Hero: Seal Badge + Status */}
+        <div className={`rounded-2xl border-2 overflow-hidden ${statusConfig.bg}`}>
+          {/* Colored top bar */}
+          <div className={`${statusConfig.bannerBg} h-1.5 w-full`} />
+          <div className="p-6 text-center space-y-4">
+            <div className="flex justify-center">
+              <SealBadge status={sealStatus} size="lg" />
             </div>
-          )}
-          {sealStatus === "in_progress" && (
-            <div className="flex items-center justify-center gap-1.5 text-xs text-amber-700">
-              <Clock size={13} />
-              <span>{Math.round(product.completenessScore ?? 0)}% {t.completeness}</span>
+            <div>
+              <h1 className={`text-xl font-bold ${statusConfig.color}`}>
+                {t[`sealTitle_${sealStatus}` as keyof typeof t]}
+              </h1>
+              <p className="text-gray-600 text-sm mt-1 max-w-sm mx-auto">
+                {t[`sealDesc_${sealStatus}` as keyof typeof t]}
+              </p>
             </div>
-          )}
+            {sealStatus === "verified" && product.approvedAt && (
+              <div className="inline-flex items-center gap-1.5 text-xs text-green-700 bg-green-100 rounded-full px-3 py-1">
+                <CheckCircle2 size={13} />
+                <span>{t.approvedOn}: {formatDate(product.approvedAt, lang)}</span>
+              </div>
+            )}
+            {sealStatus === "in_progress" && (
+              <div className="inline-flex items-center gap-1.5 text-xs text-amber-700 bg-amber-100 rounded-full px-3 py-1">
+                <Clock size={13} />
+                <span>{Math.round(product.completenessScore ?? 0)}% {t.completeness}</span>
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* Trust Indicators */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <BadgeCheck size={16} className="text-[#C8102E]" />
+              {t.trustIndicators}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {trustItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.key} className="flex items-start gap-3">
+                  <div className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${
+                    item.met ? "bg-green-100" : "bg-gray-100"
+                  }`}>
+                    <Icon size={12} className={item.met ? "text-green-600" : "text-gray-400"} />
+                  </div>
+                  <p className={`text-sm ${item.met ? "text-gray-800" : "text-gray-500"}`}>
+                    {lang === "de" ? item.labelDe : item.labelEn}
+                  </p>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+
+        {/* Supplier Declaration */}
+        {supplierConfirmedAt && (
+          <Card className="border-green-200 bg-green-50/40">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <ClipboardCheck size={16} className="text-green-600" />
+                {t.supplierDeclaration}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 size={18} className="text-green-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm space-y-0.5">
+                  <p className="font-medium text-green-800">{t.supplierConfirmed}</p>
+                  <p className="text-green-700 text-xs">
+                    {t.supplierConfirmedBy} <strong>{supplierConfirmedBy}</strong>{" "}
+                    {t.supplierConfirmedOn} {formatDate(supplierConfirmedAt, lang)}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Documents Overview */}
+        {docSummary.length > 0 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <FileText size={16} className="text-gray-400" />
+                {t.documents}
+                <span className="ml-auto text-xs font-normal text-gray-500">
+                  {approvedDocs}/{totalDocs} {t.docsApproved}
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <p className="text-xs text-gray-500 mb-3">{t.documentsDesc}</p>
+              {docSummary.map((doc) => {
+                const docLabel = t[`docType_${doc.type}` as keyof typeof t] ?? doc.type;
+                const allApproved = doc.approved === doc.total && doc.total > 0;
+                const hasRejected = doc.rejected > 0;
+                return (
+                  <div key={doc.type} className="flex items-center justify-between py-2 border-b last:border-0">
+                    <div className="flex items-center gap-2">
+                      {allApproved ? (
+                        <CheckCircle2 size={14} className="text-green-500 flex-shrink-0" />
+                      ) : hasRejected ? (
+                        <XCircle size={14} className="text-red-400 flex-shrink-0" />
+                      ) : (
+                        <AlertCircle size={14} className="text-amber-400 flex-shrink-0" />
+                      )}
+                      <span className="text-sm text-gray-700">{docLabel}</span>
+                      {doc.total > 1 && (
+                        <span className="text-xs text-gray-400">({doc.total})</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {doc.approved > 0 && (
+                        <Badge variant="outline" className="text-xs border-green-300 text-green-700 bg-green-50 py-0">
+                          {doc.approved} {t.docsApproved}
+                        </Badge>
+                      )}
+                      {doc.pending > 0 && (
+                        <Badge variant="outline" className="text-xs border-amber-300 text-amber-700 bg-amber-50 py-0">
+                          {doc.pending} {t.docsPending}
+                        </Badge>
+                      )}
+                      {doc.rejected > 0 && (
+                        <Badge variant="outline" className="text-xs border-red-300 text-red-700 bg-red-50 py-0">
+                          {doc.rejected} {t.docsRejected}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Product Info */}
         <Card>

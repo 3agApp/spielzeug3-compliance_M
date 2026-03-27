@@ -514,4 +514,40 @@ export const productsRouter = router({
     const { getInternalDashboardStats } = await import("../db");
     return getInternalDashboardStats();
   }),
+
+  // ── Supplier Declaration of Completeness ──────────────────────────────────
+  supplierConfirm: protectedProcedure
+    .input(z.object({ productId: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const role = ctx.user.complianceRole ?? "internal_employee";
+      if (role !== "supplier") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Nur Lieferanten können die Vollständigkeit bestätigen" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const product = await getProductById(input.productId);
+      if (!product) throw new TRPCError({ code: "NOT_FOUND" });
+      if (product.supplierId !== ctx.user.supplierId) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const { products: productsTable } = await import("../../drizzle/schema");
+      const { eq } = await import("drizzle-orm");
+      const confirmedAt = new Date();
+      const confirmedBy = ctx.user.name ?? ctx.user.email ?? "Lieferant";
+      await db
+        .update(productsTable)
+        .set({
+          supplierConfirmedAt: confirmedAt,
+          supplierConfirmedBy: confirmedBy,
+        })
+        .where(eq(productsTable.id, input.productId));
+      await createAuditLog({
+        entityType: "product",
+        entityId: input.productId,
+        action: "supplier_confirmed",
+        performedByUserId: ctx.user.id,
+        payloadSnapshot: { confirmedBy } as any,
+      });
+      return { success: true, confirmedAt, confirmedBy };
+    }),
 });

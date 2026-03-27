@@ -319,7 +319,7 @@ export default function ProductDetail() {
             <Package className="h-4 w-4" />
             Chargen-Info
           </TabsTrigger>
-          {isInternalRole && (
+          {(isInternalRole || role === "supplier") && (
             <TabsTrigger value="seal" className="gap-2">
               <ShieldCheck className="h-5 w-5" />
               Siegel
@@ -514,13 +514,14 @@ export default function ProductDetail() {
           <BatchTab productId={productId} canEdit={isInternalRole} />
         </TabsContent>
         {/* Seal Tab */}
-        {isInternalRole && (
+        {(isInternalRole || role === "supplier") && (
           <TabsContent value="seal" className="mt-4">
             <SealTab
               productId={productId}
               productName={product.productName}
               canManage={["administrator", "compliance_manager", "super_admin"].includes(role)}
               isAdmin={["administrator", "super_admin"].includes(role)}
+              isSupplier={role === "supplier"}
               onSealActivated={() => sealInfoQuery.refetch()}
             />
           </TabsContent>
@@ -577,17 +578,34 @@ function SealTab({
   productName,
   canManage,
   isAdmin,
+  isSupplier = false,
   onSealActivated,
 }: {
   productId: number;
   productName: string;
   canManage: boolean;
   isAdmin: boolean;
+  isSupplier?: boolean;
   onSealActivated?: () => void;
 }) {
   const utils = trpc.useUtils();
   const sealQuery = trpc.tenant.getSealInfo.useQuery({ productId });
   const seal = sealQuery.data;
+
+  // Supplier confirmation
+  const productQuery = trpc.products.getById.useQuery({ id: productId }, { enabled: isSupplier });
+  const supplierConfirmedAt = isSupplier ? (productQuery.data as any)?.supplierConfirmedAt : null;
+  const supplierConfirmedBy = isSupplier ? (productQuery.data as any)?.supplierConfirmedBy : null;
+
+  const confirmMutation = trpc.products.supplierConfirm.useMutation({
+    onSuccess: (data) => {
+      toast.success("Bestätigung gespeichert", {
+        description: `Vollständigkeit wurde am ${new Date(data.confirmedAt).toLocaleDateString("de-CH")} bestätigt.`,
+      });
+      productQuery.refetch();
+    },
+    onError: (e) => toast.error("Bestätigung fehlgeschlagen", { description: e.message }),
+  });
 
   const activateMutation = trpc.tenant.activateSeal.useMutation({
     onSuccess: () => {
@@ -617,6 +635,64 @@ function SealTab({
   const sealStatus = (seal?.sealStatus ?? "not_verified") as SealStatus;
   return (
     <div className="space-y-4">
+      {/* Supplier: Declaration of Completeness */}
+      {isSupplier && (
+        <Card className={supplierConfirmedAt ? "border-green-300 bg-green-50/40" : "border-amber-200 bg-amber-50/30"}>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              {supplierConfirmedAt ? (
+                <CheckCircle2 className="h-5 w-5 text-green-600" />
+              ) : (
+                <AlertCircle className="h-5 w-5 text-amber-500" />
+              )}
+              Vollständigkeitserklärung
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {supplierConfirmedAt ? (
+              <div className="space-y-2">
+                <p className="text-sm text-green-800 font-medium">
+                  ✅ Vollständigkeit bestätigt
+                </p>
+                <p className="text-xs text-green-700">
+                  Bestätigt von <strong>{supplierConfirmedBy}</strong> am{" "}
+                  {new Date(supplierConfirmedAt).toLocaleDateString("de-CH", {
+                    day: "2-digit", month: "long", year: "numeric",
+                  })}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Sie können die Bestätigung erneuern, falls Sie Unterlagen aktualisiert haben.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm text-amber-800">
+                  Bitte bestätigen Sie, dass alle Angaben und Unterlagen vollständig und korrekt sind.
+                </p>
+                <ul className="text-xs text-amber-700 space-y-1 list-none">
+                  <li className="flex items-start gap-2"><span className="mt-0.5">&#9675;</span>Alle erforderlichen Dokumente wurden hochgeladen</li>
+                  <li className="flex items-start gap-2"><span className="mt-0.5">&#9675;</span>Die Angaben zu Sicherheit und Material sind korrekt</li>
+                  <li className="flex items-start gap-2"><span className="mt-0.5">&#9675;</span>Die Produktinformationen entsprechen dem aktuellen Stand</li>
+                </ul>
+              </div>
+            )}
+            <Button
+              size="sm"
+              variant={supplierConfirmedAt ? "outline" : "default"}
+              className={supplierConfirmedAt ? "" : "bg-green-600 hover:bg-green-700 text-white"}
+              onClick={() => confirmMutation.mutate({ productId })}
+              disabled={confirmMutation.isPending}
+            >
+              {confirmMutation.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <CheckCircle2 className="mr-2 h-4 w-4" />
+              )}
+              {supplierConfirmedAt ? "Bestätigung erneuern" : "Vollständigkeit bestätigen"}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
       {/* Status Card */}
       <Card>
         <CardHeader>

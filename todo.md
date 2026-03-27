@@ -210,3 +210,14 @@
 - [x] Frontend: "Etiketten exportieren"-Button neben KI-Analyse-Button (erscheint bei Auswahl)
 - [x] Frontend: Download-Logik (Blob → ZIP-Datei)
 - [x] Tests für Batch-Export (7 Tests, alle grün)
+
+## Öffentliche QR-Landingpage + Supplier-Bestätigung
+- [x] DB: products-Tabelle um supplierConfirmedAt (timestamp) und supplierConfirmedBy (varchar) erweitert
+- [x] DB: Migration ausgeführt
+- [x] Server: tRPC-Mutation products.supplierConfirm (nur Supplier-Rolle)
+- [x] Server: getPublicProduct um Dokumenten-Übersicht (Typ + reviewStatus) und supplierConfirmedAt erweitert
+- [x] Frontend Supplier: Vollständigkeitserklärung-Karte mit Checkliste + Bestätigungs-Button im Siegel-Tab
+- [x] Frontend Public: Dokumenten-Prüfstatus-Sektion auf Landingpage (Anzahl geprüfte Dokumente, Kategorien)
+- [x] Frontend Public: Supplier-Bestätigungs-Badge auf Landingpage
+- [x] Frontend Public: Redesign mit Trust-Indikatoren, farbigem Hero-Banner, Vertrauens-Sektion
+- [x] Tests für supplierConfirm-Mutation und getPublicProduct-Erweiterung (12 Tests, alle grün)

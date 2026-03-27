@@ -100,6 +100,9 @@ export const products = mysqlTable("products", {
   sealStatusOverride: mysqlEnum("sealStatusOverride", ["verified", "in_progress", "not_verified"]), // Admin override
   batchInfo: json("batchInfo"),                               // Batch/traceability info (JSON)
   importerName: varchar("importerName", { length: 255 }),     // Override importer display name
+  // Supplier declaration of completeness
+  supplierConfirmedAt: timestamp("supplierConfirmedAt"),       // When supplier confirmed completeness
+  supplierConfirmedBy: varchar("supplierConfirmedBy", { length: 255 }), // Name of confirming user
   lastUpdatedAt: timestamp("lastUpdatedAt").defaultNow().onUpdateNow().notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
