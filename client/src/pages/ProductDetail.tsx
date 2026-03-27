@@ -362,8 +362,18 @@ export default function ProductDetail() {
           {(role === "supplier" || role === "internal_employee") && (
             <UploadDocumentCard
               productId={productId}
+              role={role}
               t={t}
-              onSuccess={() => documentsQuery.refetch()}
+              onSuccess={(confirmedAtReset?: boolean) => {
+                documentsQuery.refetch();
+                utils.products.getById.invalidate({ id: productId });
+                if (confirmedAtReset) {
+                  toast.warning("Vollständigkeitserklärung zurückgesetzt", {
+                    description: "Da Sie ein Dokument geändert haben, müssen Sie die Vollständigkeit im Siegel-Tab erneut bestätigen.",
+                    duration: 6000,
+                  });
+                }
+              }}
             />
           )}
           <Card>
@@ -1038,7 +1048,7 @@ function SealLabelDownloadButton({
 }
 
 // ─── Upload Document Card ────────────────────────────────────────────
-function UploadDocumentCard({ productId, t, onSuccess }: any) {
+function UploadDocumentCard({ productId, role, t, onSuccess }: any) {
   const [open, setOpen] = useState(false);
   const [docType, setDocType] = useState<string>("test_report");
   const [file, setFile] = useState<File | null>(null);
@@ -1046,11 +1056,11 @@ function UploadDocumentCard({ productId, t, onSuccess }: any) {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const uploadMutation = trpc.documents.upload.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast.success(t.msg.uploadSuccess);
       setOpen(false);
       setFile(null);
-      onSuccess?.();
+      onSuccess?.(data?.confirmedAtReset ?? false);
     },
     onError: (e) => toast.error(e.message),
   });

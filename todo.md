@@ -236,3 +236,12 @@
 - [x] Frontend: Fortschrittsanzeige "X von Y vollständig" im Checklisten-Header
 - [x] Frontend: Hinweis-Link zum Dokumente-Tab wenn Pflichtdoks fehlen
 - [x] Tests für Checklisten-Logik (7 neue Tests, 138 gesamt, alle grün)
+
+## Bestätigungs-Reset bei Dokumentänderung
+- [x] Backend: upload-Mutation setzt supplierConfirmedAt auf null wenn Supplier bereits bestätigt hatte
+- [x] Backend: delete-Mutation setzt supplierConfirmedAt auf null wenn Supplier bereits bestätigt hatte
+- [x] Backend: Rückgabe-Flag confirmedAtReset: true damit Frontend Toast anzeigen kann
+- [x] Backend: Audit-Log-Eintrag supplier_confirmation_reset mit Grund (document_uploaded / document_deleted)
+- [x] Frontend: Amber-Toast "Vollständigkeitserklärung zurückgesetzt" nach Upload wenn reset erfolgte
+- [x] Frontend: Siegel-Tab-Daten (getById) nach Dokumentänderung invalidiert
+- [x] Tests für Reset-Logik (11 neue Tests, 149 gesamt, alle grün)

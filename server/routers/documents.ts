@@ -9,6 +9,7 @@ import {
   updateDocument,
   updateMissingRequirement,
   getMissingRequirementsByProduct,
+  updateProduct,
 } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
 import { storagePut } from "../storage";
@@ -95,6 +96,23 @@ export const documentsRouter = router({
         });
       }
 
+      // Reset supplier confirmation if supplier had already confirmed
+      let confirmedAtReset = false;
+      if (role === "supplier" && (product as any).supplierConfirmedAt) {
+        await updateProduct(input.productId, {
+          supplierConfirmedAt: null as any,
+          supplierConfirmedBy: null as any,
+        });
+        confirmedAtReset = true;
+        await createAuditLog({
+          entityType: "product",
+          entityId: input.productId,
+          action: "supplier_confirmation_reset",
+          performedByUserId: ctx.user.id,
+          payloadSnapshot: { reason: "document_uploaded", fileName: input.fileName } as any,
+        });
+      }
+
       await createAuditLog({
         entityType: "document",
         entityId: input.productId,
@@ -103,7 +121,7 @@ export const documentsRouter = router({
         payloadSnapshot: { fileName: input.fileName, documentType: input.documentType } as any,
       });
 
-      return { success: true, url };
+      return { success: true, url, confirmedAtReset };
     }),
 
   updateReviewStatus: protectedProcedure
@@ -132,20 +150,47 @@ export const documentsRouter = router({
     }),
 
   delete: protectedProcedure
-    .input(z.object({ documentId: z.number() }))
+    .input(z.object({ documentId: z.number(), productId: z.number().optional() }))
     .mutation(async ({ ctx, input }) => {
-      requireRole(ctx.user.complianceRole ?? "", [
-        "administrator",
-        "compliance_manager",
-        "internal_employee",
-      ]);
+      const role = ctx.user.complianceRole ?? "internal_employee";
+      // Suppliers can delete their own product's documents; internal roles always allowed
+      if (role === "supplier") {
+        if (!input.productId) throw new TRPCError({ code: "BAD_REQUEST", message: "productId required for supplier" });
+        const product = await getProductById(input.productId);
+        if (!product) throw new TRPCError({ code: "NOT_FOUND" });
+        if (product.supplierId !== ctx.user.supplierId) throw new TRPCError({ code: "FORBIDDEN" });
+      } else {
+        requireRole(role, ["administrator", "compliance_manager", "internal_employee"]);
+      }
+
       await deleteDocument(input.documentId);
+
+      // Reset supplier confirmation if supplier had already confirmed
+      let confirmedAtReset = false;
+      if (role === "supplier" && input.productId) {
+        const product = await getProductById(input.productId);
+        if (product && (product as any).supplierConfirmedAt) {
+          await updateProduct(input.productId, {
+            supplierConfirmedAt: null as any,
+            supplierConfirmedBy: null as any,
+          });
+          confirmedAtReset = true;
+          await createAuditLog({
+            entityType: "product",
+            entityId: input.productId,
+            action: "supplier_confirmation_reset",
+            performedByUserId: ctx.user.id,
+            payloadSnapshot: { reason: "document_deleted", documentId: input.documentId } as any,
+          });
+        }
+      }
+
       await createAuditLog({
         entityType: "document",
         entityId: input.documentId,
         action: "deleted",
         performedByUserId: ctx.user.id,
       });
-      return { success: true };
+      return { success: true, confirmedAtReset };
     }),
 });
