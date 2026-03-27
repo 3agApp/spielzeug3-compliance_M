@@ -2,6 +2,7 @@ import PDFDocument from "pdfkit";
 import sharp from "sharp";
 import * as fs from "fs";
 import * as path from "path";
+import { getActiveSealUrl } from "./routers/sealAssets";
 
 export type SealLabelStatus = "verified" | "in_progress" | "not_verified";
 
@@ -9,6 +10,8 @@ export interface SealLabelOptions {
   status: SealLabelStatus;
   tenantName: string;
   tenantUrl: string;
+  /** Tenant ID for loading custom seal graphics from DB (defaults to 1) */
+  tenantId?: number;
   /** Optional: actual QR code PNG buffer to embed. If omitted, a placeholder is drawn. */
   qrCodeBuffer?: Buffer;
 }
@@ -117,31 +120,45 @@ function drawQrPlaceholder(doc: PDFKit.PDFDocument, x: number, y: number, size: 
  * ensuring pixel-identical appearance across HTML, PDF, and embed widgets.
  */
 export async function generateSealLabelPdf(opts: SealLabelOptions): Promise<Buffer> {
-  const { status, tenantName, tenantUrl, qrCodeBuffer } = opts;
+  const { status, tenantName, tenantUrl, qrCodeBuffer, tenantId = 1 } = opts;
   const cfg = STATUS_COLORS[status];
 
-  // ── Render SVG → PNG for embedding ─────────────────────────────────────────
+  // ── Load seal graphic: DB custom upload → local SVG → CDN PNG fallback ────────────
   let sealPng: Buffer;
   try {
-    const svgPath = SVG_PATHS[status];
-    const svgBuffer = fs.readFileSync(svgPath);
-    sealPng = await sharp(svgBuffer)
-      .resize(400, 440)  // 2× for crisp rendering in PDF
-      .png()
-      .toBuffer();
+    // 1. Try DB-stored custom URL (could be PNG or SVG)
+    const activeUrl = await getActiveSealUrl(tenantId, status);
+    const res = await fetch(activeUrl);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const imgBuffer = Buffer.from(await res.arrayBuffer());
+    const contentType = res.headers.get("content-type") ?? "";
+    if (contentType.includes("svg")) {
+      // SVG needs rasterization
+      sealPng = await sharp(imgBuffer).resize(400, 440).png().toBuffer();
+    } else {
+      // PNG/JPEG: resize to consistent dimensions
+      sealPng = await sharp(imgBuffer).resize(400, 440, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 0 } }).png().toBuffer();
+    }
   } catch {
-    // Fallback: try loading from CDN
-    const cdnUrls: Record<SealLabelStatus, string> = {
-      verified:
-        "https://d2xsxph8kpxj0f.cloudfront.net/310519663310227526/kgkV5LdecSJ3HqPv7WFR7a/seal-verified_2d6f9454.svg",
-      in_progress:
-        "https://d2xsxph8kpxj0f.cloudfront.net/310519663310227526/kgkV5LdecSJ3HqPv7WFR7a/seal-in-progress_12797c74.svg",
-      not_verified:
-        "https://d2xsxph8kpxj0f.cloudfront.net/310519663310227526/kgkV5LdecSJ3HqPv7WFR7a/seal-not-verified_70d2c824.svg",
-    };
-    const res = await fetch(cdnUrls[status]);
-    const svgBuffer = Buffer.from(await res.arrayBuffer());
-    sealPng = await sharp(svgBuffer).resize(400, 440).png().toBuffer();
+    // 2. Local SVG fallback
+    try {
+      const svgPath = SVG_PATHS[status];
+      const svgBuffer = fs.readFileSync(svgPath);
+      sealPng = await sharp(svgBuffer).resize(400, 440).png().toBuffer();
+    } catch {
+      // 3. CDN PNG fallback
+      const cdnUrls: Record<SealLabelStatus, string> = {
+        verified:
+          "https://d2xsxph8kpxj0f.cloudfront.net/310519663310227526/kgkV5LdecSJ3HqPv7WFR7a/seal-verified_75b748c3.png",
+        in_progress:
+          "https://d2xsxph8kpxj0f.cloudfront.net/310519663310227526/kgkV5LdecSJ3HqPv7WFR7a/seal-in-progress_65b28caf.png",
+        not_verified:
+          "https://d2xsxph8kpxj0f.cloudfront.net/310519663310227526/kgkV5LdecSJ3HqPv7WFR7a/seal-not-verified_119c8334.png",
+      };
+      const fallbackRes = await fetch(cdnUrls[status]);
+      const fallbackBuf = Buffer.from(await fallbackRes.arrayBuffer());
+      sealPng = await sharp(fallbackBuf).resize(400, 440, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 0 } }).png().toBuffer();
+    }
   }
 
   return new Promise((resolve, reject) => {

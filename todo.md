@@ -330,3 +330,12 @@
 - [x] QR-Code-Platzhalter ohne Logo-Overlay (sauber lesbar)
 - [x] Embed-Widget-Code nutzt CDN-SVG-URL
 - [x] 160 Tests grün, 0 TypeScript-Fehler
+
+## Siegel-Grafik Upload-System
+- [x] Vorschau-Bug behoben (SVG hatte content-type: application/octet-stream → auf PNG umgestellt)
+- [x] DB-Tabelle seal_assets (status, url, fileKey, tenantId, uploadedByUserId)
+- [x] S3-Upload-Endpoint für Siegel-Grafiken (Admin/Compliance Manager only)
+- [x] Upload-UI in Einstellungen → Siegel-Tab: pro Status Grafik hochladen/ersetzen/zurücksetzen
+- [x] SealPreview lädt aktuelle Grafik aus DB via trpc.sealAssets.getActive (Fallback auf CDN-PNG)
+- [x] PDF-Generator lädt aktuelle Grafik aus DB via getActiveSealUrl (3-stufiger Fallback)
+- [x] 160 Tests grün, 0 TypeScript-Fehler

@@ -1,4 +1,5 @@
 import { SealPreview } from "@/components/SealPreview";
+import { SealAssetUpload } from "@/components/SealAssetUpload";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -585,6 +586,22 @@ export default function AdminSettings() {
 
         {/* ── Siegel-Einstellungen ── */}
         <TabsContent value="seal" className="space-y-4 mt-4">
+          {/* Siegel-Grafiken Upload */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Shield className="h-4 w-4" />
+                Siegel-Grafiken verwalten
+              </CardTitle>
+              <CardDescription>
+                Laden Sie eigene Grafiken für jeden Prüfstatus hoch. Die Grafiken werden in der Vorschau, im PDF-Export und im Einbettungscode verwendet. Mit „Standard wiederherstellen“ kehren Sie zur Original-Grafik zurück.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <SealAssetUpload />
+            </CardContent>
+          </Card>
+
           {/* Siegel-Vorschau */}
           <Card>
             <CardHeader>

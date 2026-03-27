@@ -17,7 +17,7 @@ import { templatesRouter } from "./routers/templates";
 import { componentsRouter } from "./routers/components";
 import { bunnydocRouter } from "./routers/bunnydoc";
 import { tenantRouter } from "./routers/tenant";
-
+import { sealAssetsRouter } from "./routers/sealAssets";
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -44,6 +44,7 @@ export const appRouter = router({
   components: componentsRouter,
   bunnydoc: bunnydocRouter,
   tenant: tenantRouter,
+  sealAssets: sealAssetsRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -2,17 +2,18 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
 
 type SealStatus = "verified" | "in_progress" | "not_verified";
 
-// CDN-URLs der professionellen SVG-Siegel-Grafiken
-const SEAL_IMAGES: Record<SealStatus, string> = {
+// CDN-Fallback-URLs (PNG, korrekte Content-Type)
+const DEFAULT_SEAL_IMAGES: Record<SealStatus, string> = {
   verified:
-    "https://d2xsxph8kpxj0f.cloudfront.net/310519663310227526/kgkV5LdecSJ3HqPv7WFR7a/seal-verified_2d6f9454.svg",
+    "https://d2xsxph8kpxj0f.cloudfront.net/310519663310227526/kgkV5LdecSJ3HqPv7WFR7a/seal-verified_75b748c3.png",
   in_progress:
-    "https://d2xsxph8kpxj0f.cloudfront.net/310519663310227526/kgkV5LdecSJ3HqPv7WFR7a/seal-in-progress_12797c74.svg",
+    "https://d2xsxph8kpxj0f.cloudfront.net/310519663310227526/kgkV5LdecSJ3HqPv7WFR7a/seal-in-progress_65b28caf.png",
   not_verified:
-    "https://d2xsxph8kpxj0f.cloudfront.net/310519663310227526/kgkV5LdecSJ3HqPv7WFR7a/seal-not-verified_70d2c824.svg",
+    "https://d2xsxph8kpxj0f.cloudfront.net/310519663310227526/kgkV5LdecSJ3HqPv7WFR7a/seal-not-verified_119c8334.png",
 };
 
 const STATUS_CONFIG: Record<SealStatus, { label: string; borderColor: string; accentColor: string }> = {
@@ -40,6 +41,10 @@ export function SealPreview({
   const [downloading, setDownloading] = useState(false);
   const [copied, setCopied] = useState(false);
   const cfg = STATUS_CONFIG[status];
+
+  // Load active seal URLs (custom upload or CDN default)
+  const { data: activeSealUrls } = trpc.sealAssets.getActive.useQuery();
+  const sealImages: Record<SealStatus, string> = activeSealUrls ?? DEFAULT_SEAL_IMAGES;
 
   async function handleDownload() {
     setDownloading(true);
@@ -70,7 +75,7 @@ export function SealPreview({
 
   function getEmbedCode() {
     const publicUrl = `${window.location.origin}/product/${productId ?? "PRODUCT_ID"}`;
-    const sealImgUrl = SEAL_IMAGES[status];
+    const sealImgUrl = sealImages[status];
     const qrSrc = qrCodeUrl ?? "";
     return `<!-- Swiss Product Seal Widget -->
 <div style="display:inline-block;font-family:'Helvetica Neue',Arial,sans-serif;text-align:center;width:180px;border:2px solid ${cfg.borderColor};border-radius:14px;padding:16px 14px 14px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
@@ -146,9 +151,9 @@ ${qrSrc ? `  <img src="${qrSrc}" alt="QR-Code" width="100" height="100" style="d
               fontFamily: "'Helvetica Neue', Arial, sans-serif",
             }}
           >
-            {/* Seal graphic – CDN SVG */}
+            {/* Seal graphic – CDN PNG (or custom uploaded) */}
             <img
-              src={SEAL_IMAGES[status]}
+              src={sealImages[status]}
               alt={`Swiss Product Seal – ${cfg.label}`}
               width={130}
               height={143}

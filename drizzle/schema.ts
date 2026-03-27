@@ -545,3 +545,17 @@ export const signatureRequests = mysqlTable("signature_requests", {
 });
 export type SignatureRequest = typeof signatureRequests.$inferSelect;
 export type InsertSignatureRequest = typeof signatureRequests.$inferInsert;
+
+// ─── Seal Assets (custom seal graphics per status) ───────────────────────────
+export const sealAssets = mysqlTable("seal_assets", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").notNull(),
+  status: mysqlEnum("status", ["verified", "in_progress", "not_verified"]).notNull(),
+  url: text("url").notNull(),          // S3/CDN URL of the uploaded image
+  fileKey: varchar("fileKey", { length: 512 }).notNull(), // S3 key for deletion
+  originalName: varchar("originalName", { length: 255 }), // original filename
+  uploadedByUserId: int("uploadedByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type SealAsset = typeof sealAssets.$inferSelect;
+export type InsertSealAsset = typeof sealAssets.$inferInsert;
