@@ -622,6 +622,18 @@ function SealTab({
   const supplierConfirmedAt = isSupplier ? (productQuery.data as any)?.supplierConfirmedAt : null;
   const supplierConfirmedBy = isSupplier ? (productQuery.data as any)?.supplierConfirmedBy : null;
 
+  // Missing requirements checklist (only for supplier)
+  const requirementsQuery = trpc.products.getMissingRequirements.useQuery(
+    { productId },
+    { enabled: isSupplier }
+  );
+  const allRequirements = requirementsQuery.data ?? [];
+  const mandatoryReqs = allRequirements.filter((r: any) => r.required);
+  const missingMandatory = mandatoryReqs.filter(
+    (r: any) => r.status === "missing" || r.status === "rejected"
+  );
+  const allMandatoryMet = mandatoryReqs.length === 0 || missingMandatory.length === 0;
+
   const confirmMutation = trpc.products.supplierConfirm.useMutation({
     onSuccess: (data) => {
       toast.success("Bestätigung gespeichert", {
@@ -701,11 +713,108 @@ function SealTab({
                 </ul>
               </div>
             )}
+            {/* Mandatory requirements checklist */}
+            {!supplierConfirmedAt && mandatoryReqs.length > 0 && (
+              <div className="border rounded-lg overflow-hidden">
+                <div className="bg-muted/50 px-3 py-2 flex items-center justify-between">
+                  <span className="text-xs font-semibold text-foreground">
+                    Pflichtdokumente
+                  </span>
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                    allMandatoryMet
+                      ? "bg-green-100 text-green-700"
+                      : "bg-red-100 text-red-700"
+                  }`}>
+                    {mandatoryReqs.length - missingMandatory.length} / {mandatoryReqs.length} vollständig
+                  </span>
+                </div>
+                <ul className="divide-y">
+                  {mandatoryReqs.map((req: any) => {
+                    const isMet = req.status !== "missing" && req.status !== "rejected";
+                    const label = ({
+                      test_report: "Prüfbericht",
+                      declaration_of_conformity: "Konformitätserklärung",
+                      manual: "Bedienungsanleitung",
+                      certificate: "Zertifikat",
+                      product_image: "Produktbild",
+                      safety_image: "Sicherheitsbild",
+                      regulatory_document: "Regulatorisches Dokument",
+                      safety_text: "Sicherheitstext",
+                      warning_text: "Warnhinweis",
+                      age_grading: "Altersangabe",
+                      material_information: "Materialangaben",
+                      usage_restrictions: "Verwendungseinschränkungen",
+                      safety_instructions: "Sicherheitshinweise",
+                      additional_notes: "Zusätzliche Hinweise",
+                    } as Record<string, string>)[req.requirementType] ?? req.requirementType;
+                    const statusLabel = ({
+                      missing: "Fehlend",
+                      provided: "Hochgeladen",
+                      under_review: "In Prüfung",
+                      approved: "Genehmigt",
+                      rejected: "Abgelehnt",
+                    } as Record<string, string>)[req.status] ?? req.status;
+                    return (
+                      <li key={req.id} className="flex items-center gap-3 px-3 py-2 text-xs">
+                        {isMet ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
+                        )}
+                        <span className={`flex-1 ${isMet ? "text-foreground" : "text-red-700 font-medium"}`}>
+                          {label}
+                        </span>
+                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                          isMet
+                            ? "bg-green-100 text-green-700"
+                            : "bg-red-100 text-red-600"
+                        }`}>
+                          {statusLabel}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+                {!allMandatoryMet && (
+                  <div className="bg-red-50 border-t border-red-100 px-3 py-2">
+                    <p className="text-xs text-red-700">
+                      Bitte laden Sie alle fehlenden Pflichtdokumente im{" "}
+                      <button
+                        className="underline font-medium hover:text-red-900"
+                        onClick={() => {
+                          // Navigate to documents tab via parent
+                          const tabTrigger = document.querySelector('[data-value="documents"]') as HTMLElement;
+                          tabTrigger?.click();
+                        }}
+                      >
+                        Dokumente-Tab
+                      </button>{" "}
+                      hoch, bevor Sie die Vollständigkeit bestätigen.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
             <Button
               size="sm"
               variant={supplierConfirmedAt ? "outline" : "default"}
-              className={supplierConfirmedAt ? "" : "bg-green-600 hover:bg-green-700 text-white"}
-              onClick={() => confirmMutation.mutate({ productId })}
+              className={`${
+                supplierConfirmedAt
+                  ? ""
+                  : allMandatoryMet
+                  ? "bg-green-600 hover:bg-green-700 text-white"
+                  : "opacity-50 cursor-not-allowed"
+              }`}
+              onClick={() => {
+                if (!allMandatoryMet && !supplierConfirmedAt) {
+                  toast.warning("Pflichtdokumente fehlen", {
+                    description: `${missingMandatory.length} Pflichtdokument(e) fehlen noch. Bitte laden Sie diese zuerst hoch.`,
+                  });
+                  return;
+                }
+                confirmMutation.mutate({ productId });
+              }}
               disabled={confirmMutation.isPending}
             >
               {confirmMutation.isPending ? (

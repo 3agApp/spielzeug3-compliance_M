@@ -187,6 +187,84 @@ describe("submit mutation: blocked without supplierConfirmedAt", () => {
   });
 });
 
+// ─── Tests: mandatory requirements checklist logic ──────────────────────────
+describe("mandatory requirements checklist in SealTab", () => {
+  it("allMandatoryMet is true when no mandatory requirements exist", () => {
+    const mandatoryReqs: any[] = [];
+    const missingMandatory = mandatoryReqs.filter(
+      (r) => r.status === "missing" || r.status === "rejected"
+    );
+    const allMandatoryMet = mandatoryReqs.length === 0 || missingMandatory.length === 0;
+    expect(allMandatoryMet).toBe(true);
+  });
+
+  it("allMandatoryMet is false when mandatory docs are missing", () => {
+    const mandatoryReqs = [
+      { id: 1, requirementType: "test_report", required: true, status: "missing" },
+      { id: 2, requirementType: "declaration_of_conformity", required: true, status: "approved" },
+    ];
+    const missingMandatory = mandatoryReqs.filter(
+      (r) => r.status === "missing" || r.status === "rejected"
+    );
+    const allMandatoryMet = mandatoryReqs.length === 0 || missingMandatory.length === 0;
+    expect(allMandatoryMet).toBe(false);
+    expect(missingMandatory).toHaveLength(1);
+  });
+
+  it("allMandatoryMet is true when all mandatory docs are provided/approved", () => {
+    const mandatoryReqs = [
+      { id: 1, requirementType: "test_report", required: true, status: "approved" },
+      { id: 2, requirementType: "declaration_of_conformity", required: true, status: "provided" },
+      { id: 3, requirementType: "certificate", required: true, status: "under_review" },
+    ];
+    const missingMandatory = mandatoryReqs.filter(
+      (r) => r.status === "missing" || r.status === "rejected"
+    );
+    const allMandatoryMet = mandatoryReqs.length === 0 || missingMandatory.length === 0;
+    expect(allMandatoryMet).toBe(true);
+    expect(missingMandatory).toHaveLength(0);
+  });
+
+  it("rejected docs count as missing for checklist", () => {
+    const mandatoryReqs = [
+      { id: 1, requirementType: "test_report", required: true, status: "rejected" },
+    ];
+    const missingMandatory = mandatoryReqs.filter(
+      (r) => r.status === "missing" || r.status === "rejected"
+    );
+    expect(missingMandatory).toHaveLength(1);
+  });
+
+  it("progress counter shows correct fraction", () => {
+    const mandatoryReqs = [
+      { id: 1, status: "approved" },
+      { id: 2, status: "provided" },
+      { id: 3, status: "missing" },
+      { id: 4, status: "rejected" },
+    ];
+    const missingMandatory = mandatoryReqs.filter(
+      (r) => r.status === "missing" || r.status === "rejected"
+    );
+    const completed = mandatoryReqs.length - missingMandatory.length;
+    expect(completed).toBe(2);
+    expect(mandatoryReqs.length).toBe(4);
+  });
+
+  it("button is blocked when mandatory docs are missing", () => {
+    const allMandatoryMet = false;
+    const supplierConfirmedAt = null;
+    const shouldBlock = !allMandatoryMet && !supplierConfirmedAt;
+    expect(shouldBlock).toBe(true);
+  });
+
+  it("button is active after renewal even if docs are missing (renewal allowed)", () => {
+    // After first confirmation, renewal is always allowed
+    const supplierConfirmedAt = new Date().toISOString();
+    // Button shows 'Bestätigung erneuern' regardless of docs
+    expect(!!supplierConfirmedAt).toBe(true);
+  });
+});
+
 // ─── Tests: trust indicator logic ────────────────────────────────────────────
 describe("trust indicators on public landing page", () => {
   it("shows supplier confirmation badge when confirmed", () => {

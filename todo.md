@@ -228,3 +228,11 @@
 - [x] Frontend: Klick auf gesperrten Button navigiert zum Siegel-Tab mit Toast-Hinweis
 - [x] Backend: submit-Mutation wirft PRECONDITION_FAILED wenn Supplier nicht bestätigt hat
 - [x] Tests für submit-Blockierung (5 neue Tests, 131 gesamt, alle grün)
+
+## Pflichtdokumenten-Checkliste im Siegel-Tab
+- [x] Backend: tRPC-Query products.getMissingRequirements bereits vorhanden, direkt genutzt
+- [x] Frontend: Checkliste im Siegel-Tab (grüner Haken = vorhanden, rotes X = fehlend)
+- [x] Frontend: Bestätigungs-Button gesperrt (Toast + kein Mutate) wenn Pflichtdoks fehlen
+- [x] Frontend: Fortschrittsanzeige "X von Y vollständig" im Checklisten-Header
+- [x] Frontend: Hinweis-Link zum Dokumente-Tab wenn Pflichtdoks fehlen
+- [x] Tests für Checklisten-Logik (7 neue Tests, 138 gesamt, alle grün)
