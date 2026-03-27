@@ -1,31 +1,38 @@
+/**
+ * server/routers/products.ts
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Thin tRPC router for the Products domain.
+ *
+ * Responsibilities of this file:
+ * - Input validation (Zod schemas)
+ * - Calling the appropriate service method
+ * - Converting AppError → TRPCError via toTRPCError()
+ *
+ * Business logic lives in: server/domains/products/productService.ts
+ */
+
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import {
-  computeCompletenessScore,
-  createApprovalHistoryEntry,
-  createAuditLog,
   createMissingRequirement,
-  createNotification,
-  createProduct,
-  getAllProducts,
   getDb,
   getMissingRequirementsByProduct,
   getProductById,
-  getProductsBySupplier,
-  getSystemSetting,
   updateMissingRequirement,
+  createAuditLog,
+  getApprovalHistory,
+  getCommentsByProduct,
   updateProduct,
+  getInternalDashboardStats,
+  getSupplierDashboardStats,
 } from "../db";
-import { ensureProductPublicUuid, getTenantById } from "../tenantDb";
 import { protectedProcedure, router } from "../_core/trpc";
-
-function requireRole(role: string, allowed: string[]) {
-  if (!allowed.includes(role)) {
-    throw new TRPCError({ code: "FORBIDDEN", message: "Insufficient permissions" });
-  }
-}
+import { productService } from "../domains/products/productService";
+import { toTRPCError } from "../shared/errors";
 
 export const productsRouter = router({
+  // ─── Queries ───────────────────────────────────────────────────────────────
+
   list: protectedProcedure
     .input(
       z.object({
@@ -36,406 +43,42 @@ export const productsRouter = router({
       }).optional()
     )
     .query(async ({ ctx, input }) => {
-      const role = ctx.user.complianceRole ?? "internal_employee";
-      if (role === "supplier") {
-        if (!ctx.user.supplierId) return [];
-        return getProductsBySupplier(ctx.user.supplierId);
+      try {
+        return await productService.list(ctx.user, input ?? {});
+      } catch (err) {
+        throw toTRPCError(err);
       }
-      return getAllProducts(input ?? {});
     }),
 
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ ctx, input }) => {
-      const product = await getProductById(input.id);
-      if (!product) throw new TRPCError({ code: "NOT_FOUND" });
-      const role = ctx.user.complianceRole ?? "internal_employee";
-      if (role === "supplier" && product.supplierId !== ctx.user.supplierId) {
-        throw new TRPCError({ code: "FORBIDDEN" });
+      try {
+        return await productService.getById(ctx.user, input.id);
+      } catch (err) {
+        throw toTRPCError(err);
       }
-      return product;
     }),
 
   getMissingRequirements: protectedProcedure
     .input(z.object({ productId: z.number() }))
     .query(async ({ ctx, input }) => {
-      const product = await getProductById(input.productId);
-      if (!product) throw new TRPCError({ code: "NOT_FOUND" });
-      const role = ctx.user.complianceRole ?? "internal_employee";
-      if (role === "supplier" && product.supplierId !== ctx.user.supplierId) {
-        throw new TRPCError({ code: "FORBIDDEN" });
-      }
-      return getMissingRequirementsByProduct(input.productId);
-    }),
-
-  create: protectedProcedure
-    .input(
-      z.object({
-        productName: z.string().min(1),
-        supplierId: z.number(),
-        internalArticleNumber: z.string().optional(),
-        supplierArticleNumber: z.string().optional(),
-        orderNumber: z.string().optional(),
-        ean: z.string().optional(),
-        brand: z.string().optional(),
-        imageUrl: z.string().optional(),
-        kontorId: z.string().optional(),
-        categoryId: z.number().optional(),
-        templateId: z.number().optional(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      requireRole(ctx.user.complianceRole ?? "", [
-        "administrator",
-        "compliance_manager",
-        "internal_employee",
-      ]);
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-
-      // Create the product
-      await createProduct({ ...input, status: "open" });
-
-      // If a template was selected, auto-apply its required documents as missing requirements
-      if (input.templateId) {
-        const { productTemplates } = await import("../../drizzle/schema");
-        const { eq } = await import("drizzle-orm");
-        const [template] = await db
-          .select()
-          .from(productTemplates)
-          .where(eq(productTemplates.id, input.templateId))
-          .limit(1);
-        if (template) {
-          // Get the newly created product to get its ID
-          const { products: productsTable } = await import("../../drizzle/schema");
-          const { desc } = await import("drizzle-orm");
-          const [newProduct] = await db
-            .select()
-            .from(productsTable)
-            .where(eq(productsTable.supplierId, input.supplierId))
-            .orderBy(desc(productsTable.createdAt))
-            .limit(1);
-          if (newProduct) {
-            const requiredDocs = (template.requiredDocuments as string[]) ?? [];
-            const optionalDocs = (template.optionalDocuments as string[]) ?? [];
-            const validTypes = [
-              "test_report", "declaration_of_conformity", "manual", "certificate",
-              "product_image", "safety_image", "regulatory_document", "safety_text",
-              "warning_text", "age_grading", "material_information", "usage_restrictions",
-              "safety_instructions", "additional_notes",
-            ] as const;
-            for (const doc of requiredDocs) {
-              if (validTypes.includes(doc as any)) {
-                await createMissingRequirement({
-                  productId: newProduct.id,
-                  requirementType: doc as any,
-                  required: true,
-                  isMissing: true,
-                  status: "missing",
-                  sourceSystem: `template:${template.id}`,
-                });
-              }
-            }
-            for (const doc of optionalDocs) {
-              if (validTypes.includes(doc as any)) {
-                await createMissingRequirement({
-                  productId: newProduct.id,
-                  requirementType: doc as any,
-                  required: false,
-                  isMissing: true,
-                  status: "missing",
-                  sourceSystem: `template:${template.id}`,
-                });
-              }
-            }
-          }
-        }
-      }
-
-      await createAuditLog({
-        entityType: "product",
-        action: "created",
-        performedByUserId: ctx.user.id,
-        payloadSnapshot: input as any,
-      });
-      return { success: true };
-    }),
-
-  update: protectedProcedure
-    .input(
-      z.object({
-        id: z.number(),
-        productName: z.string().optional(),
-        internalArticleNumber: z.string().optional(),
-        supplierArticleNumber: z.string().optional(),
-        orderNumber: z.string().optional(),
-        ean: z.string().optional(),
-        brand: z.string().optional(),
-        imageUrl: z.string().optional(),
-        assignedInternalUserId: z.number().optional(),
-        assignedSupplierUserId: z.number().optional(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      requireRole(ctx.user.complianceRole ?? "", [
-        "administrator",
-        "compliance_manager",
-        "internal_employee",
-      ]);
-      const { id, ...data } = input;
-      await updateProduct(id, data);
-      await createAuditLog({
-        entityType: "product",
-        entityId: id,
-        action: "updated",
-        performedByUserId: ctx.user.id,
-        payloadSnapshot: data as any,
-      });
-      return { success: true };
-    }),
-
-  addMissingRequirement: protectedProcedure
-    .input(
-      z.object({
-        productId: z.number(),
-        requirementType: z.enum([
-          "test_report",
-          "declaration_of_conformity",
-          "manual",
-          "certificate",
-          "product_image",
-          "safety_image",
-          "regulatory_document",
-          "safety_text",
-          "warning_text",
-          "age_grading",
-          "material_information",
-          "usage_restrictions",
-          "safety_instructions",
-          "additional_notes",
-        ]),
-        note: z.string().optional(),
-        sourceSystem: z.string().optional(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      requireRole(ctx.user.complianceRole ?? "", [
-        "administrator",
-        "compliance_manager",
-        "internal_employee",
-      ]);
-      await createMissingRequirement({ ...input, required: true, isMissing: true, status: "missing" });
-      return { success: true };
-    }),
-
-  updateRequirementStatus: protectedProcedure
-    .input(
-      z.object({
-        requirementId: z.number(),
-        status: z.enum(["missing", "provided", "under_review", "approved", "rejected"]),
-        note: z.string().optional(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      await updateMissingRequirement(input.requirementId, {
-        status: input.status,
-        isMissing: input.status === "missing",
-        note: input.note,
-      });
-      return { success: true };
-    }),
-
-  // ─── Workflow Actions ──────────────────────────────────────────────────────
-  submit: protectedProcedure
-    .input(z.object({ productId: z.number(), note: z.string().optional() }))
-    .mutation(async ({ ctx, input }) => {
-      const product = await getProductById(input.productId);
-      if (!product) throw new TRPCError({ code: "NOT_FOUND" });
-      const role = ctx.user.complianceRole ?? "internal_employee";
-      if (role === "supplier" && product.supplierId !== ctx.user.supplierId) {
-        throw new TRPCError({ code: "FORBIDDEN" });
-      }
-      // Supplier must confirm completeness before submitting
-      if (role === "supplier" && !(product as any).supplierConfirmedAt) {
-        throw new TRPCError({
-          code: "PRECONDITION_FAILED",
-          message: "Bitte bestätigen Sie zuerst die Vollständigkeit der Unterlagen im Siegel-Tab, bevor Sie das Produkt einreichen.",
-        });
-      }
-      const fromStatus = product.status;
-      await updateProduct(input.productId, { status: "submitted", submittedAt: new Date() });
-      await createApprovalHistoryEntry({
-        productId: input.productId,
-        action: "submitted",
-        fromStatus,
-        toStatus: "submitted",
-        performedByUserId: ctx.user.id,
-        note: input.note,
-      });
-      await createAuditLog({
-        entityType: "product",
-        entityId: input.productId,
-        action: "submitted",
-        performedByUserId: ctx.user.id,
-      });
-      return { success: true };
-    }),
-
-  approve: protectedProcedure
-    .input(z.object({ productId: z.number(), note: z.string().optional() }))
-    .mutation(async ({ ctx, input }) => {
-      requireRole(ctx.user.complianceRole ?? "", ["compliance_manager", "administrator"]);
-      const product = await getProductById(input.productId);
-      if (!product) throw new TRPCError({ code: "NOT_FOUND" });
-      const score = await computeCompletenessScore(input.productId);
-      await updateProduct(input.productId, {
-        status: "approved",
-        approvedAt: new Date(),
-        completenessScore: String(score) as any,
-      });
-      await createApprovalHistoryEntry({
-        productId: input.productId,
-        action: "approved",
-        fromStatus: product.status,
-        toStatus: "approved",
-        performedByUserId: ctx.user.id,
-        note: input.note,
-      });
-      await createAuditLog({
-        entityType: "product",
-        entityId: input.productId,
-        action: "approved",
-        performedByUserId: ctx.user.id,
-      });
-      // Notify supplier users
-      if (product.assignedSupplierUserId) {
-        await createNotification({
-          userId: product.assignedSupplierUserId,
-          type: "approved",
-          title: `Produkt genehmigt: ${product.productName}`,
-          message: input.note ?? "Ihr Produkt wurde genehmigt.",
-          relatedProductId: input.productId,
-        });
-      }
-      // Auto-activate seal if SEAL_AUTO_ACTIVATE is enabled (default: true)
-      let sealActivated = false;
       try {
-        const autoActivateSetting = await getSystemSetting("SEAL_AUTO_ACTIVATE");
-        const settingValue = autoActivateSetting?.settingValue ?? null;
-        const shouldActivate =
-          settingValue === null ||
-          settingValue === "true" ||
-          settingValue === "1";
-        if (shouldActivate) {
-          const tenantId = ctx.user.tenantId ?? 1;
-          const tenant = await getTenantById(tenantId);
-          if (tenant) {
-            const modules = (tenant.modulesEnabled as string[]) ?? [];
-            const hasSeal = modules.includes("seal") || ctx.user.complianceRole === "super_admin";
-            if (hasSeal) {
-              await ensureProductPublicUuid(input.productId, tenant.slug);
-              sealActivated = true;
-            }
-          }
+        const product = await getProductById(input.productId);
+        if (!product) throw new TRPCError({ code: "NOT_FOUND" });
+        const role = ctx.user.complianceRole ?? "internal_employee";
+        if (role === "supplier" && product.supplierId !== ctx.user.supplierId) {
+          throw new TRPCError({ code: "FORBIDDEN" });
         }
-      } catch {
-        // Seal activation is best-effort – do not fail the approval
+        return getMissingRequirementsByProduct(input.productId);
+      } catch (err) {
+        throw toTRPCError(err);
       }
-      return { success: true, sealActivated };
-    }),
-
-  reject: protectedProcedure
-    .input(z.object({ productId: z.number(), note: z.string().min(1) }))
-    .mutation(async ({ ctx, input }) => {
-      requireRole(ctx.user.complianceRole ?? "", ["compliance_manager", "administrator"]);
-      const product = await getProductById(input.productId);
-      if (!product) throw new TRPCError({ code: "NOT_FOUND" });
-      await updateProduct(input.productId, { status: "rejected", rejectedAt: new Date() });
-      await createApprovalHistoryEntry({
-        productId: input.productId,
-        action: "rejected",
-        fromStatus: product.status,
-        toStatus: "rejected",
-        performedByUserId: ctx.user.id,
-        note: input.note,
-      });
-      await createAuditLog({
-        entityType: "product",
-        entityId: input.productId,
-        action: "rejected",
-        performedByUserId: ctx.user.id,
-      });
-      if (product.assignedSupplierUserId) {
-        await createNotification({
-          userId: product.assignedSupplierUserId,
-          type: "rejected",
-          title: `Produkt abgelehnt: ${product.productName}`,
-          message: input.note,
-          relatedProductId: input.productId,
-        });
-      }
-      return { success: true };
-    }),
-
-  requestClarification: protectedProcedure
-    .input(z.object({ productId: z.number(), note: z.string().min(1) }))
-    .mutation(async ({ ctx, input }) => {
-      requireRole(ctx.user.complianceRole ?? "", [
-        "compliance_manager",
-        "administrator",
-        "internal_employee",
-      ]);
-      const product = await getProductById(input.productId);
-      if (!product) throw new TRPCError({ code: "NOT_FOUND" });
-      await updateProduct(input.productId, { status: "clarification_needed" });
-      await createApprovalHistoryEntry({
-        productId: input.productId,
-        action: "clarification_requested",
-        fromStatus: product.status,
-        toStatus: "clarification_needed",
-        performedByUserId: ctx.user.id,
-        note: input.note,
-      });
-      await createAuditLog({
-        entityType: "product",
-        entityId: input.productId,
-        action: "clarification_requested",
-        performedByUserId: ctx.user.id,
-      });
-      if (product.assignedSupplierUserId) {
-        await createNotification({
-          userId: product.assignedSupplierUserId,
-          type: "clarification_requested",
-          title: `Rückfrage zu: ${product.productName}`,
-          message: input.note,
-          relatedProductId: input.productId,
-        });
-      }
-      return { success: true };
-    }),
-
-  markComplete: protectedProcedure
-    .input(z.object({ productId: z.number(), note: z.string().optional() }))
-    .mutation(async ({ ctx, input }) => {
-      requireRole(ctx.user.complianceRole ?? "", ["compliance_manager", "administrator"]);
-      const product = await getProductById(input.productId);
-      if (!product) throw new TRPCError({ code: "NOT_FOUND" });
-      await updateProduct(input.productId, { status: "completed", completedAt: new Date() });
-      await createApprovalHistoryEntry({
-        productId: input.productId,
-        action: "completed",
-        fromStatus: product.status,
-        toStatus: "completed",
-        performedByUserId: ctx.user.id,
-        note: input.note,
-      });
-      return { success: true };
     }),
 
   getTimeline: protectedProcedure
     .input(z.object({ productId: z.number() }))
     .query(async ({ ctx, input }) => {
-      const { getApprovalHistory, getCommentsByProduct } = await import("../db");
       const role = ctx.user.complianceRole ?? "internal_employee";
       const isInternal = role !== "supplier";
       const [history, comments] = await Promise.all([
@@ -443,50 +86,6 @@ export const productsRouter = router({
         getCommentsByProduct(input.productId, isInternal),
       ]);
       return { history, comments };
-    }),
-
-  updateBatchInfo: protectedProcedure
-    .input(
-      z.object({
-        productId: z.number(),
-        batchNumber: z.string().max(128).optional(),
-        productionDate: z.string().optional(),
-        expiryDate: z.string().optional(),
-        importerName: z.string().max(255).optional(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      requireRole(ctx.user.complianceRole ?? "", [
-        "compliance_manager",
-        "administrator",
-        "super_admin",
-        "internal_employee",
-      ]);
-      const product = await getProductById(input.productId);
-      if (!product) throw new TRPCError({ code: "NOT_FOUND" });
-
-      const existingBatch = (product.batchInfo ?? {}) as Record<string, unknown>;
-      const batchInfo = {
-        ...existingBatch,
-        batchNumber: input.batchNumber !== undefined ? input.batchNumber : (existingBatch.batchNumber ?? null),
-        productionDate: input.productionDate !== undefined ? input.productionDate : (existingBatch.productionDate ?? null),
-        expiryDate: input.expiryDate !== undefined ? input.expiryDate : (existingBatch.expiryDate ?? null),
-      };
-
-      await updateProduct(input.productId, {
-        batchInfo,
-        ...(input.importerName !== undefined ? { importerName: input.importerName } : {}),
-      });
-
-      await createAuditLog({
-        entityType: "product",
-        entityId: input.productId,
-        action: "updated",
-        performedByUserId: ctx.user.id,
-        payloadSnapshot: { batchInfo } as any,
-      });
-
-      return { success: true };
     }),
 
   getBatchInfo: protectedProcedure
@@ -515,46 +114,290 @@ export const productsRouter = router({
     const role = ctx.user.complianceRole ?? "internal_employee";
     if (role === "supplier") {
       if (!ctx.user.supplierId) return {};
-      const { getSupplierDashboardStats } = await import("../db");
       return getSupplierDashboardStats(ctx.user.supplierId);
     }
-    const { getInternalDashboardStats } = await import("../db");
     return getInternalDashboardStats();
   }),
 
-  // ── Supplier Declaration of Completeness ──────────────────────────────────
-  supplierConfirm: protectedProcedure
-    .input(z.object({ productId: z.number().int().positive() }))
+  // ─── Mutations ─────────────────────────────────────────────────────────────
+
+  create: protectedProcedure
+    .input(
+      z.object({
+        productName: z.string().min(1),
+        supplierId: z.number(),
+        internalArticleNumber: z.string().optional(),
+        supplierArticleNumber: z.string().optional(),
+        orderNumber: z.string().optional(),
+        ean: z.string().optional(),
+        brand: z.string().optional(),
+        imageUrl: z.string().optional(),
+        kontorId: z.string().optional(),
+        categoryId: z.number().optional(),
+        templateId: z.number().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Role check delegated to service
+      try {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+        // Service handles role check + audit log
+        await productService.create(ctx.user, {
+          productName: input.productName,
+          supplierId: input.supplierId,
+          internalArticleNumber: input.internalArticleNumber,
+          supplierArticleNumber: input.supplierArticleNumber,
+          orderNumber: input.orderNumber,
+          ean: input.ean,
+          brand: input.brand,
+          tenantId: ctx.user.tenantId ?? 1,
+        });
+
+        // Template-specific logic: apply required documents
+        // (kept here as it requires direct DB access and is create-only)
+        if (input.templateId) {
+          const { productTemplates, products: productsTable } = await import("../../drizzle/schema");
+          const { eq, desc } = await import("drizzle-orm");
+          const [template] = await db
+            .select()
+            .from(productTemplates)
+            .where(eq(productTemplates.id, input.templateId))
+            .limit(1);
+          if (template) {
+            const [newProduct] = await db
+              .select()
+              .from(productsTable)
+              .where(eq(productsTable.supplierId, input.supplierId))
+              .orderBy(desc(productsTable.createdAt))
+              .limit(1);
+            if (newProduct) {
+              const validTypes = [
+                "test_report", "declaration_of_conformity", "manual", "certificate",
+                "product_image", "safety_image", "regulatory_document", "safety_text",
+                "warning_text", "age_grading", "material_information", "usage_restrictions",
+                "safety_instructions", "additional_notes",
+              ] as const;
+              for (const doc of (template.requiredDocuments as string[]) ?? []) {
+                if (validTypes.includes(doc as any)) {
+                  await createMissingRequirement({
+                    productId: newProduct.id,
+                    requirementType: doc as any,
+                    required: true,
+                    isMissing: true,
+                    status: "missing",
+                    sourceSystem: `template:${template.id}`,
+                  });
+                }
+              }
+              for (const doc of (template.optionalDocuments as string[]) ?? []) {
+                if (validTypes.includes(doc as any)) {
+                  await createMissingRequirement({
+                    productId: newProduct.id,
+                    requirementType: doc as any,
+                    required: false,
+                    isMissing: true,
+                    status: "missing",
+                    sourceSystem: `template:${template.id}`,
+                  });
+                }
+              }
+            }
+          }
+        }
+        return { success: true };
+      } catch (err) {
+        throw toTRPCError(err);
+      }
+    }),
+
+  update: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        productName: z.string().optional(),
+        internalArticleNumber: z.string().optional(),
+        supplierArticleNumber: z.string().optional(),
+        orderNumber: z.string().optional(),
+        ean: z.string().optional(),
+        brand: z.string().optional(),
+        imageUrl: z.string().optional(),
+        assignedInternalUserId: z.number().optional(),
+        assignedSupplierUserId: z.number().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const { id, ...data } = input;
+        await productService.update(ctx.user as any, { productId: id, ...data });
+        return { success: true };
+      } catch (err) {
+        throw toTRPCError(err);
+      }
+    }),
+
+  addMissingRequirement: protectedProcedure
+    .input(
+      z.object({
+        productId: z.number(),
+        requirementType: z.enum([
+          "test_report", "declaration_of_conformity", "manual", "certificate",
+          "product_image", "safety_image", "regulatory_document", "safety_text",
+          "warning_text", "age_grading", "material_information", "usage_restrictions",
+          "safety_instructions", "additional_notes",
+        ]),
+        note: z.string().optional(),
+        sourceSystem: z.string().optional(),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       const role = ctx.user.complianceRole ?? "internal_employee";
-      if (role !== "supplier") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Nur Lieferanten können die Vollständigkeit bestätigen" });
-      }
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      const product = await getProductById(input.productId);
-      if (!product) throw new TRPCError({ code: "NOT_FOUND" });
-      if (product.supplierId !== ctx.user.supplierId) {
+      if (!["administrator", "compliance_manager", "internal_employee"].includes(role)) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
-      const { products: productsTable } = await import("../../drizzle/schema");
-      const { eq } = await import("drizzle-orm");
-      const confirmedAt = new Date();
-      const confirmedBy = ctx.user.name ?? ctx.user.email ?? "Lieferant";
-      await db
-        .update(productsTable)
-        .set({
-          supplierConfirmedAt: confirmedAt,
-          supplierConfirmedBy: confirmedBy,
-        })
-        .where(eq(productsTable.id, input.productId));
+      await createMissingRequirement({ ...input, required: true, isMissing: true, status: "missing" });
+      return { success: true };
+    }),
+
+  updateRequirementStatus: protectedProcedure
+    .input(
+      z.object({
+        requirementId: z.number(),
+        status: z.enum(["missing", "provided", "under_review", "approved", "rejected"]),
+        note: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      await updateMissingRequirement(input.requirementId, {
+        status: input.status,
+        isMissing: input.status === "missing",
+        note: input.note,
+      });
+      return { success: true };
+    }),
+
+  updateBatchInfo: protectedProcedure
+    .input(
+      z.object({
+        productId: z.number(),
+        batchNumber: z.string().max(128).optional(),
+        productionDate: z.string().optional(),
+        expiryDate: z.string().optional(),
+        importerName: z.string().max(255).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const role = ctx.user.complianceRole ?? "internal_employee";
+      if (!["compliance_manager", "administrator", "super_admin", "internal_employee"].includes(role)) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const product = await getProductById(input.productId);
+      if (!product) throw new TRPCError({ code: "NOT_FOUND" });
+
+      const existingBatch = (product.batchInfo ?? {}) as Record<string, unknown>;
+      const batchInfo = {
+        ...existingBatch,
+        batchNumber: input.batchNumber !== undefined ? input.batchNumber : (existingBatch.batchNumber ?? null),
+        productionDate: input.productionDate !== undefined ? input.productionDate : (existingBatch.productionDate ?? null),
+        expiryDate: input.expiryDate !== undefined ? input.expiryDate : (existingBatch.expiryDate ?? null),
+      };
+      await updateProduct(input.productId, {
+        batchInfo,
+        ...(input.importerName !== undefined ? { importerName: input.importerName } : {}),
+      });
       await createAuditLog({
         entityType: "product",
         entityId: input.productId,
-        action: "supplier_confirmed",
+        action: "updated",
         performedByUserId: ctx.user.id,
-        payloadSnapshot: { confirmedBy } as any,
+        payloadSnapshot: { batchInfo } as any,
       });
-      return { success: true, confirmedAt, confirmedBy };
+      return { success: true };
+    }),
+
+  // ─── Workflow Actions (delegated to productService) ────────────────────────
+
+  submit: protectedProcedure
+    .input(z.object({ productId: z.number(), note: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        return await productService.submit(ctx.user as any, input);
+      } catch (err) {
+        throw toTRPCError(err);
+      }
+    }),
+
+  approve: protectedProcedure
+    .input(z.object({ productId: z.number(), note: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        return await productService.approve(ctx.user as any, input);
+      } catch (err) {
+        throw toTRPCError(err);
+      }
+    }),
+
+  reject: protectedProcedure
+    .input(z.object({ productId: z.number(), note: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        return await productService.reject(ctx.user as any, input);
+      } catch (err) {
+        throw toTRPCError(err);
+      }
+    }),
+
+  requestClarification: protectedProcedure
+    .input(z.object({ productId: z.number(), note: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        return await productService.requestClarification(ctx.user as any, input);
+      } catch (err) {
+        throw toTRPCError(err);
+      }
+    }),
+
+  markComplete: protectedProcedure
+    .input(z.object({ productId: z.number(), note: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const role = ctx.user.complianceRole ?? "internal_employee";
+      if (!["compliance_manager", "administrator"].includes(role)) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const product = await getProductById(input.productId);
+      if (!product) throw new TRPCError({ code: "NOT_FOUND" });
+      await updateProduct(input.productId, { status: "completed", completedAt: new Date() });
+      const { createApprovalHistoryEntry } = await import("../db");
+      await createApprovalHistoryEntry({
+        productId: input.productId,
+        action: "completed",
+        fromStatus: product.status,
+        toStatus: "completed",
+        performedByUserId: ctx.user.id,
+        note: input.note,
+      });
+      return { success: true };
+    }),
+
+  // ─── Supplier Confirmation (delegated to productService) ──────────────────
+
+  supplierConfirm: protectedProcedure
+    .input(z.object({ productId: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const role = ctx.user.complianceRole ?? "internal_employee";
+        if (role !== "supplier") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Nur Lieferanten können die Vollständigkeit bestätigen" });
+        }
+        const confirmedByName = ctx.user.name ?? ctx.user.email ?? "Lieferant";
+        const result = await productService.supplierConfirm(ctx.user as any, {
+          productId: input.productId,
+          confirmedByName,
+        });
+        return { ...result, confirmedAt: new Date(), confirmedBy: confirmedByName };
+      } catch (err) {
+        throw toTRPCError(err);
+      }
     }),
 });

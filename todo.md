@@ -245,3 +245,20 @@
 - [x] Frontend: Amber-Toast "Vollständigkeitserklärung zurückgesetzt" nach Upload wenn reset erfolgte
 - [x] Frontend: Siegel-Tab-Daten (getById) nach Dokumentänderung invalidiert
 - [x] Tests für Reset-Logik (11 neue Tests, 149 gesamt, alle grün)
+
+## Backend-Refactoring: Domain-Driven Architecture
+- [x] Shared: server/shared/errors.ts – AppError, typed factory functions, toTRPCError()
+- [x] Shared: server/shared/tenantGuard.ts – assertSupplierOrInternal, requireRole helpers
+- [x] Shared: server/shared/validation.ts – Zod-Schemas für gemeinsame Typen
+- [x] Domain services: server/domains/products/productService.ts
+- [x] Domain services: server/domains/documents/documentService.ts
+- [x] Domain services: server/domains/suppliers/supplierService.ts
+- [x] Domain services: server/domains/tenants/tenantService.ts
+- [x] Domain services: server/domains/compliance/complianceWorkflowService.ts
+- [x] Domain services: server/domains/seal/sealService.ts
+- [x] Domain services: server/domains/ai/aiAnalysisService.ts
+- [x] Domain services: server/domains/invitations/invitationService.ts
+- [x] Repositories: server/domains/*/repository.ts (Re-Export-Fassaden pro Domain)
+- [x] Router-Schicht dünn gemacht: products.ts auf Service-Schicht umgestellt
+- [x] Alle 149 Tests weiterhin grün, 0 TypeScript-Fehler
+- [x] ARCHITECTURE.md erstellt (vollständige Architektur-Dokumentation)
