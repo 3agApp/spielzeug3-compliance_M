@@ -291,3 +291,12 @@
 - [x] HTML-Widget: Anleitung für WooCommerce, Shopify und normale Webseiten
 - [x] Tenant-Name und URL aus Datenbank in SealPreview eingebunden
 - [x] 0 TypeScript-Fehler, 149 Tests grün
+
+## Produktspezifischer HTML-Einbettungscode im Siegel-Tab
+- [x] ProductEmbedCode-Komponente mit drei Varianten (Widget, Badge, Minimal)
+- [x] Embed-Code zeigt echten QR-Code als <img>-Tag (qrCodeUrl aus S3)
+- [x] Embed-Code enthält Link zur öffentlichen Landingpage (/p/:uuid)
+- [x] Embed-Code-Sektion im Siegel-Tab der Produktdetailseite (nur wenn Siegel aktiv + QR-Code vorhanden)
+- [x] Kopieren-Button mit Toast-Bestätigung
+- [x] Anleitungen für WooCommerce, Shopify und Webseiten
+- [x] 0 TypeScript-Fehler, 149 Tests grün

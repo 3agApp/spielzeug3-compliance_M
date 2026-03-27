@@ -23,6 +23,8 @@ import {
   Bot,
   CheckCircle2,
   Clock,
+  Code2,
+  Copy,
   Download,
   ExternalLink,
   FileSignature,
@@ -979,10 +981,21 @@ function SealTab({
                       <p className="text-xs text-muted-foreground">
                         Druckempfehlung: SVG für Etiketten, PNG für digitale Verwendung
                       </p>
-                      <SealLabelDownloadButton productId={productId} sealStatus={sealStatus} />
+                       <SealLabelDownloadButton productId={productId} sealStatus={sealStatus} />
                     </div>
                   </div>
                 </div>
+              )}
+
+              {/* ── Produktspezifischer HTML-Einbettungscode ── */}
+              {seal?.publicUuid && seal?.qrCodeUrl && (
+                <ProductEmbedCode
+                  publicUuid={seal.publicUuid}
+                  qrCodeUrl={seal.qrCodeUrl}
+                  publicUrl={seal.publicUrl ?? ""}
+                  productName={productName}
+                  sealStatus={sealStatus}
+                />
               )}
             </>
           )}
@@ -991,7 +1004,129 @@ function SealTab({
     </div>
   );
 }
+// ─── Produktspezifischer Embed-Code ─────────────────────────────────
+function ProductEmbedCode({
+  publicUuid,
+  qrCodeUrl,
+  publicUrl,
+  productName,
+  sealStatus,
+}: {
+  publicUuid: string;
+  qrCodeUrl: string;
+  publicUrl: string;
+  productName: string;
+  sealStatus: SealStatus;
+}) {
+  const [copied, setCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState<"badge" | "widget" | "minimal">("widget");
 
+  const statusLabel = sealStatus === "verified" ? "Verifiziert" : sealStatus === "in_progress" ? "In Prüfung" : "Nicht verifiziert";
+  const statusColor = sealStatus === "verified" ? "#16a34a" : sealStatus === "in_progress" ? "#d97706" : "#6b7280";
+  const statusBg = sealStatus === "verified" ? "#f0fdf4" : sealStatus === "in_progress" ? "#fffbeb" : "#f9fafb";
+  const statusBorder = sealStatus === "verified" ? "#86efac" : sealStatus === "in_progress" ? "#fcd34d" : "#e5e7eb";
+
+  const widgetCode = `<!-- Swiss Product Seal Widget: ${productName} -->
+<div id="swiss-seal-widget" style="display:inline-block;font-family:system-ui,sans-serif;">
+  <a href="${publicUrl}" target="_blank" rel="noopener noreferrer"
+     style="display:flex;align-items:center;gap:12px;padding:12px 16px;border:1px solid ${statusBorder};border-radius:12px;background:${statusBg};text-decoration:none;color:inherit;max-width:320px;">
+    <img src="${qrCodeUrl}" alt="QR-Code" width="64" height="64" style="border-radius:6px;flex-shrink:0;" />
+    <div>
+      <div style="font-size:11px;color:#6b7280;margin-bottom:2px;">Swiss Product Seal</div>
+      <div style="font-size:13px;font-weight:600;color:#111827;margin-bottom:4px;">${productName}</div>
+      <div style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;color:${statusColor};background:white;border:1px solid ${statusBorder};border-radius:20px;padding:2px 8px;">
+        <span style="width:6px;height:6px;border-radius:50%;background:${statusColor};display:inline-block;"></span>
+        ${statusLabel}
+      </div>
+    </div>
+  </a>
+</div>`;
+
+  const badgeCode = `<!-- Swiss Product Seal Badge: ${productName} -->
+<a href="${publicUrl}" target="_blank" rel="noopener noreferrer"
+   style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid ${statusBorder};border-radius:20px;background:${statusBg};text-decoration:none;font-family:system-ui,sans-serif;font-size:12px;font-weight:500;color:${statusColor};">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+  </svg>
+  Swiss Product Seal · ${statusLabel}
+</a>`;
+
+  const minimalCode = `<!-- Swiss Product Seal QR: ${productName} -->
+<a href="${publicUrl}" target="_blank" rel="noopener noreferrer" title="Swiss Product Seal – ${statusLabel}">
+  <img src="${qrCodeUrl}" alt="Swiss Product Seal QR-Code" width="80" height="80" style="border-radius:8px;" />
+</a>`;
+
+  const codes: Record<string, string> = { widget: widgetCode, badge: badgeCode, minimal: minimalCode };
+  const currentCode = codes[activeTab];
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(currentCode).then(() => {
+      setCopied(true);
+      toast.success("Einbettungscode kopiert!");
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  return (
+    <div className="border rounded-xl overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 bg-muted/40 border-b">
+        <div className="flex items-center gap-2">
+          <Code2 className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium">HTML-Einbettungscode</span>
+          <span className="text-xs text-muted-foreground">– direkt in Onlineshop oder Webseite einbetten</span>
+        </div>
+        <Button size="sm" variant="outline" onClick={handleCopy} className="gap-1.5 h-7 text-xs">
+          {copied ? <CheckCircle2 className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
+          {copied ? "Kopiert!" : "Kopieren"}
+        </Button>
+      </div>
+
+      {/* Variant Tabs */}
+      <div className="flex border-b bg-muted/20">
+        {(["widget", "badge", "minimal"] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 py-2 text-xs font-medium transition-colors ${
+              activeTab === tab
+                ? "border-b-2 border-primary text-primary bg-background"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {tab === "widget" ? "Widget (QR + Status)" : tab === "badge" ? "Badge (Text)" : "Minimal (nur QR)"}
+          </button>
+        ))}
+      </div>
+
+      {/* Code Block */}
+      <div className="relative">
+        <pre className="p-4 text-xs font-mono bg-[#0f172a] text-[#e2e8f0] overflow-x-auto leading-relaxed whitespace-pre-wrap break-all">
+          <code>{currentCode}</code>
+        </pre>
+      </div>
+
+      {/* Integration Hints */}
+      <div className="px-4 py-3 bg-muted/20 border-t">
+        <p className="text-xs text-muted-foreground mb-2 font-medium">Einbindung:</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-muted-foreground">
+          <div className="flex items-start gap-1.5">
+            <span className="font-semibold text-foreground mt-0.5">WooCommerce</span>
+            <span>→ Produkt bearbeiten → Kurzbeschreibung → HTML-Ansicht → Code einfügen</span>
+          </div>
+          <div className="flex items-start gap-1.5">
+            <span className="font-semibold text-foreground mt-0.5">Shopify</span>
+            <span>→ Produkte → Beschreibung → &lt;&gt; Quellcode → Code einfügen</span>
+          </div>
+          <div className="flex items-start gap-1.5">
+            <span className="font-semibold text-foreground mt-0.5">Webseite</span>
+            <span>→ Code direkt in die HTML-Seite kopieren, kein Plugin nötig</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 // ─── Seal Label Download Button ─────────────────────────────────────
 function SealLabelDownloadButton({
   productId,
