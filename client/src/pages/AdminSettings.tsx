@@ -20,15 +20,17 @@ import {
   EyeOff,
   FileSignature,
   Globe,
+  ImagePlus,
   Key,
   RefreshCw,
   Save,
   Settings,
   Shield,
   Sparkles,
+  Trash2,
   XCircle,
 } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 export default function AdminSettings() {
@@ -76,6 +78,69 @@ export default function AdminSettings() {
     },
     onError: (e: any) => toast.error(e.message),
   });
+
+  // Logo upload state
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const currentLogoUrl = (tenantQuery.data as any)?.logoUrl ?? null;
+
+  const uploadLogoMutation = trpc.tenant.uploadLogo.useMutation({
+    onSuccess: (data) => {
+      toast.success("Logo hochgeladen", { description: "Das Logo erscheint jetzt auf dem Siegel-Etikett." });
+      setLogoPreview(null);
+      utils.tenant.getCurrent.invalidate();
+    },
+    onError: (e: any) => {
+      toast.error("Upload fehlgeschlagen", { description: e.message });
+      setLogoUploading(false);
+    },
+  });
+
+  const removeLogoMutation = trpc.tenant.updateMyTenant.useMutation({
+    onSuccess: () => {
+      toast.success("Logo entfernt");
+      setLogoPreview(null);
+      utils.tenant.getCurrent.invalidate();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  async function handleLogoFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const allowedTypes = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Ungültiges Format", { description: "Erlaubt: PNG, JPG, WebP, SVG" });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Datei zu groß", { description: "Maximale Dateigröße: 5 MB" });
+      return;
+    }
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = (ev) => setLogoPreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+    // Upload
+    setLogoUploading(true);
+    const base64Reader = new FileReader();
+    base64Reader.onload = async (ev) => {
+      const dataUrl = ev.target?.result as string;
+      const base64 = dataUrl.split(",")[1];
+      try {
+        await uploadLogoMutation.mutateAsync({
+          fileBase64: base64,
+          mimeType: file.type as any,
+          fileName: file.name,
+        });
+      } finally {
+        setLogoUploading(false);
+        if (logoInputRef.current) logoInputRef.current.value = "";
+      }
+    };
+    base64Reader.readAsDataURL(file);
+  }
   const saveSealSettingMutation = trpc.admin.setSystemSetting.useMutation({
     onSuccess: () => toast.success("Siegel-Einstellungen gespeichert"),
     onError: (e: any) => toast.error(e.message),
@@ -413,6 +478,73 @@ export default function AdminSettings() {
             </CardContent>
           </Card>
 
+          {/* ── Logo Upload ── */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <ImagePlus className="h-4 w-4" />
+                Firmenlogo
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Das Logo erscheint auf dem Siegel-Etikett unterhalb des Unternehmensnamens.
+                Empfohlen: quadratisches Format, mind. 300×300 px, PNG oder SVG.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Current / preview logo */}
+              {(logoPreview || currentLogoUrl) && (
+                <div className="flex items-center gap-4">
+                  <div className="w-20 h-20 rounded-lg border bg-muted/30 flex items-center justify-center overflow-hidden">
+                    <img
+                      src={logoPreview ?? currentLogoUrl}
+                      alt="Firmenlogo"
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">
+                      {logoPreview ? "Vorschau (noch nicht gespeichert)" : "Aktuelles Logo"}
+                    </p>
+                    {!logoPreview && currentLogoUrl && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-destructive hover:text-destructive gap-1.5"
+                        onClick={() => removeLogoMutation.mutate({ logoUrl: null })}
+                        disabled={removeLogoMutation.isPending}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Logo entfernen
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Upload area */}
+              <div
+                className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 hover:bg-muted/20 transition-colors"
+                onClick={() => logoInputRef.current?.click()}
+              >
+                <ImagePlus className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                <p className="text-sm font-medium">
+                  {logoUploading ? "Wird hochgeladen…" : "Logo hochladen"}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  PNG, JPG, WebP oder SVG · max. 5 MB
+                </p>
+              </div>
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                className="hidden"
+                onChange={handleLogoFileChange}
+                disabled={logoUploading}
+              />
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="text-base">System-Informationen</CardTitle>
@@ -676,6 +808,7 @@ export default function AdminSettings() {
               <SealPreview
                 tenantName={tenantName}
                 tenantUrl={tenantWebsiteUrl}
+                tenantLogoUrl={currentLogoUrl}
                 tenantId={tenantId}
               />
             </CardContent>

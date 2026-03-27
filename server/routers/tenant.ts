@@ -9,6 +9,9 @@ import { z } from "zod";
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { tenantService } from "../domains/tenants/tenantService";
 import { toTRPCError } from "../shared/errors";
+import { storagePut } from "../storage";
+import { TRPCError } from "@trpc/server";
+import { updateTenant } from "../tenantDb";
 
 export const tenantRouter = router({
   // ── Get current tenant for logged-in user ──────────────────────────────────
@@ -83,12 +86,13 @@ export const tenantRouter = router({
       }
     }),
 
-  // ── Update own tenant portal settings (admin / compliance_manager) ────────
+    // ── Update own tenant portal settings (admin / compliance_manager) ────
   updateMyTenant: protectedProcedure
     .input(z.object({
       name: z.string().min(1).max(255).optional(),
       websiteUrl: z.string().max(255).optional().nullable(),
       contactEmail: z.string().email().optional().nullable(),
+      logoUrl: z.string().url().optional().nullable(),
     }))
     .mutation(async ({ ctx, input }) => {
       try {
@@ -96,6 +100,36 @@ export const tenantRouter = router({
       } catch (err) {
         throw toTRPCError(err);
       }
+    }),
+
+  // ── Upload tenant logo (admin / compliance_manager) ──────────────────────
+  uploadLogo: protectedProcedure
+    .input(z.object({
+      fileBase64: z.string().min(1),
+      mimeType: z.enum(["image/png", "image/jpeg", "image/webp", "image/svg+xml"]),
+      fileName: z.string().max(255),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const user = ctx.user as any;
+      const role = user.complianceRole ?? "internal_employee";
+      if (!["super_admin", "administrator", "compliance_manager"].includes(role)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Keine Berechtigung für Logo-Upload" });
+      }
+      const tenantId: number = user.tenantId ?? 1;
+
+      // Decode base64 and upload to S3
+      const fileBuffer = Buffer.from(input.fileBase64, "base64");
+      if (fileBuffer.length > 5 * 1024 * 1024) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Logo-Datei zu groß (max. 5 MB)" });
+      }
+      const ext = input.mimeType.split("/")[1].replace("svg+xml", "svg");
+      const fileKey = `tenant-logos/tenant-${tenantId}-logo-${Date.now()}.${ext}`;
+      const { url } = await storagePut(fileKey, fileBuffer, input.mimeType);
+
+      // Persist URL in tenant record
+      await updateTenant(tenantId, { logoUrl: url } as any);
+
+      return { url, fileKey };
     }),
 
   // ── Activate seal for a product (generate UUID + QR code) ─────────────────

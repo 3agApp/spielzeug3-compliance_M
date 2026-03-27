@@ -25,6 +25,7 @@ const STATUS_CONFIG: Record<SealStatus, { label: string; borderColor: string; ac
 interface SealPreviewProps {
   tenantName?: string;
   tenantUrl?: string;
+  tenantLogoUrl?: string | null;
   tenantId?: number;
   productId?: number;
   qrCodeUrl?: string;
@@ -33,6 +34,7 @@ interface SealPreviewProps {
 export function SealPreview({
   tenantName = "Spielzeug 3 AG",
   tenantUrl = "swiss-product-seal.ch",
+  tenantLogoUrl,
   tenantId = 1,
   productId,
   qrCodeUrl,
@@ -250,9 +252,17 @@ ${qrSrc ? `  <img src="${qrSrc}" alt="QR-Code" width="100" height="100" style="d
             <p style={{ fontSize: 8, color: "#9ca3af", fontStyle: "italic", margin: "0 0 3px", textAlign: "center" }}>
               Imported by
             </p>
-            <p style={{ fontSize: 11, fontWeight: 700, color: "#111827", margin: "0 0 2px", textAlign: "center" }}>
-              {tenantName}
-            </p>
+            {tenantLogoUrl ? (
+              <img
+                src={tenantLogoUrl}
+                alt={tenantName}
+                style={{ height: 32, maxWidth: 120, objectFit: "contain", margin: "0 auto 4px", display: "block" }}
+              />
+            ) : (
+              <p style={{ fontSize: 11, fontWeight: 700, color: "#111827", margin: "0 0 2px", textAlign: "center" }}>
+                {tenantName}
+              </p>
+            )}
             <p style={{ fontSize: 9, color: cfg.accentColor, fontWeight: 600, margin: 0, textAlign: "center" }}>
               {tenantUrl}
             </p>

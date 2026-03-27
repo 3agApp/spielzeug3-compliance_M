@@ -137,6 +137,7 @@ export function registerPdfRoutes(app: Express) {
       const tenant = await getTenantById(isNaN(tenantId) ? 1 : tenantId);
       const tenantName = tenant?.name ?? "Swiss Product Seal";
       const tenantUrl = (tenant as any)?.websiteUrl ?? "swiss-product-seal.ch";
+      const tenantLogoUrl: string | null = (tenant as any)?.logoUrl ?? null;
 
       // Optionally load real QR code from S3
       let qrCodeBuffer: Buffer | undefined;
@@ -165,7 +166,9 @@ export function registerPdfRoutes(app: Express) {
         status,
         tenantName,
         tenantUrl,
+        tenantLogoUrl,
         qrCodeBuffer,
+        tenantId: isNaN(tenantId) ? 1 : tenantId,
       });
 
       const statusSlug = status.replace(/_/g, "-");

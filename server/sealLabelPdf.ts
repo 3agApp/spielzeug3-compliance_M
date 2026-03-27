@@ -14,6 +14,8 @@ export interface SealLabelOptions {
   tenantId?: number;
   /** Optional: actual QR code PNG buffer to embed. If omitted, a placeholder is drawn. */
   qrCodeBuffer?: Buffer;
+  /** Optional: tenant logo URL to display instead of plain tenantName text */
+  tenantLogoUrl?: string | null;
 }
 
 // ─── Color config ─────────────────────────────────────────────────────────────
@@ -120,7 +122,7 @@ function drawQrPlaceholder(doc: PDFKit.PDFDocument, x: number, y: number, size: 
  * ensuring pixel-identical appearance across HTML, PDF, and embed widgets.
  */
 export async function generateSealLabelPdf(opts: SealLabelOptions): Promise<Buffer> {
-  const { status, tenantName, tenantUrl, qrCodeBuffer, tenantId = 1 } = opts;
+  const { status, tenantName, tenantUrl, qrCodeBuffer, tenantId = 1, tenantLogoUrl } = opts;
   const cfg = STATUS_COLORS[status];
 
   // ── Load seal graphic: DB custom upload → local SVG → CDN PNG fallback ────────────
@@ -158,6 +160,23 @@ export async function generateSealLabelPdf(opts: SealLabelOptions): Promise<Buff
       const fallbackRes = await fetch(cdnUrls[status]);
       const fallbackBuf = Buffer.from(await fallbackRes.arrayBuffer());
       sealPng = await sharp(fallbackBuf).resize(400, 440, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 0 } }).png().toBuffer();
+    }
+  }
+
+  // ── Load tenant logo PNG (before Promise, so we can use await) ────────────
+  let logoPng: Buffer | null = null;
+  if (tenantLogoUrl) {
+    try {
+      const logoRes = await fetch(tenantLogoUrl);
+      if (logoRes.ok) {
+        const logoBuf = Buffer.from(await logoRes.arrayBuffer());
+        logoPng = await sharp(logoBuf)
+          .resize(200, 64, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 0 } })
+          .png()
+          .toBuffer();
+      }
+    } catch {
+      // Logo load failed – fall back to text
     }
   }
 
@@ -224,7 +243,7 @@ export async function generateSealLabelPdf(opts: SealLabelOptions): Promise<Buff
     doc.stroke();
     doc.restore();
 
-    // ── IMPORTED BY SECTION ───────────────────────────────────────────────────
+        // ── IMPORTED BY SECTION ─────────────────────────────────────────────
     const impY = divY + 9;
 
     doc.save();
@@ -233,16 +252,24 @@ export async function generateSealLabelPdf(opts: SealLabelOptions): Promise<Buff
     doc.text("Imported by", 0, impY, { width: W, align: "center" });
     doc.restore();
 
-    doc.save();
-    setFill(doc, "#111111");
-    doc.fontSize(10).font("Helvetica-Bold");
-    doc.text(tenantName, 0, impY + 11, { width: W, align: "center" });
-    doc.restore();
+    // If tenant has a logo (pre-loaded above), embed it; otherwise fall back to text
+    if (logoPng) {
+      const logoW = 80;
+      const logoH = 26;
+      const logoX = (W - logoW) / 2;
+      doc.image(logoPng, logoX, impY + 9, { width: logoW, height: logoH });
+    } else {
+      doc.save();
+      setFill(doc, "#111111");
+      doc.fontSize(10).font("Helvetica-Bold");
+      doc.text(tenantName, 0, impY + 11, { width: W, align: "center" });
+      doc.restore();
+    }
 
     doc.save();
     setFill(doc, cfg.urlColor);
     doc.fontSize(8).font("Helvetica-Bold");
-    doc.text(tenantUrl, 0, impY + 25, { width: W, align: "center" });
+    doc.text(tenantUrl, 0, impY + 39, { width: W, align: "center" });
     doc.restore();
 
     doc.end();

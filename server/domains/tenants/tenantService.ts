@@ -54,6 +54,7 @@ export interface UpdateMyTenantInput {
   name?: string;
   websiteUrl?: string | null;
   contactEmail?: string | null;
+  logoUrl?: string | null;
 }
 
 // ─── Service ──────────────────────────────────────────────────────────────────

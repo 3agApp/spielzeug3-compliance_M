@@ -370,3 +370,13 @@
 - [x] Speichern-Button mit tRPC-Mutation, Loading-State und Toast-Feedback
 - [x] Hinweistexte unter jedem Feld erklären wo der Wert erscheint
 - [x] 172 Tests grün, 0 TypeScript-Fehler
+
+## Logo-Upload im Portal-Tab
+- [x] Backend: uploadLogo-Endpoint (S3, base64, max. 5 MB, PNG/JPG/WebP/SVG)
+- [x] Backend: logoUrl in updateMyTenant-Prozedur speicherbar
+- [x] UpdateMyTenantInput-Interface um logoUrl erweitert
+- [x] Frontend: Logo-Upload-Karte im Portal-Tab (Klick-Zone, Vorschau, Entfernen-Button)
+- [x] SealPreview: Logo statt Unternehmensname anzeigen wenn vorhanden (32px H, max 120px B)
+- [x] PDF-Generator: Logo vor new Promise() laden (async-safe), im Importer-Block einbetten (80×26 pt)
+- [x] pdfRoutes.ts: tenantLogoUrl aus Tenant-Daten an PDF-Generator übergeben
+- [x] 172 Tests grün, 0 TypeScript-Fehler
