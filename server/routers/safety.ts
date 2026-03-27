@@ -1,19 +1,24 @@
-import { TRPCError } from "@trpc/server";
+/**
+ * server/routers/safety.ts
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Thin tRPC router for Product Safety data.
+ * All business logic lives in safetyService.
+ */
+
 import { z } from "zod";
-import { createAuditLog, getProductById, getProductSafety, upsertProductSafety } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
+import { safetyService } from "../domains/compliance/safetyService";
+import { toTRPCError } from "../shared";
 
 export const safetyRouter = router({
   getByProduct: protectedProcedure
     .input(z.object({ productId: z.number() }))
     .query(async ({ ctx, input }) => {
-      const product = await getProductById(input.productId);
-      if (!product) throw new TRPCError({ code: "NOT_FOUND" });
-      const role = ctx.user.complianceRole ?? "internal_employee";
-      if (role === "supplier" && product.supplierId !== ctx.user.supplierId) {
-        throw new TRPCError({ code: "FORBIDDEN" });
+      try {
+        return await safetyService.getByProduct(ctx.user as any, input.productId);
+      } catch (err) {
+        throw toTRPCError(err);
       }
-      return getProductSafety(input.productId);
     }),
 
   upsert: protectedProcedure
@@ -29,19 +34,10 @@ export const safetyRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const product = await getProductById(input.productId);
-      if (!product) throw new TRPCError({ code: "NOT_FOUND" });
-      const role = ctx.user.complianceRole ?? "internal_employee";
-      if (role === "supplier" && product.supplierId !== ctx.user.supplierId) {
-        throw new TRPCError({ code: "FORBIDDEN" });
+      try {
+        return await safetyService.upsert(ctx.user as any, input);
+      } catch (err) {
+        throw toTRPCError(err);
       }
-      await upsertProductSafety({ ...input, submittedByUserId: ctx.user.id });
-      await createAuditLog({
-        entityType: "product_safety",
-        entityId: input.productId,
-        action: "updated",
-        performedByUserId: ctx.user.id,
-      });
-      return { success: true };
     }),
 });

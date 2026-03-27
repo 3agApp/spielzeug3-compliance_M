@@ -1,20 +1,24 @@
-import { TRPCError } from "@trpc/server";
+/**
+ * server/routers/comments.ts
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Thin tRPC router for Product Comments.
+ * All business logic lives in commentsService.
+ */
+
 import { z } from "zod";
-import { createComment, getCommentsByProduct, getProductById } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
+import { commentsService } from "../domains/compliance/commentsService";
+import { toTRPCError } from "../shared";
 
 export const commentsRouter = router({
   listByProduct: protectedProcedure
     .input(z.object({ productId: z.number() }))
     .query(async ({ ctx, input }) => {
-      const product = await getProductById(input.productId);
-      if (!product) throw new TRPCError({ code: "NOT_FOUND" });
-      const role = ctx.user.complianceRole ?? "internal_employee";
-      if (role === "supplier" && product.supplierId !== ctx.user.supplierId) {
-        throw new TRPCError({ code: "FORBIDDEN" });
+      try {
+        return await commentsService.listByProduct(ctx.user as any, input.productId);
+      } catch (err) {
+        throw toTRPCError(err);
       }
-      const isInternal = role !== "supplier";
-      return getCommentsByProduct(input.productId, isInternal);
     }),
 
   create: protectedProcedure
@@ -26,21 +30,10 @@ export const commentsRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const product = await getProductById(input.productId);
-      if (!product) throw new TRPCError({ code: "NOT_FOUND" });
-      const role = ctx.user.complianceRole ?? "internal_employee";
-      if (role === "supplier" && product.supplierId !== ctx.user.supplierId) {
-        throw new TRPCError({ code: "FORBIDDEN" });
+      try {
+        return await commentsService.create(ctx.user as any, input);
+      } catch (err) {
+        throw toTRPCError(err);
       }
-      // Suppliers cannot create internal-only comments
-      const internalOnly = role === "supplier" ? false : input.visibilityInternalOnly;
-      await createComment({
-        productId: input.productId,
-        userId: ctx.user.id,
-        userRole: role,
-        commentText: input.commentText,
-        visibilityInternalOnly: internalOnly,
-      });
-      return { success: true };
     }),
 });

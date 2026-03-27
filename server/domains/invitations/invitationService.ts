@@ -130,6 +130,39 @@ export const invitationService = {
   },
 
   /**
+   * Validate a token (public – called from the accept page).
+   * Returns invitation details if valid, throws otherwise.
+   */
+  async validateToken(token: string) {
+    const db = await getDb();
+    if (!db) throw Errors.external("Database", "Connection unavailable");
+
+    const rows = await db
+      .select({
+        id: supplierInvitations.id,
+        email: supplierInvitations.email,
+        status: supplierInvitations.status,
+        expiresAt: supplierInvitations.expiresAt,
+        supplierId: supplierInvitations.supplierId,
+        supplierName: suppliers.name,
+      })
+      .from(supplierInvitations)
+      .innerJoin(suppliers, eq(supplierInvitations.supplierId, suppliers.id))
+      .where(eq(supplierInvitations.token, token))
+      .limit(1);
+
+    const invitation = rows[0];
+    if (!invitation) throw Errors.notFound("Invitation");
+    if (invitation.status !== "pending") {
+      throw Errors.precondition("Diese Einladung wurde bereits verwendet oder widerrufen.");
+    }
+    if (invitation.expiresAt < new Date()) {
+      throw Errors.precondition("Diese Einladung ist abgelaufen.");
+    }
+    return invitation;
+  },
+
+  /**
    * Revoke a pending invitation (admin only).
    */
   async revoke(user: UserContext, invitationId: number) {

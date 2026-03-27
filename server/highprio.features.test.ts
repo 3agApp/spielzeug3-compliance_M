@@ -61,10 +61,11 @@ describe("expiry.getExpiringDocuments", () => {
 
 // ─── Feature 2: Invitations Router ───────────────────────────────────────────
 describe("invitations.validateToken", () => {
-  it("returns invalid for unknown token", async () => {
+  it("returns null for unknown token", async () => {
     const caller = appRouter.createCaller(makePublicCtx());
     const result = await caller.invitations.validateToken({ token: "nonexistent-token-xyz" });
-    expect(result.valid).toBe(false);
+    // After refactor: returns null (falsy) for unknown/expired tokens
+    expect(result).toBeNull();
   });
 });
 

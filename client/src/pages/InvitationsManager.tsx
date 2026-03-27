@@ -76,13 +76,13 @@ export default function InvitationsManager() {
 
   const createMutation = trpc.invitations.create.useMutation({
     onSuccess: (data) => {
-      setCreatedLink(data.magicLink);
+      setCreatedLink(data.inviteUrl);
       setShowCreate(false);
       setShowLinkDialog(true);
       setNewEmail("");
       setNewSupplierId("");
       utils.invitations.list.invalidate();
-      toast.success(`Einladung für ${data.email} erstellt`);
+      toast.success("Einladung erfolgreich erstellt");
     },
     onError: (e) => toast.error(e.message),
   });

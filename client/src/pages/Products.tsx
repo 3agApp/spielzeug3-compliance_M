@@ -246,8 +246,8 @@ export default function Products() {
 
       try {
         const result = await analyzeProductMutation.mutateAsync({ productId });
-        results.push({ productId, name: productName, success: true, score: result.overallScore });
-        setAiScores((prev) => ({ ...prev, [productId]: result.overallScore }));
+        results.push({ productId, name: productName, success: true, score: result.result?.overallScore });
+        setAiScores((prev) => ({ ...prev, [productId]: result.result?.overallScore }));
       } catch (err: any) {
         results.push({ productId, name: productName, success: false, error: err.message });
         if (err.message?.includes("API-Schlüssel")) {

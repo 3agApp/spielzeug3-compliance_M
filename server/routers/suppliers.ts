@@ -1,35 +1,33 @@
-import { z } from "zod";
-import { createAuditLog, createSupplier, getAllSuppliers, getSupplierById, updateSupplier } from "../db";
-import { protectedProcedure, router } from "../_core/trpc";
-import { TRPCError } from "@trpc/server";
+/**
+ * server/routers/suppliers.ts
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Thin tRPC router for Supplier management.
+ * All business logic lives in supplierService.
+ */
 
-function requireRole(role: string, allowed: string[]) {
-  if (!allowed.includes(role)) {
-    throw new TRPCError({ code: "FORBIDDEN", message: "Insufficient permissions" });
-  }
-}
+import { z } from "zod";
+import { protectedProcedure, router } from "../_core/trpc";
+import { supplierService } from "../domains/suppliers/supplierService";
+import { toTRPCError } from "../shared";
 
 export const suppliersRouter = router({
   list: protectedProcedure.query(async ({ ctx }) => {
-    const role = ctx.user.complianceRole ?? "internal_employee";
-    if (role === "supplier") {
-      // Suppliers only see their own supplier
-      if (!ctx.user.supplierId) return [];
-      const s = await getSupplierById(ctx.user.supplierId);
-      return s ? [s] : [];
+    try {
+      return await supplierService.list(ctx.user as any);
+    } catch (err) {
+      throw toTRPCError(err);
     }
-    return getAllSuppliers();
   }),
 
-  getById: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
-    const role = ctx.user.complianceRole ?? "internal_employee";
-    if (role === "supplier" && ctx.user.supplierId !== input.id) {
-      throw new TRPCError({ code: "FORBIDDEN" });
-    }
-    const supplier = await getSupplierById(input.id);
-    if (!supplier) throw new TRPCError({ code: "NOT_FOUND" });
-    return supplier;
-  }),
+  getById: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ ctx, input }) => {
+      try {
+        return await supplierService.getById(ctx.user as any, input.id);
+      } catch (err) {
+        throw toTRPCError(err);
+      }
+    }),
 
   create: protectedProcedure
     .input(
@@ -44,15 +42,11 @@ export const suppliersRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      requireRole(ctx.user.complianceRole ?? "", ["administrator", "compliance_manager"]);
-      await createSupplier({ ...input, active: true });
-      await createAuditLog({
-        entityType: "supplier",
-        action: "created",
-        performedByUserId: ctx.user.id,
-        payloadSnapshot: input as any,
-      });
-      return { success: true };
+      try {
+        return await supplierService.create(ctx.user as any, input);
+      } catch (err) {
+        throw toTRPCError(err);
+      }
     }),
 
   update: protectedProcedure
@@ -69,16 +63,16 @@ export const suppliersRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      requireRole(ctx.user.complianceRole ?? "", ["administrator", "compliance_manager"]);
-      const { id, ...data } = input;
-      await updateSupplier(id, data);
-      await createAuditLog({
-        entityType: "supplier",
-        entityId: id,
-        action: "updated",
-        performedByUserId: ctx.user.id,
-        payloadSnapshot: data as any,
-      });
-      return { success: true };
+      try {
+        const { id, ...rest } = input;
+        return await supplierService.update(ctx.user as any, {
+          supplierId: id,
+          name: rest.name,
+          country: rest.country,
+          contactEmail: rest.email,
+        });
+      } catch (err) {
+        throw toTRPCError(err);
+      }
     }),
 });

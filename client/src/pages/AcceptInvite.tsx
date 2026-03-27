@@ -69,7 +69,7 @@ export default function AcceptInvite() {
     );
   }
 
-  if (!validation?.valid) {
+  if (!validation) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
         <Card className="max-w-md w-full">
@@ -89,7 +89,7 @@ export default function AcceptInvite() {
     );
   }
 
-  const inv = validation.invitation!;
+  const inv = validation;
 
   if (accepted) {
     return (
@@ -128,7 +128,6 @@ export default function AcceptInvite() {
               <Building2 className="h-4 w-4 text-muted-foreground" />
               <span className="text-muted-foreground">Lieferant:</span>
               <span className="font-semibold">{inv.supplierName}</span>
-              <span className="text-muted-foreground text-xs">({inv.supplierCode})</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <CheckCircle2 className="h-4 w-4 text-green-500" />

@@ -35,6 +35,11 @@ export type ProductStatus = z.infer<typeof ProductStatusSchema>;
 export const DOCUMENT_TYPES = [
   "test_report",
   "declaration_of_conformity",
+  "manual",
+  "certificate",
+  "product_image",
+  "safety_image",
+  "regulatory_document",
   "technical_file",
   "safety_data_sheet",
   "reach_declaration",

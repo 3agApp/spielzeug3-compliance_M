@@ -1,35 +1,23 @@
-import { TRPCError } from "@trpc/server";
+/**
+ * server/routers/admin.ts
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Thin tRPC router for admin operations.
+ * All business logic lives in adminService.
+ */
+
 import { z } from "zod";
-import {
-  createAuditLog,
-  createRequirementType,
-  getAllRequirementTypes,
-  getAllUsers,
-  getAuditLogs,
-  getSystemSetting,
-  updateRequirementType,
-  updateUser,
-  upsertSystemSetting,
-} from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
-
-function requireAdmin(role: string) {
-  if (role !== "administrator") {
-    throw new TRPCError({ code: "FORBIDDEN", message: "Administrator access required" });
-  }
-}
-
-function requireManagerOrAdmin(role: string) {
-  if (!["administrator", "compliance_manager"].includes(role)) {
-    throw new TRPCError({ code: "FORBIDDEN", message: "Insufficient permissions" });
-  }
-}
+import { adminService } from "../domains/users/adminService";
+import { toTRPCError } from "../shared";
 
 export const adminRouter = router({
-  // ─── Users ────────────────────────────────────────────────────────────────
+  // ─── Users ─────────────────────────────────────────────────────────────────
   listUsers: protectedProcedure.query(async ({ ctx }) => {
-    requireManagerOrAdmin(ctx.user.complianceRole ?? "");
-    return getAllUsers();
+    try {
+      return await adminService.listUsers(ctx.user as any);
+    } catch (err) {
+      throw toTRPCError(err);
+    }
   }),
 
   updateUser: protectedProcedure
@@ -45,22 +33,21 @@ export const adminRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      requireAdmin(ctx.user.complianceRole ?? "");
-      const { id, ...data } = input;
-      await updateUser(id, data as any);
-      await createAuditLog({
-        entityType: "user",
-        entityId: id,
-        action: "updated",
-        performedByUserId: ctx.user.id,
-        payloadSnapshot: data as any,
-      });
-      return { success: true };
+      try {
+        const { id, ...data } = input;
+        return await adminService.updateUser(ctx.user as any, id, data as any);
+      } catch (err) {
+        throw toTRPCError(err);
+      }
     }),
 
-  // ─── Requirement Types ────────────────────────────────────────────────────
-  listRequirementTypes: protectedProcedure.query(async ({ ctx }) => {
-    return getAllRequirementTypes();
+  // ─── Requirement Types ──────────────────────────────────────────────────────
+  listRequirementTypes: protectedProcedure.query(async () => {
+    try {
+      return await adminService.listRequirementTypes();
+    } catch (err) {
+      throw toTRPCError(err);
+    }
   }),
 
   createRequirementType: protectedProcedure
@@ -75,9 +62,11 @@ export const adminRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      requireAdmin(ctx.user.complianceRole ?? "");
-      await createRequirementType({ ...input, active: true });
-      return { success: true };
+      try {
+        return await adminService.createRequirementType(ctx.user as any, input);
+      } catch (err) {
+        throw toTRPCError(err);
+      }
     }),
 
   updateRequirementType: protectedProcedure
@@ -92,47 +81,54 @@ export const adminRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      requireAdmin(ctx.user.complianceRole ?? "");
-      const { id, ...data } = input;
-      await updateRequirementType(id, data);
-      return { success: true };
+      try {
+        const { id, ...data } = input;
+        return await adminService.updateRequirementType(ctx.user as any, id, data);
+      } catch (err) {
+        throw toTRPCError(err);
+      }
     }),
 
-  // ─── Audit Logs ───────────────────────────────────────────────────────────
+  // ─── Audit Logs ─────────────────────────────────────────────────────────────
   getAuditLogs: protectedProcedure
     .input(z.object({ limit: z.number().default(100) }))
     .query(async ({ ctx, input }) => {
-      requireManagerOrAdmin(ctx.user.complianceRole ?? "");
-      return getAuditLogs(input.limit);
+      try {
+        return await adminService.getAuditLogs(ctx.user as any, input.limit);
+      } catch (err) {
+        throw toTRPCError(err);
+      }
     }),
 
-  // ─── User Profile Update ──────────────────────────────────────────────────
+  // ─── User Profile ───────────────────────────────────────────────────────────
   updateMyLanguage: protectedProcedure
     .input(z.object({ language: z.enum(["de", "en"]) }))
     .mutation(async ({ ctx, input }) => {
-      await updateUser(ctx.user.id, { languagePreference: input.language });
-      return { success: true };
+      try {
+        return await adminService.updateMyLanguage(ctx.user as any, input.language);
+      } catch (err) {
+        throw toTRPCError(err);
+      }
     }),
 
-  // ─── System Settings ──────────────────────────────────────────────────────
+  // ─── System Settings ────────────────────────────────────────────────────────
   getSystemSetting: protectedProcedure
     .input(z.object({ key: z.string() }))
     .query(async ({ ctx, input }) => {
-      requireManagerOrAdmin(ctx.user.complianceRole ?? "");
-      return getSystemSetting(input.key);
+      try {
+        return await adminService.getSystemSetting(ctx.user as any, input.key);
+      } catch (err) {
+        throw toTRPCError(err);
+      }
     }),
 
   setSystemSetting: protectedProcedure
     .input(z.object({ key: z.string(), value: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      requireAdmin(ctx.user.complianceRole ?? "");
-      await upsertSystemSetting(input.key, input.value, false, ctx.user.id);
-      await createAuditLog({
-        entityType: "system_setting",
-        action: "updated",
-        performedByUserId: ctx.user.id,
-        payloadSnapshot: { key: input.key } as any,
-      });
-      return { success: true };
+      try {
+        return await adminService.setSystemSetting(ctx.user as any, input.key, input.value);
+      } catch (err) {
+        throw toTRPCError(err);
+      }
     }),
 });

@@ -262,3 +262,13 @@
 - [x] Router-Schicht dünn gemacht: products.ts auf Service-Schicht umgestellt
 - [x] Alle 149 Tests weiterhin grün, 0 TypeScript-Fehler
 - [x] ARCHITECTURE.md erstellt (vollständige Architektur-Dokumentation)
+
+## Router-Refactoring: Alle verbleibenden Router dünn machen
+- [x] documents.ts → documentService (upload, delete, review, confirmedAt-Reset)
+- [x] aiAnalysis.ts → aiAnalysisService (analyze, getLatest, getHistory, settings)
+- [x] invitations.ts → invitationService (list, create, accept, revoke)
+- [x] suppliers.ts → supplierService (list, getById, create, update)
+- [x] admin.ts → adminService (Benutzerverwaltung, Systemkonfiguration)
+- [x] safety.ts → safetyService (getByProduct, upsert)
+- [x] comments.ts → commentsService (list, create, delete)
+- [x] 0 TypeScript-Fehler, alle 149 Tests grün
