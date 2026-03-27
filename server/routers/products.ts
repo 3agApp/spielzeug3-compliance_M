@@ -255,6 +255,13 @@ export const productsRouter = router({
       if (role === "supplier" && product.supplierId !== ctx.user.supplierId) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
+      // Supplier must confirm completeness before submitting
+      if (role === "supplier" && !(product as any).supplierConfirmedAt) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Bitte bestätigen Sie zuerst die Vollständigkeit der Unterlagen im Siegel-Tab, bevor Sie das Produkt einreichen.",
+        });
+      }
       const fromStatus = product.status;
       await updateProduct(input.productId, { status: "submitted", submittedAt: new Date() });
       await createApprovalHistoryEntry({

@@ -221,3 +221,10 @@
 - [x] Frontend Public: Supplier-Bestätigungs-Badge auf Landingpage
 - [x] Frontend Public: Redesign mit Trust-Indikatoren, farbigem Hero-Banner, Vertrauens-Sektion
 - [x] Tests für supplierConfirm-Mutation und getPublicProduct-Erweiterung (12 Tests, alle grün)
+
+## Einreichen-Button erst nach Vollständigkeitserklärung
+- [x] Frontend: supplierConfirmedAt aus Produkt-Query gelesen
+- [x] Frontend: Einreichen-Button ausgegraut + Hinweis-Banner wenn supplierConfirmedAt null
+- [x] Frontend: Klick auf gesperrten Button navigiert zum Siegel-Tab mit Toast-Hinweis
+- [x] Backend: submit-Mutation wirft PRECONDITION_FAILED wenn Supplier nicht bestätigt hat
+- [x] Tests für submit-Blockierung (5 neue Tests, 131 gesamt, alle grün)

@@ -129,9 +129,15 @@ export default function ProductDetail() {
     );
   }
 
+  const supplierConfirmedAt = role === "supplier" ? (product as any)?.supplierConfirmedAt : null;
+  const hasSupplierConfirmed = !!supplierConfirmedAt;
+
   const canSubmit =
     role === "supplier" &&
     ["open", "in_progress", "clarification_needed"].includes(product.status);
+
+  // Supplier can only submit after confirming completeness
+  const submitBlocked = canSubmit && !hasSupplierConfirmed;
 
   return (
     <div className="p-6 space-y-5 max-w-6xl">
@@ -206,15 +212,34 @@ export default function ProductDetail() {
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col items-end gap-2">
             {canSubmit && (
-              <Button
-                onClick={() => submitMutation.mutate({ productId, note: undefined })}
-                disabled={submitMutation.isPending}
-              >
-                <Send className="mr-2 h-4 w-4" />
-                {t.action.submit}
-              </Button>
+              <>
+                {submitBlocked && (
+                  <div className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-1.5 max-w-xs text-right">
+                    <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span>Bitte zuerst die <strong>Vollständigkeitserklärung</strong> im Siegel-Tab abgeben.</span>
+                  </div>
+                )}
+                <Button
+                  onClick={() => {
+                    if (submitBlocked) {
+                      setActiveTab("seal");
+                      toast.warning("Vollständigkeitserklärung erforderlich", {
+                        description: "Bitte bestätigen Sie zuerst die Vollständigkeit im Siegel-Tab.",
+                      });
+                      return;
+                    }
+                    submitMutation.mutate({ productId, note: undefined });
+                  }}
+                  disabled={submitMutation.isPending}
+                  variant={submitBlocked ? "outline" : "default"}
+                  className={submitBlocked ? "opacity-60 cursor-not-allowed" : ""}
+                >
+                  <Send className="mr-2 h-4 w-4" />
+                  {t.action.submit}
+                </Button>
+              </>
             )}
           </div>
         </div>

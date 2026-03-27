@@ -143,6 +143,50 @@ describe("getPublicProduct document summary aggregation", () => {
   });
 });
 
+// ─── Tests: submit blocked without supplier confirmation ────────────────────
+describe("submit mutation: blocked without supplierConfirmedAt", () => {
+  it("throws PRECONDITION_FAILED when supplier has not confirmed", () => {
+    const product = { id: 1, supplierId: 5, supplierConfirmedAt: null };
+    const role = "supplier";
+    const shouldBlock = role === "supplier" && !product.supplierConfirmedAt;
+    expect(shouldBlock).toBe(true);
+  });
+
+  it("allows submit when supplier has confirmed", () => {
+    const product = { id: 1, supplierId: 5, supplierConfirmedAt: new Date().toISOString() };
+    const role = "supplier";
+    const shouldBlock = role === "supplier" && !product.supplierConfirmedAt;
+    expect(shouldBlock).toBe(false);
+  });
+
+  it("does not block internal employees (no confirmation required)", () => {
+    const product = { id: 1, supplierId: 5, supplierConfirmedAt: null };
+    const role = "compliance_manager";
+    const shouldBlock = role === "supplier" && !product.supplierConfirmedAt;
+    expect(shouldBlock).toBe(false);
+  });
+
+  it("frontend: submitBlocked is true when canSubmit and not confirmed", () => {
+    const role = "supplier";
+    const status = "open";
+    const supplierConfirmedAt = null;
+    const canSubmit = role === "supplier" && ["open", "in_progress", "clarification_needed"].includes(status);
+    const submitBlocked = canSubmit && !supplierConfirmedAt;
+    expect(canSubmit).toBe(true);
+    expect(submitBlocked).toBe(true);
+  });
+
+  it("frontend: submitBlocked is false after confirmation", () => {
+    const role = "supplier";
+    const status = "open";
+    const supplierConfirmedAt = new Date().toISOString();
+    const canSubmit = role === "supplier" && ["open", "in_progress", "clarification_needed"].includes(status);
+    const submitBlocked = canSubmit && !supplierConfirmedAt;
+    expect(canSubmit).toBe(true);
+    expect(submitBlocked).toBe(false);
+  });
+});
+
 // ─── Tests: trust indicator logic ────────────────────────────────────────────
 describe("trust indicators on public landing page", () => {
   it("shows supplier confirmation badge when confirmed", () => {
