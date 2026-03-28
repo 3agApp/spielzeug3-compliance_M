@@ -1734,11 +1734,16 @@ function TimelineCard({ productId, t }: any) {
 
   const getAuditActionLabel = (action: string) => {
     const map: Record<string, string> = {
+      uploaded: "Dokument hochgeladen",
+      operator_document_uploaded: "Dokument hochgeladen",
+      deleted: "Dokument gelöscht",
+      operator_document_deleted: "Dokument gelöscht",
       document_uploaded: "Dokument hochgeladen",
       document_deleted: "Dokument gelöscht",
       document_reviewed: "Dokument geprüft",
       safety_upserted: "Safety-Daten aktualisiert",
       safety_updated: "Safety-Daten geändert",
+      supplier_confirmation_reset: "Vollständigkeitserklärung zurückgesetzt",
     };
     return map[action] ?? action;
   };
@@ -1863,6 +1868,58 @@ function TimelineCard({ productId, t }: any) {
                           ? ((e.payloadSnapshot as any).fileName ?? (e.payloadSnapshot as any).documentType ?? "")
                           : ""}
                       </p>
+                    )}
+                    {/* Version diff badge: v(prev) → v(new) for upload events */}
+                    {isAudit && e.payloadSnapshot?.previousVersion != null && e.payloadSnapshot?.version != null && (
+                      <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200 px-2 py-0.5 text-xs font-semibold text-amber-800">
+                          <History className="h-3 w-3" />
+                          v{e.payloadSnapshot.previousVersion}
+                          <span className="mx-0.5 text-amber-400">→</span>
+                          v{e.payloadSnapshot.version}
+                        </span>
+                        {e.payloadSnapshot.previousFileUrl && (
+                          <a
+                            href={e.payloadSnapshot.previousFileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 rounded-full bg-slate-50 border border-slate-200 px-2 py-0.5 text-xs font-medium text-slate-600 hover:bg-slate-100 transition-colors"
+                            title={`Vorgängerversion herunterladen: ${e.payloadSnapshot.previousFileName ?? ""}`}
+                          >
+                            <Download className="h-3 w-3" />
+                            {e.payloadSnapshot.previousFileName
+                              ? e.payloadSnapshot.previousFileName.length > 28
+                                ? e.payloadSnapshot.previousFileName.slice(0, 25) + "…"
+                                : e.payloadSnapshot.previousFileName
+                              : `v${e.payloadSnapshot.previousVersion}`}
+                          </a>
+                        )}
+                      </div>
+                    )}
+                    {/* Version badge for delete events */}
+                    {isAudit && (e.action === "deleted" || e.action === "operator_document_deleted") && e.payloadSnapshot?.documentVersion != null && (
+                      <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-red-50 border border-red-200 px-2 py-0.5 text-xs font-semibold text-red-700">
+                          <Trash2 className="h-3 w-3" />
+                          v{e.payloadSnapshot.documentVersion} gelöscht
+                        </span>
+                        {e.payloadSnapshot.fileUrl && (
+                          <a
+                            href={e.payloadSnapshot.fileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 rounded-full bg-slate-50 border border-slate-200 px-2 py-0.5 text-xs font-medium text-slate-600 hover:bg-slate-100 transition-colors"
+                            title="Gelöschte Version herunterladen (falls noch verfügbar)"
+                          >
+                            <Download className="h-3 w-3" />
+                            {e.payloadSnapshot.fileName
+                              ? e.payloadSnapshot.fileName.length > 28
+                                ? e.payloadSnapshot.fileName.slice(0, 25) + "…"
+                                : e.payloadSnapshot.fileName
+                              : "Datei"}
+                          </a>
+                        )}
+                      </div>
                     )}
                     {/* Operator comment */}
                     {isAudit && isOperator && e.payloadSnapshot?.operatorComment && (

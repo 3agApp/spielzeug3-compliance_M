@@ -316,3 +316,153 @@ describe("documents.listArchivedVersions tRPC endpoint", () => {
     ).rejects.toThrow();
   });
 });
+
+// ─── Audit-Log Payload Verknüpfung ───────────────────────────────────────────
+
+describe("documentService.upload – audit log payload with version link", () => {
+  it("audit log payload contains previousVersionId when replacing an existing document", async () => {
+    // Seed an existing active document with a known id, fileName and version
+    mockDocuments.push({
+      id: 10,
+      productId: 1,
+      documentType: "test_report",
+      isArchived: false,
+      fileName: "report_v1.pdf",
+      fileUrl: "https://cdn.example.com/report_v1.pdf",
+      version: 1,
+      uploadedAt: new Date("2026-01-01T10:00:00Z"),
+    });
+
+    // Capture createAuditLog calls
+    const { createAuditLog } = await import("./db");
+    const auditLogSpy = vi.mocked(createAuditLog);
+
+    const user = makeUser("supplier");
+    await documentService.upload(user, {
+      productId: 1,
+      documentType: "test_report",
+      fileName: "report_v2.pdf",
+      fileBase64: Buffer.from("v2 content").toString("base64"),
+      mimeType: "application/pdf",
+    });
+
+    // Find the upload audit log call (not the confirmation_reset one)
+    const uploadCall = auditLogSpy.mock.calls.find(
+      ([args]) => args.action === "uploaded" || args.action === "operator_document_uploaded"
+    );
+    expect(uploadCall).toBeDefined();
+    const payload = uploadCall![0].payloadSnapshot as any;
+
+    expect(payload.previousVersionId).toBe(10);
+    expect(payload.previousFileName).toBe("report_v1.pdf");
+    expect(payload.previousVersion).toBe(1);
+    expect(payload.previousFileUrl).toBe("https://cdn.example.com/report_v1.pdf");
+    expect(payload.version).toBe(2);
+    expect(payload.newDocumentId).toBeGreaterThan(0);
+  });
+
+  it("audit log payload does NOT contain previousVersionId for first upload", async () => {
+    const { createAuditLog } = await import("./db");
+    const auditLogSpy = vi.mocked(createAuditLog);
+
+    const user = makeUser("supplier");
+    await documentService.upload(user, {
+      productId: 1,
+      documentType: "certificate",
+      fileName: "cert_v1.pdf",
+      fileBase64: Buffer.from("cert").toString("base64"),
+      mimeType: "application/pdf",
+    });
+
+    const uploadCall = auditLogSpy.mock.calls.find(
+      ([args]) => args.action === "uploaded" || args.action === "operator_document_uploaded"
+    );
+    expect(uploadCall).toBeDefined();
+    const payload = uploadCall![0].payloadSnapshot as any;
+
+    expect(payload.previousVersionId).toBeUndefined();
+    expect(payload.previousFileName).toBeUndefined();
+    expect(payload.version).toBe(1);
+  });
+
+  it("audit log payload selects the most recent predecessor when multiple active docs exist", async () => {
+    // Two active docs of the same type (edge case)
+    mockDocuments.push(
+      {
+        id: 20,
+        productId: 1,
+        documentType: "manual",
+        isArchived: false,
+        fileName: "manual_old.pdf",
+        fileUrl: "https://cdn.example.com/manual_old.pdf",
+        version: 1,
+        uploadedAt: new Date("2026-01-01T08:00:00Z"),
+      },
+      {
+        id: 21,
+        productId: 1,
+        documentType: "manual",
+        isArchived: false,
+        fileName: "manual_newer.pdf",
+        fileUrl: "https://cdn.example.com/manual_newer.pdf",
+        version: 2,
+        uploadedAt: new Date("2026-02-01T08:00:00Z"),
+      }
+    );
+
+    const { createAuditLog } = await import("./db");
+    const auditLogSpy = vi.mocked(createAuditLog);
+
+    const user = makeUser("administrator");
+    await documentService.upload(user, {
+      productId: 1,
+      documentType: "manual",
+      fileName: "manual_v3.pdf",
+      fileBase64: Buffer.from("v3").toString("base64"),
+      mimeType: "application/pdf",
+    });
+
+    const uploadCall = auditLogSpy.mock.calls.find(
+      ([args]) => args.action === "uploaded" || args.action === "operator_document_uploaded"
+    );
+    const payload = uploadCall![0].payloadSnapshot as any;
+
+    // The most recent predecessor (id=21, uploadedAt Feb) should be selected
+    expect(payload.previousVersionId).toBe(21);
+    expect(payload.previousFileName).toBe("manual_newer.pdf");
+  });
+});
+
+describe("documentService.delete – audit log payload with version info", () => {
+  it("audit log payload contains documentVersion and fileUrl for deleted document", async () => {
+    mockDocuments.push({
+      id: 30,
+      productId: 1,
+      documentType: "test_report",
+      isArchived: false,
+      fileName: "report_to_delete.pdf",
+      fileUrl: "https://cdn.example.com/report_to_delete.pdf",
+      version: 3,
+      uploadedAt: new Date(),
+    });
+
+    const { createAuditLog } = await import("./db");
+    const auditLogSpy = vi.mocked(createAuditLog);
+
+    const user = makeUser("administrator");
+    await documentService.delete(user, {
+      documentId: 30,
+      productId: 1,
+    });
+
+    const deleteCall = auditLogSpy.mock.calls.find(
+      ([args]) => args.action === "deleted" || args.action === "operator_document_deleted"
+    );
+    expect(deleteCall).toBeDefined();
+    const payload = deleteCall![0].payloadSnapshot as any;
+
+    expect(payload.documentVersion).toBe(3);
+    expect(payload.fileUrl).toBe("https://cdn.example.com/report_to_delete.pdf");
+    expect(payload.fileName).toBe("report_to_delete.pdf");
+  });
+});

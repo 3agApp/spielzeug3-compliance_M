@@ -448,3 +448,13 @@
 - [x] Frontend: DocumentRow-Komponente mit aufklappbarem Versionsverlauf (Amber-Badge mit History-Icon)
 - [x] Frontend: Archivierte Versionen in separater Tabelle mit Download-Button
 - [x] 14 neue Vitest-Tests, 186 Tests gesamt grün, 0 TypeScript-Fehler
+
+## Audit-Log Versionsverlauf-Verknüpfung
+- [x] Backend: documentService.upload speichert previousVersionId, previousFileName, previousVersion, previousFileUrl im Audit-Log-Payload
+- [x] Backend: documentService.upload wählt den jüngsten Vorgänger als primaryPredecessor
+- [x] Backend: documentService.delete speichert documentVersion und fileUrl im Audit-Log-Payload
+- [x] Frontend: Timeline-Eintrag für uploaded/operator_document_uploaded zeigt Versions-Diff-Badge (v1 → v2)
+- [x] Frontend: "Vorgängerversion herunterladen"-Link im Timeline-Eintrag wenn previousFileUrl vorhanden
+- [x] Frontend: Versions-Diff-Badge (rot) für delete-Einträge mit Download-Link zur gelöschten Version
+- [x] Frontend: getAuditActionLabel um uploaded/deleted/operator_*-Aktionen erweitert
+- [x] 4 neue Tests (18 in documentVersioning.test.ts), 190 Tests gesamt grün, 0 TypeScript-Fehler

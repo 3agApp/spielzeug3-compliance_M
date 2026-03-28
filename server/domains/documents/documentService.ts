@@ -156,6 +156,12 @@ export const documentService = {
 
     // Archive all previously active documents of the same type
     let archivedCount = 0;
+    // Capture metadata of the most recent predecessor for the audit log
+    const primaryPredecessor = activeDocs.length > 0
+      ? activeDocs.reduce((latest: any, d: any) =>
+          new Date(d.uploadedAt) > new Date(latest.uploadedAt) ? d : latest
+        )
+      : null;
     for (const oldDoc of activeDocs) {
       await archiveDocument(oldDoc.id, newDocId);
       archivedCount++;
@@ -202,6 +208,14 @@ export const documentService = {
         fileName: input.fileName,
         documentType: input.documentType,
         version,
+        newDocumentId: newDocId,
+        // Predecessor info for version-diff display in the timeline
+        ...(primaryPredecessor ? {
+          previousVersionId: primaryPredecessor.id,
+          previousFileName: primaryPredecessor.fileName,
+          previousVersion: primaryPredecessor.version,
+          previousFileUrl: primaryPredecessor.fileUrl,
+        } : {}),
         ...(archivedCount > 0 ? { archivedPreviousVersions: archivedCount } : {}),
         ...(input.operatorComment ? { operatorComment: input.operatorComment } : {}),
       } as any,
@@ -291,7 +305,12 @@ export const documentService = {
       actorName,
       payloadSnapshot: {
         documentId: input.documentId,
-        ...(doc ? { fileName: doc.fileName, documentType: doc.documentType } : {}),
+        ...(doc ? {
+          fileName: doc.fileName,
+          documentType: doc.documentType,
+          documentVersion: doc.version,
+          fileUrl: doc.fileUrl,
+        } : {}),
         ...(input.operatorComment ? { operatorComment: input.operatorComment } : {}),
       } as any,
     });
