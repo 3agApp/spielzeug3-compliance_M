@@ -387,3 +387,13 @@
 - [x] Fallback: farbiger Avatar-Block mit Anfangsbuchstaben wenn kein Logo vorhanden
 - [x] websiteUrl statt Slug als Unterzeile angezeigt (https:// wird abgeschnitten)
 - [x] 172 Tests grün, 0 TypeScript-Fehler
+
+## Primärfarbe des Siegels anpassbar
+- [x] Backend: updateMyTenant-Schema um primaryColor erweitert (Regex-Validierung #RRGGBB)
+- [x] tenantService.UpdateMyTenantInput um primaryColor erweitert
+- [x] Frontend: Farbwähler-Karte im Portal-Tab (native color input + Hex-Textfeld + Vorschau-Chip)
+- [x] Live-Vorschau: Farbänderung wirkt sofort auf SealPreview ohne Speichern
+- [x] SealPreview: tenantPrimaryColor-Prop, überschreibt borderColor/accentColor für verified-Status
+- [x] PDF-Generator: tenantPrimaryColor-Prop, überschreibt Rahmen- und URL-Farbe für verified-Status
+- [x] pdfRoutes.ts: primaryColor aus Tenant-Daten an generateSealLabelPdf übergeben
+- [x] 172 Tests grün, 0 TypeScript-Fehler

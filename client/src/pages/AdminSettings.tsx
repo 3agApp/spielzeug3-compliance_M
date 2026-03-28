@@ -63,11 +63,16 @@ export default function AdminSettings() {
   const [portalName, setPortalName] = useState("");
   const [portalWebsiteUrl, setPortalWebsiteUrl] = useState("");
   const [portalContactEmail, setPortalContactEmail] = useState("");
+  const [portalPrimaryColor, setPortalPrimaryColor] = useState("#C8102E");
+  const [portalColorHex, setPortalColorHex] = useState("#C8102E");
   const [portalLoaded, setPortalLoaded] = useState(false);
   if (!portalLoaded && tenantQuery.data) {
     setPortalName((tenantQuery.data as any).name ?? "");
     setPortalWebsiteUrl((tenantQuery.data as any).websiteUrl ?? "swiss-product-seal.ch");
     setPortalContactEmail((tenantQuery.data as any).contactEmail ?? "");
+    const savedColor = (tenantQuery.data as any).primaryColor ?? "#C8102E";
+    setPortalPrimaryColor(savedColor);
+    setPortalColorHex(savedColor);
     setPortalLoaded(true);
   }
   const utils = trpc.useUtils();
@@ -437,8 +442,51 @@ export default function AdminSettings() {
                   type="email"
                   value={portalContactEmail}
                   onChange={(e) => setPortalContactEmail(e.target.value)}
-                  placeholder="z. B. compliance@spielzeug3.ch"
+                  placeholder="z. B. compliance@spielzeug3.ch"
                 />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Primärfarbe (Siegel-Rahmen &amp; Akzent)</Label>
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <input
+                      type="color"
+                      value={portalPrimaryColor}
+                      onChange={(e) => {
+                        setPortalPrimaryColor(e.target.value);
+                        setPortalColorHex(e.target.value);
+                      }}
+                      className="w-10 h-10 rounded-lg border cursor-pointer p-0.5 bg-white"
+                      title="Farbe wählen"
+                    />
+                  </div>
+                  <Input
+                    value={portalColorHex}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setPortalColorHex(val);
+                      if (/^#[0-9A-Fa-f]{6}$/.test(val)) setPortalPrimaryColor(val);
+                    }}
+                    placeholder="#C8102E"
+                    className="w-32 font-mono text-sm"
+                    maxLength={7}
+                  />
+                  <div
+                    className="w-8 h-8 rounded-full border shadow-sm shrink-0"
+                    style={{ backgroundColor: portalPrimaryColor }}
+                    title="Vorschau"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => { setPortalPrimaryColor("#C8102E"); setPortalColorHex("#C8102E"); }}
+                    className="text-xs text-muted-foreground hover:text-foreground underline"
+                  >
+                    Zurücksetzen
+                  </button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Diese Farbe wird für den Rahmen und die Akzente des Siegel-Etiketts (HTML &amp; PDF) verwendet.
+                </p>
               </div>
               <Separator />
               <div className="space-y-1.5">
@@ -467,6 +515,7 @@ export default function AdminSettings() {
                       name: portalName || undefined,
                       websiteUrl: portalWebsiteUrl || null,
                       contactEmail: portalContactEmail || null,
+                      primaryColor: /^#[0-9A-Fa-f]{6}$/.test(portalPrimaryColor) ? portalPrimaryColor : "#C8102E",
                     })
                   }
                   disabled={updateMyTenantMutation.isPending}
@@ -809,6 +858,7 @@ export default function AdminSettings() {
                 tenantName={tenantName}
                 tenantUrl={tenantWebsiteUrl}
                 tenantLogoUrl={currentLogoUrl}
+                tenantPrimaryColor={portalPrimaryColor}
                 tenantId={tenantId}
               />
             </CardContent>

@@ -16,6 +16,8 @@ export interface SealLabelOptions {
   qrCodeBuffer?: Buffer;
   /** Optional: tenant logo URL to display instead of plain tenantName text */
   tenantLogoUrl?: string | null;
+  /** Optional: tenant primary color to override the verified-status border/accent color */
+  tenantPrimaryColor?: string | null;
 }
 
 // ─── Color config ─────────────────────────────────────────────────────────────
@@ -122,8 +124,12 @@ function drawQrPlaceholder(doc: PDFKit.PDFDocument, x: number, y: number, size: 
  * ensuring pixel-identical appearance across HTML, PDF, and embed widgets.
  */
 export async function generateSealLabelPdf(opts: SealLabelOptions): Promise<Buffer> {
-  const { status, tenantName, tenantUrl, qrCodeBuffer, tenantId = 1, tenantLogoUrl } = opts;
-  const cfg = STATUS_COLORS[status];
+  const { status, tenantName, tenantUrl, qrCodeBuffer, tenantId = 1, tenantLogoUrl, tenantPrimaryColor } = opts;
+  // Apply tenant primary color to verified status only; keep semantic colors for others
+  const baseCfg = STATUS_COLORS[status];
+  const cfg = (status === "verified" && tenantPrimaryColor && /^#[0-9A-Fa-f]{6}$/.test(tenantPrimaryColor))
+    ? { border: tenantPrimaryColor, urlColor: tenantPrimaryColor }
+    : baseCfg;
 
   // ── Load seal graphic: DB custom upload → local SVG → CDN PNG fallback ────────────
   let sealPng: Buffer;

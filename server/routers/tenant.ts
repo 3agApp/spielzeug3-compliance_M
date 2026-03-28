@@ -93,6 +93,7 @@ export const tenantRouter = router({
       websiteUrl: z.string().max(255).optional().nullable(),
       contactEmail: z.string().email().optional().nullable(),
       logoUrl: z.string().url().optional().nullable(),
+      primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional().nullable(),
     }))
     .mutation(async ({ ctx, input }) => {
       try {

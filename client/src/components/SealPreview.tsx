@@ -26,6 +26,7 @@ interface SealPreviewProps {
   tenantName?: string;
   tenantUrl?: string;
   tenantLogoUrl?: string | null;
+  tenantPrimaryColor?: string | null;
   tenantId?: number;
   productId?: number;
   qrCodeUrl?: string;
@@ -35,6 +36,7 @@ export function SealPreview({
   tenantName = "Spielzeug 3 AG",
   tenantUrl = "swiss-product-seal.ch",
   tenantLogoUrl,
+  tenantPrimaryColor,
   tenantId = 1,
   productId,
   qrCodeUrl,
@@ -42,7 +44,11 @@ export function SealPreview({
   const [status, setStatus] = useState<SealStatus>("verified");
   const [downloading, setDownloading] = useState(false);
   const [copied, setCopied] = useState(false);
-  const cfg = STATUS_CONFIG[status];
+  // Apply tenant primary color to verified status only; keep semantic colors for others
+  const baseCfg = STATUS_CONFIG[status];
+  const cfg = (status === "verified" && tenantPrimaryColor)
+    ? { ...baseCfg, borderColor: tenantPrimaryColor, accentColor: tenantPrimaryColor }
+    : baseCfg;
 
   // Load active seal URLs (custom upload or CDN default)
   const { data: activeSealUrls } = trpc.sealAssets.getActive.useQuery();
