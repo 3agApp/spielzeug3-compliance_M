@@ -26,15 +26,16 @@ import { useLocation, useParams } from "wouter";
 
 // ─── Status badge ─────────────────────────────────────────────────────────────
 function StatusBadge({ status }: { status: string }) {
+  const { lang: statusLang } = useLang();
   const map: Record<string, { label: string; className: string }> = {
-    submitted:            { label: "Eingereicht",   className: "bg-blue-100 text-blue-800 border-blue-300" },
-    under_review:         { label: "In Prüfung",    className: "bg-purple-100 text-purple-800 border-purple-300" },
-    clarification_needed: { label: "Rückfrage",     className: "bg-amber-100 text-amber-800 border-amber-300" },
-    approved:             { label: "Genehmigt",     className: "bg-emerald-100 text-emerald-800 border-emerald-300" },
-    rejected:             { label: "Abgelehnt",     className: "bg-red-100 text-red-800 border-red-300" },
-    completed:            { label: "Vollständig",   className: "bg-teal-100 text-teal-800 border-teal-300" },
-    open:                 { label: "Offen",          className: "bg-slate-100 text-slate-700 border-slate-300" },
-    in_progress:          { label: "In Bearbeitung", className: "bg-orange-100 text-orange-800 border-orange-300" },
+    submitted:            { label: statusLang === "de" ? "Eingereicht" : "Submitted",   className: "bg-blue-100 text-blue-800 border-blue-300" },
+    under_review:         { label: statusLang === "de" ? "In Prüfung" : "Under review",    className: "bg-purple-100 text-purple-800 border-purple-300" },
+    clarification_needed: { label: statusLang === "de" ? "Rückfrage" : "Clarification needed",     className: "bg-amber-100 text-amber-800 border-amber-300" },
+    approved:             { label: statusLang === "de" ? "Genehmigt" : "Approved",     className: "bg-emerald-100 text-emerald-800 border-emerald-300" },
+    rejected:             { label: statusLang === "de" ? "Abgelehnt" : "Rejected",     className: "bg-red-100 text-red-800 border-red-300" },
+    completed:            { label: statusLang === "de" ? "Vollständig" : "Completed",   className: "bg-teal-100 text-teal-800 border-teal-300" },
+    open:                 { label: statusLang === "de" ? "Offen" : "Open",          className: "bg-slate-100 text-slate-700 border-slate-300" },
+    in_progress:          { label: statusLang === "de" ? "In Bearbeitung" : "In progress", className: "bg-orange-100 text-orange-800 border-orange-300" },
   };
   const cfg = map[status] ?? { label: status, className: "bg-slate-100 text-slate-700 border-slate-300" };
   return (
@@ -89,7 +90,7 @@ export default function SupplierDetail() {
   const { id } = useParams<{ id: string }>();
   const supplierId = Number(id);
   const [, setLocation] = useLocation();
-  const { t } = useLang();
+  const { t, lang } = useLang();
 
   const [search, setSearch]           = useState("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
@@ -148,10 +149,10 @@ export default function SupplierDetail() {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
         <Building2 className="h-12 w-12 opacity-30" />
-        <p>Lieferant nicht gefunden.</p>
+        <p>{lang === "de" ? "Lieferant nicht gefunden." : "Supplier not found."}</p>
         <Button variant="outline" size="sm" onClick={() => setLocation("/suppliers")}>
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Zurück zur Übersicht
+          {lang === "de" ? "Zurück zur Übersicht" : "Back to overview"}
         </Button>
       </div>
     );
@@ -173,7 +174,7 @@ export default function SupplierDetail() {
           onClick={() => setLocation("/suppliers")}
         >
           <ArrowLeft className="mr-1.5 h-4 w-4" />
-          Alle Lieferanten
+          {lang === "de" ? "Alle Lieferanten" : "All suppliers"}
         </Button>
 
         <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -200,7 +201,7 @@ export default function SupplierDetail() {
                     ? "text-xs border-emerald-300 text-emerald-700 bg-emerald-50"
                     : "text-xs border-red-300 text-red-700 bg-red-50"}
                 >
-                  {supplier.active ? "Aktiv" : "Inaktiv"}
+                  {supplier.active ? (lang === "de" ? "Aktiv" : "Active") : (lang === "de" ? "Inaktiv" : "Inactive")}
                 </Badge>
               </div>
             </div>
@@ -209,7 +210,7 @@ export default function SupplierDetail() {
           {/* Overall compliance score */}
           <div className="rounded-xl border p-4 text-center min-w-[120px]">
             <p className={`text-3xl font-bold ${scoreColor}`}>{stats.avgScore}%</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Ø Compliance-Score</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{lang === "de" ? "Ø Compliance-Score" : "Avg. compliance score"}</p>
             <div className="mt-2">
               <CompletenessBar score={stats.avgScore} />
             </div>
@@ -219,9 +220,9 @@ export default function SupplierDetail() {
 
       <Tabs defaultValue="overview">
         <TabsList>
-          <TabsTrigger value="overview">Übersicht</TabsTrigger>
-          <TabsTrigger value="products">Produkte ({stats.total})</TabsTrigger>
-          <TabsTrigger value="contact">Kontakt</TabsTrigger>
+          <TabsTrigger value="overview">{lang === "de" ? "Übersicht" : "Overview"}</TabsTrigger>
+          <TabsTrigger value="products">{lang === "de" ? "Produkte" : "Products"} ({stats.total})</TabsTrigger>
+          <TabsTrigger value="contact">{lang === "de" ? "Kontakt" : "Contact"}</TabsTrigger>
         </TabsList>
 
         {/* ── Overview tab ── */}
@@ -229,46 +230,46 @@ export default function SupplierDetail() {
           {/* Status distribution */}
           <div>
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-              Produktstatus
+              {lang === "de" ? "Produktstatus" : "Product status"}
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
               <StatCard
-                label="Offen"
+                label={lang === "de" ? "Offen" : "Open"}
                 value={stats.open}
                 color="text-slate-700"
                 active={statusFilter === "open"}
                 onClick={() => setStatusFilter(statusFilter === "open" ? null : "open")}
               />
               <StatCard
-                label="Eingereicht"
+                label={lang === "de" ? "Eingereicht" : "Submitted"}
                 value={stats.submitted}
                 color="text-blue-600"
                 active={statusFilter === "submitted"}
                 onClick={() => setStatusFilter(statusFilter === "submitted" ? null : "submitted")}
               />
               <StatCard
-                label="Rückfragen"
+                label={lang === "de" ? "Rückfragen" : "Clarifications"}
                 value={stats.clarify}
                 color="text-amber-600"
                 active={statusFilter === "clarification_needed"}
                 onClick={() => setStatusFilter(statusFilter === "clarification_needed" ? null : "clarification_needed")}
               />
               <StatCard
-                label="Genehmigt"
+                label={lang === "de" ? "Genehmigt" : "Approved"}
                 value={stats.approved}
                 color="text-emerald-600"
                 active={statusFilter === "approved"}
                 onClick={() => setStatusFilter(statusFilter === "approved" ? null : "approved")}
               />
               <StatCard
-                label="Abgelehnt"
+                label={lang === "de" ? "Abgelehnt" : "Rejected"}
                 value={stats.rejected}
                 color="text-red-600"
                 active={statusFilter === "rejected"}
                 onClick={() => setStatusFilter(statusFilter === "rejected" ? null : "rejected")}
               />
               <StatCard
-                label="Abgeschlossen"
+                label={lang === "de" ? "Abgeschlossen" : "Completed"}
                 value={stats.completed}
                 color="text-teal-600"
                 active={statusFilter === "completed"}
@@ -280,7 +281,7 @@ export default function SupplierDetail() {
                 onClick={() => setStatusFilter(null)}
                 className="mt-2 text-xs text-primary hover:underline"
               >
-                Filter aufheben
+                {lang === "de" ? "Filter aufheben" : "Clear filter"}
               </button>
             )}
           </div>
@@ -291,7 +292,7 @@ export default function SupplierDetail() {
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
                   <Tag className="h-4 w-4" />
-                  Compliance-Score nach Marke
+                  {lang === "de" ? "Compliance-Score nach Marke" : "Compliance score by brand"}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -307,7 +308,7 @@ export default function SupplierDetail() {
                       <div className="flex justify-between text-sm">
                         <span className="font-medium">{brand}</span>
                         <span className="text-muted-foreground text-xs">
-                          {brandProducts.length} Produkt{brandProducts.length !== 1 ? "e" : ""}
+                          {brandProducts.length} {lang === "de" ? `Produkt${brandProducts.length !== 1 ? "e" : ""}` : `product${brandProducts.length !== 1 ? "s" : ""}`}
                         </span>
                       </div>
                       <CompletenessBar score={avg} />
@@ -323,13 +324,13 @@ export default function SupplierDetail() {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
                 <Package className="h-4 w-4" />
-                Zuletzt aktualisierte Produkte
+                  {lang === "de" ? "Zuletzt aktualisierte Produkte" : "Recently updated products"}
               </CardTitle>
             </CardHeader>
             <CardContent>
               {allProducts.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-4 text-center">
-                  Keine Produkte vorhanden
+                  {lang === "de" ? "Keine Produkte vorhanden" : "No products available"}
                 </p>
               ) : (
                 <div className="divide-y">
@@ -366,7 +367,7 @@ export default function SupplierDetail() {
                     tab?.click();
                   }}
                 >
-                  Alle {allProducts.length} Produkte anzeigen →
+                  {lang === "de" ? `Alle ${allProducts.length} Produkte anzeigen →` : `Show all ${allProducts.length} products →`}
                 </button>
               )}
             </CardContent>
@@ -380,17 +381,17 @@ export default function SupplierDetail() {
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Produkt suchen…"
+                placeholder={lang === "de" ? "Produkt suchen…" : "Search product..."}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9 h-9"
               />
             </div>
             {statusFilter && (
-              <Button variant="outline" size="sm" onClick={() => setStatusFilter(null)}>
-                <XCircle className="mr-1.5 h-3.5 w-3.5" />
-                Filter aufheben
-              </Button>
+                <Button variant="outline" size="sm" onClick={() => setStatusFilter(null)}>
+                  <XCircle className="mr-1.5 h-3.5 w-3.5" />
+                  {lang === "de" ? "Filter aufheben" : "Clear filter"}
+                </Button>
             )}
           </div>
 
@@ -402,18 +403,18 @@ export default function SupplierDetail() {
           ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">
               <Package className="h-10 w-10 opacity-30" />
-              <p className="text-sm">Keine Produkte gefunden</p>
+              <p className="text-sm">{lang === "de" ? "Keine Produkte gefunden" : "No products found"}</p>
             </div>
           ) : (
             <div className="rounded-xl border overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b bg-muted/40">
-                    <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Produkt</th>
-                    <th className="text-left px-4 py-2.5 font-medium text-muted-foreground hidden md:table-cell">Artikelnr.</th>
-                    <th className="text-left px-4 py-2.5 font-medium text-muted-foreground hidden sm:table-cell">Marke</th>
+                    <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">{lang === "de" ? "Produkt" : "Product"}</th>
+                    <th className="text-left px-4 py-2.5 font-medium text-muted-foreground hidden md:table-cell">{lang === "de" ? "Artikelnr." : "Article no."}</th>
+                    <th className="text-left px-4 py-2.5 font-medium text-muted-foreground hidden sm:table-cell">{lang === "de" ? "Marke" : "Brand"}</th>
                     <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Status</th>
-                    <th className="text-left px-4 py-2.5 font-medium text-muted-foreground hidden lg:table-cell">Vollständigkeit</th>
+                    <th className="text-left px-4 py-2.5 font-medium text-muted-foreground hidden lg:table-cell">{lang === "de" ? "Vollständigkeit" : "Completeness"}</th>
                     <th className="px-4 py-2.5" />
                   </tr>
                 </thead>
@@ -464,7 +465,7 @@ export default function SupplierDetail() {
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
                   <Building2 className="h-4 w-4" />
-                  Unternehmensdaten
+                  {lang === "de" ? "Unternehmensdaten" : "Company details"}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -472,21 +473,21 @@ export default function SupplierDetail() {
                   <span className="text-muted-foreground">Name</span>
                   <span className="font-medium">{supplier.name}</span>
 
-                  <span className="text-muted-foreground">Lieferantencode</span>
+                  <span className="text-muted-foreground">{lang === "de" ? "Lieferantencode" : "Supplier code"}</span>
                   <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded w-fit">
                     {supplier.supplierCode}
                   </span>
 
                   {supplier.address && (
                     <>
-                      <span className="text-muted-foreground">Adresse</span>
+                      <span className="text-muted-foreground">{lang === "de" ? "Adresse" : "Address"}</span>
                       <span>{supplier.address}</span>
                     </>
                   )}
 
                   {supplier.country && (
                     <>
-                      <span className="text-muted-foreground">Land</span>
+                      <span className="text-muted-foreground">{lang === "de" ? "Land" : "Country"}</span>
                       <span className="flex items-center gap-1">
                         <Globe className="h-3.5 w-3.5 text-muted-foreground" />
                         {supplier.country}
@@ -508,7 +509,7 @@ export default function SupplierDetail() {
                       ? "text-xs border-emerald-300 text-emerald-700 bg-emerald-50 w-fit"
                       : "text-xs border-red-300 text-red-700 bg-red-50 w-fit"}
                   >
-                    {supplier.active ? "Aktiv" : "Inaktiv"}
+                    {supplier.active ? (lang === "de" ? "Aktiv" : "Active") : (lang === "de" ? "Inaktiv" : "Inactive")}
                   </Badge>
                 </div>
               </CardContent>
@@ -518,7 +519,7 @@ export default function SupplierDetail() {
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
                   <Mail className="h-4 w-4" />
-                  Kontaktinformationen
+                  {lang === "de" ? "Kontaktinformationen" : "Contact information"}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -538,7 +539,7 @@ export default function SupplierDetail() {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">Keine E-Mail hinterlegt</p>
+                  <p className="text-sm text-muted-foreground">{lang === "de" ? "Keine E-Mail hinterlegt" : "No email stored"}</p>
                 )}
 
                 {supplier.phone && (
@@ -558,9 +559,9 @@ export default function SupplierDetail() {
                   </div>
                 )}
 
-                {!supplier.email && !supplier.phone && (
+                  {!supplier.email && !supplier.phone && (
                   <p className="text-sm text-muted-foreground py-2">
-                    Keine Kontaktdaten hinterlegt.
+                    {lang === "de" ? "Keine Kontaktdaten hinterlegt." : "No contact details stored."}
                   </p>
                 )}
 
@@ -568,15 +569,15 @@ export default function SupplierDetail() {
 
                 <div className="text-xs text-muted-foreground space-y-1">
                   <p>
-                    Erstellt:{" "}
+                    {lang === "de" ? "Erstellt:" : "Created:"}{" "}
                     {supplier.createdAt
-                      ? new Date(supplier.createdAt).toLocaleDateString("de-DE")
+                      ? new Date(supplier.createdAt).toLocaleDateString(lang === "de" ? "de-DE" : "en-GB")
                       : "–"}
                   </p>
                   {supplier.updatedAt && (
                     <p>
-                      Zuletzt aktualisiert:{" "}
-                      {new Date(supplier.updatedAt).toLocaleDateString("de-DE")}
+                      {lang === "de" ? "Zuletzt aktualisiert:" : "Last updated:"}{" "}
+                      {new Date(supplier.updatedAt).toLocaleDateString(lang === "de" ? "de-DE" : "en-GB")}
                     </p>
                   )}
                 </div>

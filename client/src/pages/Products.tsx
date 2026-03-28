@@ -73,6 +73,7 @@ function AnalysisProgressDialog({
   progress: AnalysisProgress | null;
   onClose: () => void;
 }) {
+  const { lang } = useLang();
   const pct = progress ? Math.round((progress.done / progress.total) * 100) : 0;
   const done = progress?.done ?? 0;
   const total = progress?.total ?? 0;
@@ -83,10 +84,10 @@ function AnalysisProgressDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
-            KI-Plausibilitätsprüfung
+            {lang === "de" ? "KI-Plausibilitätsprüfung" : "AI Plausibility Check"}
           </DialogTitle>
           <DialogDescription>
-            GPT-4o analysiert die Produktdokumente auf Plausibilität und Vollständigkeit.
+            {lang === "de" ? "GPT-4o analysiert die Produktdokumente auf Plausibilität und Vollständigkeit." : "GPT-4o analyses the product documents for plausibility and completeness."}
           </DialogDescription>
         </DialogHeader>
 
@@ -94,7 +95,7 @@ function AnalysisProgressDialog({
           {/* Overall progress */}
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Fortschritt</span>
+              <span className="text-muted-foreground">{lang === "de" ? "Fortschritt" : "Progress"}</span>
               <span className="font-medium">{done} / {total}</span>
             </div>
             <Progress value={pct} className="h-2" />
@@ -104,7 +105,7 @@ function AnalysisProgressDialog({
           {done < total && progress?.current && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/40 rounded-lg px-3 py-2">
               <Bot className="h-4 w-4 animate-pulse text-primary shrink-0" />
-              <span className="truncate">Analysiere: {progress.current}</span>
+              <span className="truncate">{lang === "de" ? "Analysiere:" : "Analysing:"} {progress.current}</span>
             </div>
           )}
 
@@ -127,7 +128,7 @@ function AnalysisProgressDialog({
                   {r.success && r.score !== undefined ? (
                     <AiScoreBadge score={r.score} />
                   ) : (
-                    <span className="text-xs text-red-500 shrink-0">Fehler</span>
+                    <span className="text-xs text-red-500 shrink-0">{lang === "de" ? "Fehler" : "Error"}</span>
                   )}
                 </div>
               ))}
@@ -137,7 +138,7 @@ function AnalysisProgressDialog({
           {/* Done */}
           {done === total && total > 0 && (
             <div className="flex justify-end pt-2">
-              <Button onClick={onClose}>Schließen</Button>
+              <Button onClick={onClose}>{lang === "de" ? "Schließen" : "Close"}</Button>
             </div>
           )}
         </div>
@@ -250,8 +251,8 @@ export default function Products() {
         setAiScores((prev) => ({ ...prev, [productId]: result.result?.overallScore }));
       } catch (err: any) {
         results.push({ productId, name: productName, success: false, error: err.message });
-        if (err.message?.includes("API-Schlüssel")) {
-          toast.error("Kein OpenAI API-Schlüssel konfiguriert. Bitte in den Einstellungen hinterlegen.");
+        if (err.message?.includes("API-Schlüssel") || err.message?.includes("API key")) {
+          toast.error(lang === "de" ? "Kein OpenAI API-Schlüssel konfiguriert. Bitte in den Einstellungen hinterlegen." : "No OpenAI API key configured. Please add it in the settings.");
           break;
         }
       }
@@ -297,12 +298,12 @@ export default function Products() {
       document.body.removeChild(a);
       URL.revokeObjectURL(objectUrl);
 
-      toast.success(`${ids.length} Etikett${ids.length !== 1 ? "en" : ""} exportiert`, {
-        description: "Die Siegel-Etiketten wurden als ZIP-Archiv heruntergeladen.",
+      toast.success(lang === "de" ? `${ids.length} Etikett${ids.length !== 1 ? "en" : ""} exportiert` : `${ids.length} label${ids.length !== 1 ? "s" : ""} exported`, {
+        description: lang === "de" ? "Die Siegel-Etiketten wurden als ZIP-Archiv heruntergeladen." : "The seal labels were downloaded as a ZIP archive.",
       });
       setSelected(new Set());
     } catch (err: any) {
-      toast.error("Export fehlgeschlagen", { description: err.message ?? "Unbekannter Fehler" });
+      toast.error(lang === "de" ? "Export fehlgeschlagen" : "Export failed", { description: err.message ?? (lang === "de" ? "Unbekannter Fehler" : "Unknown error") });
     } finally {
       setBatchExporting(false);
     }
@@ -323,7 +324,7 @@ export default function Products() {
             {products.length} {t.common.items}
             {someSelected && (
               <span className="ml-2 text-primary font-medium">
-                · {selected.size} ausgewählt
+                · {selected.size} {lang === "de" ? "ausgewählt" : "selected"}
               </span>
             )}
           </p>
@@ -351,7 +352,7 @@ export default function Products() {
               className="gap-2 border-violet-300 text-violet-700 hover:bg-violet-50"
             >
               <Sparkles className="h-4 w-4" />
-              KI-Analyse ({selected.size})
+              {lang === "de" ? "KI-Analyse" : "AI Analysis"} ({selected.size})
             </Button>
 
             {/* Batch label export */}
@@ -366,8 +367,8 @@ export default function Products() {
                 <FileArchive className="h-4 w-4" />
               )}
               {batchExporting
-                ? "Exportiere…"
-                : `Etiketten exportieren (${selected.size})`}
+                ? (lang === "de" ? "Exportiere…" : "Exporting...")
+                : (lang === "de" ? `Etiketten exportieren (${selected.size})` : `Export labels (${selected.size})`)}
             </Button>
           </div>
         )}
@@ -403,7 +404,7 @@ export default function Products() {
             {canRunAi && !someSelected && products.length > 0 && (
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap">
                 <Download className="h-3.5 w-3.5" />
-                Produkte auswählen für KI-Analyse oder Etikett-Export
+                {lang === "de" ? "Produkte auswählen für KI-Analyse oder Etikett-Export" : "Select products for AI analysis or label export"}
               </div>
             )}
           </div>
@@ -432,7 +433,7 @@ export default function Products() {
                         <Checkbox
                           checked={allSelected}
                           onCheckedChange={toggleAll}
-                          aria-label="Alle auswählen"
+                          aria-label={lang === "de" ? "Alle auswählen" : "Select all"}
                         />
                       </th>
                     )}
@@ -446,11 +447,11 @@ export default function Products() {
                     <th className="whitespace-nowrap">
                       <span className="flex items-center gap-1">
                         <Bot className="h-3.5 w-3.5" />
-                        KI-Score
+                        {lang === "de" ? "KI-Score" : "AI Score"}
                       </span>
                     </th>
                     <th>{t.product.missingRequirements}</th>
-                    <th className="whitespace-nowrap">Siegel</th>
+                    <th className="whitespace-nowrap">{lang === "de" ? "Siegel" : "Seal"}</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -471,7 +472,7 @@ export default function Products() {
                             <Checkbox
                               checked={isSelected}
                               onCheckedChange={() => {}}
-                              aria-label={`${p.productName} auswählen`}
+                              aria-label={lang === "de" ? `${p.productName} auswählen` : `Select ${p.productName}`}
                             />
                           </td>
                         )}

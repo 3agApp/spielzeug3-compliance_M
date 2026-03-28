@@ -516,3 +516,10 @@
 - [x] AdminSettings: Erklärungsbox was passiert
 - [x] ProductDetail DocumentRow: Ablaufdatum-Anzeige (rot wenn abgelaufen), Warnung wenn abgelaufen UND publicDownload=true
 - [x] 5 neue Tests (27 in documentVersioning.test.ts), 199 Tests gesamt grün, 0 TypeScript-Fehler
+
+## i18n-Bereinigung: vollständige DE/EN-Trennung
+- [ ] i18n.ts: alle fehlenden EN-Übersetzungen ergänzen
+- [ ] Alle Seiten: hardcodierte deutsche Texte durch t.*-Keys ersetzen
+- [ ] PublicProductPage: vollständig zweisprachig
+- [ ] AdminSettings, ProductDetail, Dashboard: vollständig zweisprachig
+- [ ] Toast-Meldungen, Fehlertexte, Platzhalter zweisprachig

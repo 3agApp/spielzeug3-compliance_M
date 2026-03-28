@@ -54,7 +54,7 @@ function StatCard({
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [, setLocation] = useLocation();
   const role = (user as any)?.complianceRole ?? "internal_employee";
 
@@ -65,22 +65,22 @@ export default function Dashboard() {
   const recentProducts = (productsQuery.data ?? []).slice(0, 5);
 
   if (role === "supplier") {
-    return <SupplierDashboard stats={stats} recentProducts={recentProducts} t={t} setLocation={setLocation} />;
+    return <SupplierDashboard stats={stats} recentProducts={recentProducts} t={t} lang={lang} setLocation={setLocation} />;
   }
 
   if (role === "compliance_manager") {
-    return <ComplianceManagerDashboard stats={stats} recentProducts={recentProducts} t={t} setLocation={setLocation} />;
+    return <ComplianceManagerDashboard stats={stats} recentProducts={recentProducts} t={t} lang={lang} setLocation={setLocation} />;
   }
 
-  return <InternalDashboard stats={stats} recentProducts={recentProducts} t={t} setLocation={setLocation} />;
+  return <InternalDashboard stats={stats} recentProducts={recentProducts} t={t} lang={lang} setLocation={setLocation} />;
 }
 
-function SupplierDashboard({ stats, recentProducts, t, setLocation }: any) {
+function SupplierDashboard({ stats, recentProducts, t, lang, setLocation }: any) {
   return (
     <div className="p-6 space-y-6 max-w-6xl">
       <div>
         <h1 className="text-2xl font-semibold">{t.nav.dashboard}</h1>
-        <p className="text-muted-foreground text-sm mt-1">Übersicht Ihrer Compliance-Aufgaben</p>
+        <p className="text-muted-foreground text-sm mt-1">{lang === "de" ? "Übersicht Ihrer Compliance-Aufgaben" : "Overview of your compliance tasks"}</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -129,12 +129,12 @@ function SupplierDashboard({ stats, recentProducts, t, setLocation }: any) {
   );
 }
 
-function InternalDashboard({ stats, recentProducts, t, setLocation }: any) {
+function InternalDashboard({ stats, recentProducts, t, lang, setLocation }: any) {
   return (
     <div className="p-6 space-y-6 max-w-6xl">
       <div>
         <h1 className="text-2xl font-semibold">{t.nav.dashboard}</h1>
-        <p className="text-muted-foreground text-sm mt-1">Interne Übersicht aller Compliance-Artikel</p>
+        <p className="text-muted-foreground text-sm mt-1">{lang === "de" ? "Interne Übersicht aller Compliance-Artikel" : "Internal overview of all compliance articles"}</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -208,7 +208,7 @@ function InternalDashboard({ stats, recentProducts, t, setLocation }: any) {
   );
 }
 
-function ComplianceManagerDashboard({ stats, recentProducts, t, setLocation }: any) {
+function ComplianceManagerDashboard({ stats, recentProducts, t, lang, setLocation }: any) {
   const syncLogsQuery = trpc.sync.getLogs.useQuery({ limit: 3 });
   const syncLogs = syncLogsQuery.data ?? [];
 
@@ -221,7 +221,7 @@ function ComplianceManagerDashboard({ stats, recentProducts, t, setLocation }: a
     <div className="p-6 space-y-6 max-w-6xl">
       <div>
         <h1 className="text-2xl font-semibold">{t.nav.dashboard}</h1>
-        <p className="text-muted-foreground text-sm mt-1">Compliance Manager Übersicht</p>
+        <p className="text-muted-foreground text-sm mt-1">{lang === "de" ? "Compliance Manager Übersicht" : "Compliance Manager overview"}</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -287,7 +287,7 @@ function ComplianceManagerDashboard({ stats, recentProducts, t, setLocation }: a
           </CardHeader>
           <CardContent>
             {syncLogs.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Noch kein Sync durchgeführt</p>
+              <p className="text-sm text-muted-foreground">{lang === "de" ? "Noch kein Sync durchgeführt" : "No sync performed yet"}</p>
             ) : (
               <div className="space-y-2">
                 {syncLogs.map((log: any) => (

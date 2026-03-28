@@ -22,6 +22,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
+import { useLang } from "@/lib/i18n";
 import {
   CheckCircle2,
   ChevronRight,
@@ -36,35 +37,43 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-const DOCUMENT_TYPES = [
-  { key: "test_report", labelDe: "Testbericht", labelEn: "Test Report" },
-  { key: "declaration_of_conformity", labelDe: "Konformitätserklärung", labelEn: "Declaration of Conformity" },
-  { key: "manual", labelDe: "Handbuch / Bedienungsanleitung", labelEn: "Manual / Instructions" },
-  { key: "certificate", labelDe: "Zertifikat (CE, EN 71 etc.)", labelEn: "Certificate (CE, EN 71 etc.)" },
-  { key: "product_image", labelDe: "Produktbild", labelEn: "Product Image" },
-  { key: "safety_image", labelDe: "Sicherheitsbild / Piktogramm", labelEn: "Safety Image / Pictogram" },
-  { key: "regulatory_document", labelDe: "Regulatorisches Dokument", labelEn: "Regulatory Document" },
-  { key: "other", labelDe: "Sonstiges", labelEn: "Other" },
+const DOCUMENT_TYPE_KEYS = [
+  "test_report",
+  "declaration_of_conformity",
+  "manual",
+  "certificate",
+  "product_image",
+  "safety_image",
+  "regulatory_document",
+  "other",
 ];
 
-const DATA_FIELDS = [
-  { key: "safety_text", labelDe: "Sicherheitshinweis-Text" },
-  { key: "warning_text", labelDe: "Warnhinweis-Text" },
-  { key: "age_grading", labelDe: "Altersfreigabe" },
-  { key: "material_information", labelDe: "Materialinformationen" },
-  { key: "usage_restrictions", labelDe: "Verwendungsbeschränkungen" },
-  { key: "safety_instructions", labelDe: "Sicherheitsanweisungen" },
-  { key: "additional_notes", labelDe: "Zusätzliche Hinweise" },
+const DATA_FIELD_KEYS = [
+  "safety_text",
+  "warning_text",
+  "age_grading",
+  "material_information",
+  "usage_restrictions",
+  "safety_instructions",
+  "additional_notes",
 ];
 
-// ─── Component ────────────────────────────────────────────────────────────────
+const DATA_FIELD_LABELS: Record<string, { de: string; en: string }> = {
+  safety_text: { de: "Sicherheitshinweis-Text", en: "Safety notice text" },
+  warning_text: { de: "Warnhinweis-Text", en: "Warning text" },
+  age_grading: { de: "Altersfreigabe", en: "Age grading" },
+  material_information: { de: "Materialinformationen", en: "Material information" },
+  usage_restrictions: { de: "Verwendungsbeschränkungen", en: "Usage restrictions" },
+  safety_instructions: { de: "Sicherheitsanweisungen", en: "Safety instructions" },
+  additional_notes: { de: "Zusätzliche Hinweise", en: "Additional notes" },
+};
+
 export default function TemplatesManager() {
+  const { t, lang } = useLang();
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [showCreateTemplate, setShowCreateTemplate] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<any | null>(null);
 
-  // Form state
   const [formName, setFormName] = useState("");
   const [formDescDe, setFormDescDe] = useState("");
   const [formDescEn, setFormDescEn] = useState("");
@@ -85,7 +94,7 @@ export default function TemplatesManager() {
       utils.templates.listTemplates.invalidate();
       setShowCreateTemplate(false);
       resetForm();
-      toast.success("Vorlage erstellt");
+      toast.success(t.templates.templateCreated);
     },
     onError: (e) => toast.error(e.message),
   });
@@ -95,7 +104,7 @@ export default function TemplatesManager() {
       utils.templates.listTemplates.invalidate();
       setEditingTemplate(null);
       resetForm();
-      toast.success("Vorlage aktualisiert");
+      toast.success(t.templates.templateUpdated);
     },
     onError: (e) => toast.error(e.message),
   });
@@ -103,7 +112,7 @@ export default function TemplatesManager() {
   const deleteMutation = trpc.templates.deleteTemplate.useMutation({
     onSuccess: () => {
       utils.templates.listTemplates.invalidate();
-      toast.success("Vorlage deaktiviert");
+      toast.success(t.templates.templateDeleted);
     },
     onError: (e) => toast.error(e.message),
   });
@@ -135,7 +144,7 @@ export default function TemplatesManager() {
 
   function handleSave() {
     if (!formName || !formCategoryId) {
-      toast.error("Bitte Name und Kategorie angeben");
+      toast.error(lang === "de" ? "Bitte Name und Kategorie angeben" : "Please enter name and category");
       return;
     }
     const payload = {
@@ -157,15 +166,22 @@ export default function TemplatesManager() {
   const isDialogOpen = showCreateTemplate || !!editingTemplate;
   const isPending = createMutation.isPending || updateMutation.isPending;
 
+  const docTypeLabel = (key: string) =>
+    (t.docType as Record<string, string>)[key] ?? key;
+
+  const dataFieldLabel = (key: string) =>
+    DATA_FIELD_LABELS[key]?.[lang] ?? key;
+
+  const catLabel = (cat: any) =>
+    lang === "de" ? cat.labelDe : (cat.labelEn ?? cat.labelDe);
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Produktvorlagen</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Definieren Sie Anforderungs-Templates pro Produktkategorie – diese werden beim Anlegen neuer Produkte automatisch angewendet
-          </p>
+          <h1 className="text-2xl font-bold text-foreground">{t.templates.title}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t.templates.subtitle}</p>
         </div>
         <Button
           size="sm"
@@ -173,14 +189,16 @@ export default function TemplatesManager() {
           className="gap-2"
         >
           <Plus className="h-4 w-4" />
-          Neue Vorlage
+          {t.templates.newTemplate}
         </Button>
       </div>
 
       <div className="grid grid-cols-12 gap-6">
         {/* Category Sidebar */}
         <div className="col-span-3 space-y-2">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-1">Kategorien</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-1">
+            {lang === "de" ? "Kategorien" : "Categories"}
+          </p>
           <Card className="p-1">
             <button
               className={`w-full text-left px-3 py-2 rounded-md text-sm flex items-center gap-2 transition-colors ${
@@ -189,7 +207,7 @@ export default function TemplatesManager() {
               onClick={() => setSelectedCategoryId(null)}
             >
               <Layers className="h-4 w-4" />
-              Alle Kategorien
+              {lang === "de" ? "Alle Kategorien" : "All categories"}
             </button>
             {catLoading ? (
               <div className="flex items-center justify-center py-4">
@@ -205,7 +223,7 @@ export default function TemplatesManager() {
                   onClick={() => setSelectedCategoryId(cat.id)}
                 >
                   <FolderOpen className="h-4 w-4" />
-                  <span className="truncate">{cat.labelDe}</span>
+                  <span className="truncate">{catLabel(cat)}</span>
                 </button>
               ))
             )}
@@ -217,17 +235,19 @@ export default function TemplatesManager() {
           {tplLoading ? (
             <div className="flex items-center justify-center py-16 text-muted-foreground gap-2">
               <RefreshCw className="h-5 w-5 animate-spin" />
-              Lade Vorlagen...
+              {t.common.loading}
             </div>
           ) : !templates?.length ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
                 <FileText className="h-10 w-10 text-muted-foreground/40" />
-                <p className="font-medium">Keine Vorlagen gefunden</p>
-                <p className="text-sm">Erstellen Sie die erste Vorlage für diese Kategorie.</p>
+                <p className="font-medium">{t.templates.noTemplates}</p>
+                <p className="text-sm">
+                  {lang === "de" ? "Erstellen Sie die erste Vorlage für diese Kategorie." : "Create the first template for this category."}
+                </p>
                 <Button size="sm" onClick={() => { resetForm(); setShowCreateTemplate(true); }} className="gap-2">
                   <Plus className="h-4 w-4" />
-                  Vorlage erstellen
+                  {t.templates.newTemplate}
                 </Button>
               </CardContent>
             </Card>
@@ -243,10 +263,12 @@ export default function TemplatesManager() {
                       <div>
                         <div className="flex items-center gap-2">
                           <CardTitle className="text-base">{tpl.name}</CardTitle>
-                          <Badge variant="outline" className="text-xs">{tpl.categoryLabelDe}</Badge>
+                          <Badge variant="outline" className="text-xs">{catLabel(tpl)}</Badge>
                         </div>
-                        {tpl.descriptionDe && (
-                          <p className="text-sm text-muted-foreground mt-1">{tpl.descriptionDe}</p>
+                        {(lang === "de" ? tpl.descriptionDe : (tpl.descriptionEn ?? tpl.descriptionDe)) && (
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {lang === "de" ? tpl.descriptionDe : (tpl.descriptionEn ?? tpl.descriptionDe)}
+                          </p>
                         )}
                       </div>
                       <div className="flex gap-1">
@@ -265,47 +287,47 @@ export default function TemplatesManager() {
                     </div>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div className="grid grid-cols-3 gap-4">
                       <div>
                         <p className="text-xs font-semibold text-red-600 uppercase tracking-wide mb-1.5">
-                          Pflichtdokumente ({required.length})
+                          {lang === "de" ? `Pflichtdokumente (${required.length})` : `Required docs (${required.length})`}
                         </p>
                         <div className="space-y-1">
                           {required.map((r) => (
                             <div key={r} className="flex items-center gap-1.5 text-xs">
                               <CheckCircle2 className="h-3 w-3 text-red-500" />
-                              {DOCUMENT_TYPES.find((d) => d.key === r)?.labelDe ?? r}
+                              {docTypeLabel(r)}
                             </div>
                           ))}
-                          {required.length === 0 && <p className="text-xs text-muted-foreground">Keine</p>}
+                          {required.length === 0 && <p className="text-xs text-muted-foreground">{t.common.none}</p>}
                         </div>
                       </div>
                       <div>
                         <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-1.5">
-                          Optionale Dokumente ({optional.length})
+                          {lang === "de" ? `Optionale Dokumente (${optional.length})` : `Optional docs (${optional.length})`}
                         </p>
                         <div className="space-y-1">
                           {optional.map((r) => (
                             <div key={r} className="flex items-center gap-1.5 text-xs">
                               <ChevronRight className="h-3 w-3 text-blue-400" />
-                              {DOCUMENT_TYPES.find((d) => d.key === r)?.labelDe ?? r}
+                              {docTypeLabel(r)}
                             </div>
                           ))}
-                          {optional.length === 0 && <p className="text-xs text-muted-foreground">Keine</p>}
+                          {optional.length === 0 && <p className="text-xs text-muted-foreground">{t.common.none}</p>}
                         </div>
                       </div>
                       <div>
                         <p className="text-xs font-semibold text-purple-600 uppercase tracking-wide mb-1.5">
-                          Pflichtfelder ({dataFields.length})
+                          {lang === "de" ? `Pflichtfelder (${dataFields.length})` : `Required fields (${dataFields.length})`}
                         </p>
                         <div className="space-y-1">
                           {dataFields.map((r) => (
                             <div key={r} className="flex items-center gap-1.5 text-xs">
                               <CheckCircle2 className="h-3 w-3 text-purple-500" />
-                              {DATA_FIELDS.find((d) => d.key === r)?.labelDe ?? r}
+                              {dataFieldLabel(r)}
                             </div>
                           ))}
-                          {dataFields.length === 0 && <p className="text-xs text-muted-foreground">Keine</p>}
+                          {dataFields.length === 0 && <p className="text-xs text-muted-foreground">{t.common.none}</p>}
                         </div>
                       </div>
                     </div>
@@ -326,28 +348,35 @@ export default function TemplatesManager() {
       >
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingTemplate ? "Vorlage bearbeiten" : "Neue Vorlage erstellen"}</DialogTitle>
+            <DialogTitle>
+              {editingTemplate ? t.templates.editTemplate : t.templates.newTemplate}
+            </DialogTitle>
             <DialogDescription>
-              Definieren Sie, welche Dokumente und Datenfelder für diese Produktkategorie erforderlich sind.
+              {lang === "de"
+                ? "Definieren Sie, welche Dokumente und Datenfelder für diese Produktkategorie erforderlich sind."
+                : "Define which documents and data fields are required for this product category."}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-5 py-2">
-            {/* Basic Info */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label>Name der Vorlage *</Label>
-                <Input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="z.B. Holzspielzeug Standard" />
+                <Label>{lang === "de" ? "Name der Vorlage *" : "Template name *"}</Label>
+                <Input
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
+                  placeholder={lang === "de" ? "z.B. Holzspielzeug Standard" : "e.g. Wooden Toy Standard"}
+                />
               </div>
               <div className="space-y-1.5">
-                <Label>Kategorie *</Label>
+                <Label>{t.templates.templateCategory} *</Label>
                 <Select value={formCategoryId} onValueChange={setFormCategoryId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Kategorie wählen..." />
+                    <SelectValue placeholder={lang === "de" ? "Kategorie wählen..." : "Select category..."} />
                   </SelectTrigger>
                   <SelectContent>
                     {categories?.map((cat) => (
-                      <SelectItem key={cat.id} value={String(cat.id)}>{cat.labelDe}</SelectItem>
+                      <SelectItem key={cat.id} value={String(cat.id)}>{catLabel(cat)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -355,11 +384,11 @@ export default function TemplatesManager() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label>Beschreibung (Deutsch)</Label>
+                <Label>{lang === "de" ? "Beschreibung (Deutsch)" : "Description (German)"}</Label>
                 <Textarea value={formDescDe} onChange={(e) => setFormDescDe(e.target.value)} rows={2} />
               </div>
               <div className="space-y-1.5">
-                <Label>Beschreibung (Englisch)</Label>
+                <Label>{lang === "de" ? "Beschreibung (Englisch)" : "Description (English)"}</Label>
                 <Textarea value={formDescEn} onChange={(e) => setFormDescEn(e.target.value)} rows={2} />
               </div>
             </div>
@@ -368,36 +397,42 @@ export default function TemplatesManager() {
 
             {/* Document Requirements */}
             <div>
-              <p className="text-sm font-semibold mb-3">Dokument-Anforderungen</p>
+              <p className="text-sm font-semibold mb-3">
+                {lang === "de" ? "Dokument-Anforderungen" : "Document requirements"}
+              </p>
               <div className="grid grid-cols-2 gap-3">
-                {DOCUMENT_TYPES.map((doc) => {
-                  const isRequired = formRequired.includes(doc.key);
-                  const isOptional = formOptional.includes(doc.key);
+                {DOCUMENT_TYPE_KEYS.map((key) => {
+                  const isRequired = formRequired.includes(key);
+                  const isOptional = formOptional.includes(key);
                   return (
-                    <div key={doc.key} className="flex items-center justify-between p-2 border rounded-lg bg-muted/20">
-                      <span className="text-sm">{doc.labelDe}</span>
+                    <div key={key} className="flex items-center justify-between p-2 border rounded-lg bg-muted/20">
+                      <span className="text-sm">{docTypeLabel(key)}</span>
                       <div className="flex items-center gap-3">
                         <label className="flex items-center gap-1.5 text-xs cursor-pointer">
                           <Checkbox
                             checked={isRequired}
                             onCheckedChange={() => {
-                              toggleDoc(doc.key, formRequired, setFormRequired);
-                              if (!isRequired && isOptional) toggleDoc(doc.key, formOptional, setFormOptional);
+                              toggleDoc(key, formRequired, setFormRequired);
+                              if (!isRequired && isOptional) toggleDoc(key, formOptional, setFormOptional);
                             }}
                             className="h-3.5 w-3.5"
                           />
-                          <span className="text-red-600 font-medium">Pflicht</span>
+                          <span className="text-red-600 font-medium">
+                            {lang === "de" ? "Pflicht" : "Required"}
+                          </span>
                         </label>
                         <label className="flex items-center gap-1.5 text-xs cursor-pointer">
                           <Checkbox
                             checked={isOptional}
                             onCheckedChange={() => {
-                              toggleDoc(doc.key, formOptional, setFormOptional);
-                              if (!isOptional && isRequired) toggleDoc(doc.key, formRequired, setFormRequired);
+                              toggleDoc(key, formOptional, setFormOptional);
+                              if (!isOptional && isRequired) toggleDoc(key, formRequired, setFormRequired);
                             }}
                             className="h-3.5 w-3.5"
                           />
-                          <span className="text-blue-600 font-medium">Optional</span>
+                          <span className="text-blue-600 font-medium">
+                            {lang === "de" ? "Optional" : "Optional"}
+                          </span>
                         </label>
                       </div>
                     </div>
@@ -410,16 +445,18 @@ export default function TemplatesManager() {
 
             {/* Data Fields */}
             <div>
-              <p className="text-sm font-semibold mb-3">Pflicht-Datenfelder</p>
+              <p className="text-sm font-semibold mb-3">
+                {lang === "de" ? "Pflicht-Datenfelder" : "Required data fields"}
+              </p>
               <div className="grid grid-cols-2 gap-2">
-                {DATA_FIELDS.map((field) => (
-                  <label key={field.key} className="flex items-center gap-2 p-2 border rounded-lg bg-muted/20 cursor-pointer hover:bg-muted/40">
+                {DATA_FIELD_KEYS.map((key) => (
+                  <label key={key} className="flex items-center gap-2 p-2 border rounded-lg bg-muted/20 cursor-pointer hover:bg-muted/40">
                     <Checkbox
-                      checked={formDataFields.includes(field.key)}
-                      onCheckedChange={() => toggleDoc(field.key, formDataFields, setFormDataFields)}
+                      checked={formDataFields.includes(key)}
+                      onCheckedChange={() => toggleDoc(key, formDataFields, setFormDataFields)}
                       className="h-3.5 w-3.5"
                     />
-                    <span className="text-sm">{field.labelDe}</span>
+                    <span className="text-sm">{dataFieldLabel(key)}</span>
                   </label>
                 ))}
               </div>
@@ -428,11 +465,11 @@ export default function TemplatesManager() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => { setShowCreateTemplate(false); setEditingTemplate(null); resetForm(); }}>
-              Abbrechen
+              {t.action.cancel}
             </Button>
             <Button onClick={handleSave} disabled={isPending} className="gap-2">
               {isPending ? <RefreshCw className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-              {editingTemplate ? "Änderungen speichern" : "Vorlage erstellen"}
+              {editingTemplate ? t.action.saveChanges : t.templates.newTemplate}
             </Button>
           </DialogFooter>
         </DialogContent>

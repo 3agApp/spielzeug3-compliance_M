@@ -18,6 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { trpc } from "@/lib/trpc";
+import { useLang } from "@/lib/i18n";
 import {
   AlertTriangle,
   Calendar,
@@ -30,37 +31,10 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "wouter";
-import { toast } from "sonner";
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-const DOC_TYPE_LABELS: Record<string, string> = {
-  test_report: "Testbericht",
-  declaration_of_conformity: "Konformitätserklärung",
-  manual: "Handbuch",
-  certificate: "Zertifikat",
-  product_image: "Produktbild",
-  safety_image: "Sicherheitsbild",
-  regulatory_document: "Regulatorisches Dokument",
-  other: "Sonstiges",
-};
-
-function urgencyConfig(urgency: string) {
-  switch (urgency) {
-    case "expired":
-      return { label: "Abgelaufen", color: "bg-red-100 text-red-700 border-red-200", icon: XCircle, iconColor: "text-red-500" };
-    case "critical":
-      return { label: "Kritisch (≤30 Tage)", color: "bg-orange-100 text-orange-700 border-orange-200", icon: AlertTriangle, iconColor: "text-orange-500" };
-    case "warning":
-      return { label: "Warnung (31–60 Tage)", color: "bg-yellow-100 text-yellow-700 border-yellow-200", icon: Clock, iconColor: "text-yellow-500" };
-    case "upcoming":
-      return { label: "Demnächst (61–90 Tage)", color: "bg-blue-100 text-blue-700 border-blue-200", icon: Calendar, iconColor: "text-blue-500" };
-    default:
-      return { label: urgency, color: "bg-gray-100 text-gray-700", icon: CheckCircle2, iconColor: "text-gray-500" };
-  }
-}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function ExpiryTracker() {
+  const { t, lang } = useLang();
   const [filterUrgency, setFilterUrgency] = useState<string>("all");
   const [filterDocType, setFilterDocType] = useState<string>("all");
   const [search, setSearch] = useState("");
@@ -90,29 +64,56 @@ export default function ExpiryTracker() {
 
   const summary = data?.summary ?? { expired: 0, critical: 0, warning: 0, upcoming: 0, total: 0 };
 
+  function urgencyConfig(urgency: string) {
+    switch (urgency) {
+      case "expired":
+        return { label: t.common.expired, color: "bg-red-100 text-red-700 border-red-200", icon: XCircle, iconColor: "text-red-500" };
+      case "critical":
+        return { label: t.expiry.critical, color: "bg-orange-100 text-orange-700 border-orange-200", icon: AlertTriangle, iconColor: "text-orange-500" };
+      case "warning":
+        return { label: t.expiry.warning, color: "bg-yellow-100 text-yellow-700 border-yellow-200", icon: Clock, iconColor: "text-yellow-500" };
+      case "upcoming":
+        return { label: t.expiry.upcoming, color: "bg-blue-100 text-blue-700 border-blue-200", icon: Calendar, iconColor: "text-blue-500" };
+      default:
+        return { label: urgency, color: "bg-gray-100 text-gray-700", icon: CheckCircle2, iconColor: "text-gray-500" };
+    }
+  }
+
+  const docTypeLabel = (key: string) =>
+    (t.docType as Record<string, string>)[key] ?? key;
+
+  const daysLabel = (days: number) =>
+    lang === "de" ? `${days} Tage Vorschau` : `${days} day preview`;
+
+  const overdueLabel = (days: number) =>
+    lang === "de" ? `${days} Tage überfällig` : `${days} days overdue`;
+
+  const foundLabel = (count: number) =>
+    lang === "de"
+      ? `${count} Dokument${count !== 1 ? "e" : ""} gefunden`
+      : `${count} document${count !== 1 ? "s" : ""} found`;
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Ablaufdaten-Tracking</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Übersicht aller Dokumente mit ablaufenden Zertifikaten und Gültigkeitsdaten
-          </p>
+          <h1 className="text-2xl font-bold text-foreground">{t.expiry.title}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t.expiry.subtitle}</p>
         </div>
         <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-2">
           <RefreshCw className="h-4 w-4" />
-          Aktualisieren
+          {t.action.refresh}
         </Button>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { key: "expired", label: "Abgelaufen", value: summary.expired, color: "text-red-600", bg: "bg-red-50 border-red-200", icon: XCircle },
-          { key: "critical", label: "Kritisch (≤30 Tage)", value: summary.critical, color: "text-orange-600", bg: "bg-orange-50 border-orange-200", icon: AlertTriangle },
-          { key: "warning", label: "Warnung (31–60 Tage)", value: summary.warning, color: "text-yellow-600", bg: "bg-yellow-50 border-yellow-200", icon: Clock },
-          { key: "upcoming", label: "Demnächst (61–90 Tage)", value: summary.upcoming, color: "text-blue-600", bg: "bg-blue-50 border-blue-200", icon: Calendar },
+          { key: "expired", label: t.common.expired, value: summary.expired, color: "text-red-600", bg: "bg-red-50 border-red-200", icon: XCircle },
+          { key: "critical", label: t.expiry.critical, value: summary.critical, color: "text-orange-600", bg: "bg-orange-50 border-orange-200", icon: AlertTriangle },
+          { key: "warning", label: t.expiry.warning, value: summary.warning, color: "text-yellow-600", bg: "bg-yellow-50 border-yellow-200", icon: Clock },
+          { key: "upcoming", label: t.expiry.upcoming, value: summary.upcoming, color: "text-blue-600", bg: "bg-blue-50 border-blue-200", icon: Calendar },
         ].map(({ key, label, value, color, bg, icon: Icon }) => (
           <Card
             key={key}
@@ -137,44 +138,42 @@ export default function ExpiryTracker() {
         <CardContent className="pt-4 pb-4">
           <div className="flex flex-wrap gap-3">
             <Input
-              placeholder="Produkt, Lieferant oder Artikelnummer suchen..."
+              placeholder={t.msg.searchPlaceholder}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="max-w-xs"
             />
             <Select value={filterUrgency} onValueChange={setFilterUrgency}>
               <SelectTrigger className="w-48">
-                <SelectValue placeholder="Dringlichkeit" />
+                <SelectValue placeholder={t.expiry.urgency} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle Dringlichkeiten</SelectItem>
-                <SelectItem value="expired">Abgelaufen</SelectItem>
-                <SelectItem value="critical">Kritisch (≤30 Tage)</SelectItem>
-                <SelectItem value="warning">Warnung (31–60 Tage)</SelectItem>
-                <SelectItem value="upcoming">Demnächst (61–90 Tage)</SelectItem>
+                <SelectItem value="all">{t.expiry.allUrgency}</SelectItem>
+                <SelectItem value="expired">{t.common.expired}</SelectItem>
+                <SelectItem value="critical">{t.expiry.critical}</SelectItem>
+                <SelectItem value="warning">{t.expiry.warning}</SelectItem>
+                <SelectItem value="upcoming">{t.expiry.upcoming}</SelectItem>
               </SelectContent>
             </Select>
             <Select value={filterDocType} onValueChange={setFilterDocType}>
               <SelectTrigger className="w-52">
-                <SelectValue placeholder="Dokumenttyp" />
+                <SelectValue placeholder={t.expiry.docType} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle Typen</SelectItem>
-                {Object.entries(DOC_TYPE_LABELS).map(([key, label]) => (
-                  <SelectItem key={key} value={key}>{label}</SelectItem>
+                <SelectItem value="all">{t.expiry.allTypes}</SelectItem>
+                {Object.keys(t.docType).map((key) => (
+                  <SelectItem key={key} value={key}>{docTypeLabel(key)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <Select value={String(daysAhead)} onValueChange={(v) => setDaysAhead(Number(v))}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-44">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="30">30 Tage Vorschau</SelectItem>
-                <SelectItem value="60">60 Tage Vorschau</SelectItem>
-                <SelectItem value="90">90 Tage Vorschau</SelectItem>
-                <SelectItem value="180">180 Tage Vorschau</SelectItem>
-                <SelectItem value="365">365 Tage Vorschau</SelectItem>
+                {[30, 60, 90, 180, 365].map((d) => (
+                  <SelectItem key={d} value={String(d)}>{daysLabel(d)}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -184,33 +183,31 @@ export default function ExpiryTracker() {
       {/* Table */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">
-            {filtered.length} Dokument{filtered.length !== 1 ? "e" : ""} gefunden
-          </CardTitle>
+          <CardTitle className="text-base">{foundLabel(filtered.length)}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
             <div className="flex items-center justify-center py-16 text-muted-foreground gap-2">
               <RefreshCw className="h-5 w-5 animate-spin" />
-              Lade Ablaufdaten...
+              {t.common.loading}
             </div>
           ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">
               <CheckCircle2 className="h-10 w-10 text-green-400" />
-              <p className="font-medium">Keine ablaufenden Dokumente gefunden</p>
-              <p className="text-sm">Im gewählten Zeitraum gibt es keine Warnungen.</p>
+              <p className="font-medium">{t.expiry.noExpiring}</p>
+              <p className="text-sm">{t.expiry.noExpiringDesc}</p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Dringlichkeit</TableHead>
-                  <TableHead>Dokument</TableHead>
-                  <TableHead>Produkt</TableHead>
-                  <TableHead>Lieferant</TableHead>
-                  <TableHead>Ablaufdatum</TableHead>
-                  <TableHead>Verbleibend</TableHead>
-                  <TableHead className="text-right">Aktion</TableHead>
+                  <TableHead>{t.expiry.urgency}</TableHead>
+                  <TableHead>{t.common.document}</TableHead>
+                  <TableHead>{t.expiry.product}</TableHead>
+                  <TableHead>{t.expiry.supplier}</TableHead>
+                  <TableHead>{t.common.expiryDate}</TableHead>
+                  <TableHead>{t.expiry.daysLeft}</TableHead>
+                  <TableHead className="text-right">{t.common.actions}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -231,7 +228,7 @@ export default function ExpiryTracker() {
                           <div>
                             <p className="text-sm font-medium truncate max-w-[180px]">{item.fileName}</p>
                             <p className="text-xs text-muted-foreground">
-                              {DOC_TYPE_LABELS[item.documentType] ?? item.documentType}
+                              {docTypeLabel(item.documentType)}
                             </p>
                           </div>
                         </div>
@@ -250,21 +247,21 @@ export default function ExpiryTracker() {
                       <TableCell>
                         <p className="text-sm font-mono">
                           {item.expiryDate
-                            ? new Date(item.expiryDate).toLocaleDateString("de-DE")
+                            ? new Date(item.expiryDate).toLocaleDateString(lang === "de" ? "de-DE" : "en-GB")
                             : "–"}
                         </p>
                       </TableCell>
                       <TableCell>
                         {item.daysUntilExpiry < 0 ? (
                           <span className="text-sm font-semibold text-red-600">
-                            {Math.abs(item.daysUntilExpiry)} Tage überfällig
+                            {overdueLabel(Math.abs(item.daysUntilExpiry))}
                           </span>
                         ) : (
                           <span className={`text-sm font-semibold ${
                             item.daysUntilExpiry <= 30 ? "text-orange-600" :
                             item.daysUntilExpiry <= 60 ? "text-yellow-600" : "text-blue-600"
                           }`}>
-                            {item.daysUntilExpiry} Tage
+                            {item.daysUntilExpiry} {t.common.days}
                           </span>
                         )}
                       </TableCell>
@@ -272,7 +269,7 @@ export default function ExpiryTracker() {
                         <Link href={`/products/${item.productId}`}>
                           <Button variant="ghost" size="sm" className="gap-1 h-7 text-xs">
                             <ExternalLink className="h-3 w-3" />
-                            Produkt öffnen
+                            {lang === "de" ? "Produkt öffnen" : "Open product"}
                           </Button>
                         </Link>
                       </TableCell>

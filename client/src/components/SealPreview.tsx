@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Download, Loader2, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { useLang } from "@/lib/i18n";
 
 type SealStatus = "verified" | "in_progress" | "not_verified";
 
@@ -16,11 +17,14 @@ const DEFAULT_SEAL_IMAGES: Record<SealStatus, string> = {
     "https://d2xsxph8kpxj0f.cloudfront.net/310519663310227526/kgkV5LdecSJ3HqPv7WFR7a/seal-not-verified_119c8334.png",
 };
 
-const STATUS_CONFIG: Record<SealStatus, { label: string; borderColor: string; accentColor: string }> = {
-  verified: { label: "VERIFIED", borderColor: "#16a34a", accentColor: "#16a34a" },
-  in_progress: { label: "IN PRÜFUNG", borderColor: "#d97706", accentColor: "#d97706" },
-  not_verified: { label: "NICHT VERIFIZIERT", borderColor: "#9ca3af", accentColor: "#6b7280" },
-};
+function useStatusConfig(): Record<SealStatus, { label: string; borderColor: string; accentColor: string }> {
+  const { lang } = useLang();
+  return {
+    verified: { label: "VERIFIED", borderColor: "#16a34a", accentColor: "#16a34a" },
+    in_progress: { label: lang === "de" ? "IN PRÜFUNG" : "IN REVIEW", borderColor: "#d97706", accentColor: "#d97706" },
+    not_verified: { label: lang === "de" ? "NICHT VERIFIZIERT" : "NOT VERIFIED", borderColor: "#9ca3af", accentColor: "#6b7280" },
+  };
+}
 
 interface SealPreviewProps {
   tenantName?: string;
@@ -41,6 +45,8 @@ export function SealPreview({
   productId,
   qrCodeUrl,
 }: SealPreviewProps) {
+  const { lang } = useLang();
+  const STATUS_CONFIG = useStatusConfig();
   const [status, setStatus] = useState<SealStatus>("verified");
   const [downloading, setDownloading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -73,9 +79,9 @@ export function SealPreview({
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(objectUrl);
-      toast.success("PDF heruntergeladen", { description: "Das Etikett wurde als PDF exportiert." });
+      toast.success(lang === "de" ? "PDF heruntergeladen" : "PDF downloaded", { description: lang === "de" ? "Das Etikett wurde als PDF exportiert." : "The label was exported as PDF." });
     } catch (err: any) {
-      toast.error("Download fehlgeschlagen", { description: err.message ?? "Unbekannter Fehler" });
+      toast.error(lang === "de" ? "Download fehlgeschlagen" : "Download failed", { description: err.message ?? (lang === "de" ? "Unbekannter Fehler" : "Unknown error") });
     } finally {
       setDownloading(false);
     }
@@ -101,8 +107,8 @@ ${qrSrc ? `  <img src="${qrSrc}" alt="QR-Code" width="100" height="100" style="d
   function handleCopyEmbed() {
     navigator.clipboard.writeText(getEmbedCode()).then(() => {
       setCopied(true);
-      toast.success("HTML-Code kopiert", {
-        description: "Fügen Sie den Code in Ihre Webseite, WooCommerce oder Shopify ein.",
+      toast.success(lang === "de" ? "HTML-Code kopiert" : "HTML code copied", {
+        description: lang === "de" ? "Fügen Sie den Code in Ihre Webseite, WooCommerce oder Shopify ein." : "Paste the code into your website, WooCommerce or Shopify.",
       });
       setTimeout(() => setCopied(false), 2500);
     });
@@ -121,7 +127,7 @@ ${qrSrc ? `  <img src="${qrSrc}" alt="QR-Code" width="100" height="100" style="d
               onClick={() => setStatus(s)}
               className="text-xs h-8"
             >
-              {s === "verified" ? "✓ Verified" : s === "in_progress" ? "⟳ In Prüfung" : "✕ Nicht verifiziert"}
+              {s === "verified" ? "✓ Verified" : s === "in_progress" ? (lang === "de" ? "⟳ In Prüfung" : "⟳ In Review") : (lang === "de" ? "✕ Nicht verifiziert" : "✕ Not verified")}
             </Button>
           ))}
         </div>
@@ -133,7 +139,7 @@ ${qrSrc ? `  <img src="${qrSrc}" alt="QR-Code" width="100" height="100" style="d
           className="gap-1.5 text-xs h-8"
         >
           {downloading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-          {downloading ? "Generiere…" : "PDF herunterladen"}
+          {downloading ? (lang === "de" ? "Generiere…" : "Generating...") : (lang === "de" ? "PDF herunterladen" : "Download PDF")}
         </Button>
       </div>
 
@@ -142,7 +148,7 @@ ${qrSrc ? `  <img src="${qrSrc}" alt="QR-Code" width="100" height="100" style="d
 
         {/* ── Seal Card ───────────────────────────────────────────────────── */}
         <div className="flex flex-col items-center gap-3 flex-shrink-0">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Vorschau Etikett</p>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{lang === "de" ? "Vorschau Etikett" : "Label preview"}</p>
 
           {/* The actual seal label */}
           <div
@@ -275,18 +281,19 @@ ${qrSrc ? `  <img src="${qrSrc}" alt="QR-Code" width="100" height="100" style="d
           </div>
 
           <p className="text-[10px] text-muted-foreground text-center max-w-[200px]">
-            QR-Code wird pro Produkt generiert · PDF A6-Format
+            {lang === "de" ? "QR-Code wird pro Produkt generiert · PDF A6-Format" : "QR code generated per product · PDF A6 format"}
           </p>
         </div>
 
         {/* ── HTML Embed Widget ────────────────────────────────────────────── */}
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">HTML-Einbettungscode</p>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">{lang === "de" ? "HTML-Einbettungscode" : "HTML embed code"}</p>
 
           <div className="rounded-lg border bg-muted/40 p-4 space-y-4">
             <p className="text-sm text-foreground">
-              Kopieren Sie diesen Code und fügen Sie ihn in Ihre Webseite, Ihren WooCommerce-Shop oder Shopify-Store ein.
-              Das Siegel-Badge wird automatisch mit dem aktuellen Status angezeigt.
+              {lang === "de"
+                ? "Kopieren Sie diesen Code und fügen Sie ihn in Ihre Webseite, Ihren WooCommerce-Shop oder Shopify-Store ein. Das Siegel-Badge wird automatisch mit dem aktuellen Status angezeigt."
+                : "Copy this code and paste it into your website, WooCommerce shop or Shopify store. The seal badge will automatically display the current status."}
             </p>
 
             {/* Code block */}
@@ -304,7 +311,7 @@ ${qrSrc ? `  <img src="${qrSrc}" alt="QR-Code" width="100" height="100" style="d
                 className="absolute top-2 right-2 gap-1.5 text-xs h-7"
               >
                 {copied ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
-                {copied ? "Kopiert!" : "Kopieren"}
+                {copied ? (lang === "de" ? "Kopiert!" : "Copied!") : (lang === "de" ? "Kopieren" : "Copy")}
               </Button>
             </div>
 
@@ -313,19 +320,19 @@ ${qrSrc ? `  <img src="${qrSrc}" alt="QR-Code" width="100" height="100" style="d
               <div className="rounded-md border bg-background p-3">
                 <p className="text-xs font-semibold mb-1">🛒 WooCommerce</p>
                 <p className="text-[11px] text-muted-foreground">
-                  Produkt bearbeiten → Tab „Beschreibung" oder „Kurzbeschreibung" → HTML-Ansicht → Code einfügen.
+                  {lang === "de" ? 'Produkt bearbeiten → Tab „Beschreibung“ oder „Kurzbeschreibung“ → HTML-Ansicht → Code einfügen.' : 'Edit product → Tab “Description” or “Short description” → HTML view → Paste code.'}
                 </p>
               </div>
               <div className="rounded-md border bg-background p-3">
                 <p className="text-xs font-semibold mb-1">🛍 Shopify</p>
                 <p className="text-[11px] text-muted-foreground">
-                  Online Store → Themes → Edit code → Produkttemplate → Code im gewünschten Abschnitt einfügen.
+                  {lang === "de" ? 'Online Store → Themes → Edit code → Produkttemplate → Code im gewünschten Abschnitt einfügen.' : 'Online Store → Themes → Edit code → Product template → Paste code in the desired section.'}
                 </p>
               </div>
               <div className="rounded-md border bg-background p-3">
                 <p className="text-xs font-semibold mb-1">🌐 Webseite</p>
                 <p className="text-[11px] text-muted-foreground">
-                  Code direkt in den HTML-Quelltext der Produktseite einfügen – kein JavaScript nötig.
+                  {lang === "de" ? 'Code direkt in den HTML-Quelltext der Produktseite einfügen – kein JavaScript nötig.' : 'Paste code directly into the HTML source of the product page – no JavaScript required.'}
                 </p>
               </div>
             </div>

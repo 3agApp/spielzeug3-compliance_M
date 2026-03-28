@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2, Clock, XCircle, Loader2, Upload, RotateCcw, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { useLang } from "@/lib/i18n";
 
 type SealStatus = "verified" | "in_progress" | "not_verified";
 
@@ -36,12 +37,14 @@ interface ValidationError {
  * Returns null if valid, or a ValidationError object.
  * SVG files skip the pixel-dimension check (they are resolution-independent).
  */
-async function validateImageFile(file: File): Promise<ValidationError | null> {
+async function validateImageFile(file: File, lang: string): Promise<ValidationError | null> {
   // 1. MIME type
   if (!(ALLOWED_TYPES as readonly string[]).includes(file.type)) {
     return {
-      title: "Ungültiges Dateiformat",
-      description: `Erlaubt: PNG, JPG, SVG, WebP. Hochgeladen: ${file.type || "unbekannt"}`,
+      title: lang === "de" ? "Ungültiges Dateiformat" : "Invalid file format",
+      description: lang === "de"
+        ? `Erlaubt: PNG, JPG, SVG, WebP. Hochgeladen: ${file.type || "unbekannt"}`
+        : `Allowed: PNG, JPG, SVG, WebP. Uploaded: ${file.type || "unknown"}`,
     };
   }
 
@@ -49,8 +52,10 @@ async function validateImageFile(file: File): Promise<ValidationError | null> {
   if (file.size > MAX_SIZE_BYTES) {
     const sizeMb = (file.size / 1024 / 1024).toFixed(1);
     return {
-      title: "Datei zu groß",
-      description: `Maximale Dateigröße: 5 MB. Ihre Datei: ${sizeMb} MB`,
+      title: lang === "de" ? "Datei zu groß" : "File too large",
+      description: lang === "de"
+        ? `Maximale Dateigröße: 5 MB. Ihre Datei: ${sizeMb} MB`
+        : `Maximum file size: 5 MB. Your file: ${sizeMb} MB`,
     };
   }
 
@@ -68,8 +73,10 @@ async function validateImageFile(file: File): Promise<ValidationError | null> {
 
       if (w < MIN_WIDTH || h < MIN_HEIGHT) {
         resolve({
-          title: "Auflösung zu gering",
-          description: `Mindestauflösung: ${MIN_WIDTH}×${MIN_HEIGHT} px. Ihre Grafik: ${w}×${h} px`,
+          title: lang === "de" ? "Auflösung zu gering" : "Resolution too low",
+          description: lang === "de"
+            ? `Mindestauflösung: ${MIN_WIDTH}×${MIN_HEIGHT} px. Ihre Grafik: ${w}×${h} px`
+            : `Minimum resolution: ${MIN_WIDTH}×${MIN_HEIGHT} px. Your graphic: ${w}×${h} px`,
         });
         return;
       }
@@ -78,11 +85,10 @@ async function validateImageFile(file: File): Promise<ValidationError | null> {
       if (ratio < MIN_RATIO || ratio > MAX_RATIO) {
         const pct = (ratio * 100).toFixed(0);
         resolve({
-          title: "Falsches Seitenverhältnis",
-          description:
-            `Das Siegel benötigt ein annähernd quadratisches Format (Verhältnis 0.75–1.25). ` +
-            `Ihre Grafik hat ${w}×${h} px (Verhältnis ${pct}%). ` +
-            `Bitte schneiden Sie die Grafik entsprechend zu.`,
+          title: lang === "de" ? "Falsches Seitenverhältnis" : "Wrong aspect ratio",
+          description: lang === "de"
+            ? `Das Siegel benötigt ein annähernd quadratisches Format (Verhältnis 0.75–1.25). Ihre Grafik hat ${w}×${h} px (Verhältnis ${pct}%). Bitte schneiden Sie die Grafik entsprechend zu.`
+            : `The seal requires an approximately square format (ratio 0.75–1.25). Your graphic is ${w}×${h} px (ratio ${pct}%). Please crop the graphic accordingly.`,
         });
         return;
       }
@@ -93,8 +99,8 @@ async function validateImageFile(file: File): Promise<ValidationError | null> {
     img.onerror = () => {
       URL.revokeObjectURL(url);
       resolve({
-        title: "Bild konnte nicht gelesen werden",
-        description: "Die Datei scheint beschädigt oder kein gültiges Bild zu sein.",
+        title: lang === "de" ? "Bild konnte nicht gelesen werden" : "Image could not be read",
+        description: lang === "de" ? "Die Datei scheint beschädigt oder kein gültiges Bild zu sein." : "The file appears to be corrupted or is not a valid image.",
       });
     };
 
@@ -105,26 +111,31 @@ async function validateImageFile(file: File): Promise<ValidationError | null> {
 }
 
 // ─── Status metadata ──────────────────────────────────────────────────────────
-const STATUS_META: Record<SealStatus, { label: string; icon: React.ReactNode; color: string }> = {
+function useStatusMeta(): Record<SealStatus, { label: string; icon: React.ReactNode; color: string }> {
+  const { lang } = useLang();
+  return {
   verified: {
-    label: "Verifiziert",
+    label: lang === "de" ? "Verifiziert" : "Verified",
     icon: <CheckCircle2 className="h-4 w-4 text-green-600" />,
     color: "border-green-200 bg-green-50",
   },
   in_progress: {
-    label: "In Prüfung",
+    label: lang === "de" ? "In Prüfung" : "In Review",
     icon: <Clock className="h-4 w-4 text-amber-600" />,
     color: "border-amber-200 bg-amber-50",
   },
   not_verified: {
-    label: "Nicht verifiziert",
+    label: lang === "de" ? "Nicht verifiziert" : "Not verified",
     icon: <XCircle className="h-4 w-4 text-gray-500" />,
     color: "border-gray-200 bg-gray-50",
   },
-};
+  };
+}
 
 // ─── Single status card ───────────────────────────────────────────────────────
 function SealStatusCard({ status, currentUrl }: { status: SealStatus; currentUrl: string }) {
+  const { lang } = useLang();
+  const STATUS_META = useStatusMeta();
   const meta = STATUS_META[status];
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -135,27 +146,31 @@ function SealStatusCard({ status, currentUrl }: { status: SealStatus; currentUrl
 
   const uploadMutation = trpc.sealAssets.upload.useMutation({
     onSuccess: () => {
-      toast.success("Siegel-Grafik aktualisiert", {
-        description: `Die Grafik für „${meta.label}" wurde erfolgreich hochgeladen.`,
+      toast.success(lang === "de" ? "Siegel-Grafik aktualisiert" : "Seal graphic updated", {
+        description: lang === "de"
+          ? `Die Grafik für „${meta.label}“ wurde erfolgreich hochgeladen.`
+          : `The graphic for "${meta.label}" was uploaded successfully.`,
       });
       setPreviewUrl(null);
       utils.sealAssets.getActive.invalidate();
     },
     onError: (err) => {
-      toast.error("Upload fehlgeschlagen", { description: err.message });
+      toast.error(lang === "de" ? "Upload fehlgeschlagen" : "Upload failed", { description: err.message });
     },
   });
 
   const resetMutation = trpc.sealAssets.resetToDefault.useMutation({
     onSuccess: () => {
-      toast.success("Standard-Grafik wiederhergestellt", {
-        description: `Die Grafik für „${meta.label}" wurde auf den Standard zurückgesetzt.`,
+      toast.success(lang === "de" ? "Standard-Grafik wiederhergestellt" : "Default graphic restored", {
+        description: lang === "de"
+          ? `Die Grafik für „${meta.label}“ wurde auf den Standard zurückgesetzt.`
+          : `The graphic for "${meta.label}" has been reset to the default.`,
       });
       setPreviewUrl(null);
       utils.sealAssets.getActive.invalidate();
     },
     onError: (err) => {
-      toast.error("Zurücksetzen fehlgeschlagen", { description: err.message });
+      toast.error(lang === "de" ? "Zurücksetzen fehlgeschlagen" : "Reset failed", { description: err.message });
     },
   });
 
@@ -167,7 +182,7 @@ function SealStatusCard({ status, currentUrl }: { status: SealStatus; currentUrl
     setValidationErr(null);
 
     // ── Client-side validation ────────────────────────────────────────────────
-    const err = await validateImageFile(file);
+    const err = await validateImageFile(file, lang);
     if (err) {
       setValidationErr(err);
       toast.error(err.title, { description: err.description });
@@ -272,7 +287,7 @@ function SealStatusCard({ status, currentUrl }: { status: SealStatus; currentUrl
             ) : (
               <Upload className="h-3.5 w-3.5" />
             )}
-            {uploading ? "Wird hochgeladen…" : "Neue Grafik hochladen"}
+            {uploading ? (lang === "de" ? "Wird hochgeladen…" : "Uploading...") : (lang === "de" ? "Neue Grafik hochladen" : "Upload new graphic")}
           </Button>
           <Button
             size="sm"
@@ -286,24 +301,25 @@ function SealStatusCard({ status, currentUrl }: { status: SealStatus; currentUrl
             ) : (
               <RotateCcw className="h-3.5 w-3.5" />
             )}
-            {resetting ? "Wird zurückgesetzt…" : "Standard wiederherstellen"}
+            {resetting ? (lang === "de" ? "Wird zurückgesetzt…" : "Resetting...") : (lang === "de" ? "Standard wiederherstellen" : "Restore default")}
           </Button>
         </div>
 
         {/* Requirements hint */}
         <div className="rounded-md bg-muted/40 px-3 py-2 text-[10px] text-muted-foreground space-y-0.5">
-          <p className="font-medium text-foreground/70">Anforderungen</p>
-          <p>Format: PNG, JPG, SVG oder WebP · max. 5 MB</p>
-          <p>Mindestauflösung: 300 × 300 px (außer SVG)</p>
-          <p>Seitenverhältnis: annähernd quadratisch (0.75 – 1.25)</p>
+          <p className="font-medium text-foreground/70">{lang === "de" ? "Anforderungen" : "Requirements"}</p>
+          <p>{lang === "de" ? "Format: PNG, JPG, SVG oder WebP · max. 5 MB" : "Format: PNG, JPG, SVG or WebP · max. 5 MB"}</p>
+          <p>{lang === "de" ? "Mindestauflösung: 300 × 300 px (außer SVG)" : "Minimum resolution: 300 × 300 px (except SVG)"}</p>
+          <p>{lang === "de" ? "Seitenverhältnis: annähernd quadratisch (0.75 – 1.25)" : "Aspect ratio: approximately square (0.75 – 1.25)"}</p>
         </div>
       </CardContent>
     </Card>
   );
 }
 
-// ─── Main export ──────────────────────────────────────────────────────────────
+// ─── Main export ───────────────────────────────────────────────────────
 export function SealAssetUpload() {
+  const { lang } = useLang();
   const { data: activeUrls, isLoading } = trpc.sealAssets.getActive.useQuery();
 
   if (isLoading) {
@@ -327,11 +343,11 @@ export function SealAssetUpload() {
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-sm font-semibold">Siegel-Grafiken</h3>
+        <h3 className="text-sm font-semibold">{lang === "de" ? "Siegel-Grafiken" : "Seal graphics"}</h3>
         <p className="text-xs text-muted-foreground mt-1">
-          Laden Sie für jeden Prüfstatus eine eigene Siegel-Grafik hoch. Die Grafik wird in der
-          Etikett-Vorschau, im PDF-Export und im Einbettungscode verwendet. Ohne eigene Grafik
-          wird die Standard-Grafik angezeigt.
+          {lang === "de"
+            ? "Laden Sie für jeden Prüfstatus eine eigene Siegel-Grafik hoch. Die Grafik wird in der Etikett-Vorschau, im PDF-Export und im Einbettungscode verwendet. Ohne eigene Grafik wird die Standard-Grafik angezeigt."
+            : "Upload a custom seal graphic for each verification status. The graphic is used in the label preview, PDF export, and embed code. Without a custom graphic, the default graphic is displayed."}
         </p>
       </div>
 

@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useLang } from "@/lib/i18n";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function scoreColor(score: number) {
@@ -87,9 +88,15 @@ function severityIcon(severity: string) {
   }
 }
 
-function severityLabel(severity: string) {
-  const map: Record<string, string> = { high: "Kritisch", medium: "Mittel", low: "Gering", info: "Info" };
-  return map[severity] ?? severity;
+function useSeverityLabel() {
+  const { lang } = useLang();
+  return (severity: string) => {
+    const map: Record<string, Record<string, string>> = {
+      de: { high: "Kritisch", medium: "Mittel", low: "Gering", info: "Info" },
+      en: { high: "Critical", medium: "Medium", low: "Low", info: "Info" },
+    };
+    return map[lang]?.[severity] ?? severity;
+  };
 }
 
 function severityBadgeClass(severity: string) {
@@ -108,6 +115,8 @@ interface AiAnalysisCardProps {
 }
 
 export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCardProps) {
+  const { lang } = useLang();
+  const getSeverityLabel = useSeverityLabel();
   const [showHistory, setShowHistory] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -119,13 +128,13 @@ export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCard
         : `/api/reports/ai-analysis/${productId}`;
       const response = await fetch(url, { credentials: "include" });
       if (!response.ok) {
-        const err = await response.json().catch(() => ({ error: "Unbekannter Fehler" }));
-        throw new Error(err.error ?? "PDF-Download fehlgeschlagen");
+        const err = await response.json().catch(() => ({ error: lang === "de" ? "Unbekannter Fehler" : "Unknown error" }));
+        throw new Error(err.error ?? (lang === "de" ? "PDF-Download fehlgeschlagen" : "PDF download failed"));
       }
       const blob = await response.blob();
       const disposition = response.headers.get("Content-Disposition") ?? "";
       const match = disposition.match(/filename="([^"]+)"/);
-      const filename = match?.[1] ?? `KI-Analyse-${productId}.pdf`;
+      const filename = match?.[1] ?? `AI-Analysis-${productId}.pdf`;
       const objectUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = objectUrl;
@@ -134,9 +143,9 @@ export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCard
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(objectUrl);
-      toast.success("PDF erfolgreich heruntergeladen");
+      toast.success(lang === "de" ? "PDF erfolgreich heruntergeladen" : "PDF downloaded successfully");
     } catch (e: any) {
-      toast.error(e.message ?? "PDF-Download fehlgeschlagen");
+      toast.error(e.message ?? (lang === "de" ? "PDF-Download fehlgeschlagen" : "PDF download failed"));
     } finally {
       setIsDownloading(false);
     }
@@ -151,7 +160,7 @@ export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCard
 
   const analyzeMutation = trpc.aiAnalysis.analyzeProduct.useMutation({
     onSuccess: () => {
-      toast.success("KI-Analyse abgeschlossen");
+      toast.success(lang === "de" ? "KI-Analyse abgeschlossen" : "AI analysis completed");
       utils.aiAnalysis.getLatest.invalidate({ productId });
       utils.aiAnalysis.getHistory.invalidate({ productId });
     },
@@ -167,7 +176,7 @@ export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCard
       <Card>
         <CardContent className="py-10 flex items-center justify-center text-muted-foreground text-sm gap-2">
           <RefreshCw className="h-4 w-4 animate-spin" />
-          Lade KI-Analyse…
+          {lang === "de" ? "Lade KI-Analyse…" : "Loading AI analysis..."}
         </CardContent>
       </Card>
     );
@@ -181,9 +190,9 @@ export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCard
             <Bot className="h-7 w-7 text-primary" />
           </div>
           <div>
-            <p className="font-medium">Noch keine KI-Analyse vorhanden</p>
+            <p className="font-medium">{lang === "de" ? "Noch keine KI-Analyse vorhanden" : "No AI analysis yet"}</p>
             <p className="text-sm text-muted-foreground mt-1">
-              GPT-4o prüft alle hochgeladenen Dokumente auf Plausibilität und Vollständigkeit.
+              {lang === "de" ? "GPT-4o prüft alle hochgeladenen Dokumente auf Plausibilität und Vollständigkeit." : "GPT-4o checks all uploaded documents for plausibility and completeness."}
             </p>
           </div>
           {canTrigger && (
@@ -197,7 +206,7 @@ export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCard
               ) : (
                 <Sparkles className="h-4 w-4" />
               )}
-              {isRunning ? "Analysiere…" : "KI-Analyse starten"}
+              {isRunning ? (lang === "de" ? "Analysiere…" : "Analysing...") : (lang === "de" ? "KI-Analyse starten" : "Start AI analysis")}
             </Button>
           )}
         </CardContent>
@@ -222,12 +231,12 @@ export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCard
           <div className="flex items-center justify-between flex-wrap gap-3">
             <CardTitle className="text-base flex items-center gap-2">
               <Bot className="h-4 w-4 text-primary" />
-              KI-Plausibilitätsprüfung
+              {lang === "de" ? "KI-Plausibilitätsprüfung" : "AI Plausibility Check"}
             </CardTitle>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                {new Date(analysis.createdAt).toLocaleString("de-DE")}
+                {new Date(analysis.createdAt).toLocaleString(lang === "de" ? "de-DE" : "en-GB")}
               </span>
               <Badge variant="outline" className="text-xs">
                 {analysis.modelUsed ?? "GPT-4o"}
@@ -244,7 +253,7 @@ export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCard
                   ) : (
                     <Download className="h-3 w-3" />
                   )}
-                  PDF exportieren
+                  {lang === "de" ? "PDF exportieren" : "Export PDF"}
                 </Button>
               {canTrigger && (
                 <Button
@@ -259,7 +268,7 @@ export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCard
                   ) : (
                     <RefreshCw className="h-3 w-3" />
                   )}
-                  Neu analysieren
+                  {lang === "de" ? "Neu analysieren" : "Re-analyse"}
                 </Button>
               )}
             </div>
@@ -275,7 +284,7 @@ export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCard
                 variant="outline"
                 className={`text-sm font-semibold px-3 py-1 ${overallColor.text} ${overallColor.bg} ${overallColor.border}`}
               >
-                {overall >= 75 ? "Plausibel" : overall >= 50 ? "Teilweise plausibel" : "Kritisch"}
+                {overall >= 75 ? (lang === "de" ? "Plausibel" : "Plausible") : overall >= 50 ? (lang === "de" ? "Teilweise plausibel" : "Partially plausible") : (lang === "de" ? "Kritisch" : "Critical")}
               </Badge>
             </div>
 
@@ -289,10 +298,10 @@ export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCard
 
               {/* Category bars */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <CategoryBar label="Dokumentenvollständigkeit" score={docScore} icon={FileText} />
-                <CategoryBar label="Inhaltliche Plausibilität" score={contentScore} icon={CheckCircle2} />
-                <CategoryBar label="Formale Korrektheit" score={formalScore} icon={Info} />
-                <CategoryBar label="Konsistenz" score={consistencyScore} icon={Sparkles} />
+                <CategoryBar label={lang === "de" ? "Dokumentenvollständigkeit" : "Document Completeness"} score={docScore} icon={FileText} />
+                <CategoryBar label={lang === "de" ? "Inhaltliche Plausibilität" : "Content Plausibility"} score={contentScore} icon={CheckCircle2} />
+                <CategoryBar label={lang === "de" ? "Formale Korrektheit" : "Formal Correctness"} score={formalScore} icon={Info} />
+                <CategoryBar label={lang === "de" ? "Konsistenz" : "Consistency"} score={consistencyScore} icon={Sparkles} />
               </div>
             </div>
           </div>
@@ -302,7 +311,7 @@ export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCard
             <>
               <Separator />
               <div className="space-y-2">
-                <p className="text-sm font-semibold">Befunde ({findings.length})</p>
+                <p className="text-sm font-semibold">{lang === "de" ? `Befunde (${findings.length})` : `Findings (${findings.length})`}</p>
                 <div className="space-y-2">
                   {findings.map((f: any, i: number) => (
                     <div
@@ -317,7 +326,7 @@ export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCard
                             variant="outline"
                             className={`text-xs px-1.5 py-0 ${severityBadgeClass(f.severity)}`}
                           >
-                            {severityLabel(f.severity)}
+                            {getSeverityLabel(f.severity)}
                           </Badge>
                         </div>
                         <p className="text-muted-foreground mt-0.5">{f.description}</p>
@@ -334,7 +343,7 @@ export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCard
             <>
               <Separator />
               <div className="space-y-2">
-                <p className="text-sm font-semibold">Empfehlungen</p>
+                <p className="text-sm font-semibold">{lang === "de" ? "Empfehlungen" : "Recommendations"}</p>
                 <ul className="space-y-1.5">
                   {recommendations.map((r, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
@@ -350,7 +359,7 @@ export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCard
           {/* Tokens used */}
           {analysis.tokensUsed && (
             <p className="text-xs text-muted-foreground text-right">
-              {analysis.tokensUsed.toLocaleString("de-DE")} Tokens verwendet
+              {analysis.tokensUsed.toLocaleString(lang === "de" ? "de-DE" : "en-US")} {lang === "de" ? "Tokens verwendet" : "tokens used"}
             </p>
           )}
         </CardContent>
@@ -365,15 +374,15 @@ export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCard
           onClick={() => setShowHistory(!showHistory)}
         >
           {showHistory ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-          Analyse-Verlauf ({showHistory ? "ausblenden" : "anzeigen"})
+          {lang === "de" ? `Analyse-Verlauf (${showHistory ? "ausblenden" : "anzeigen"})` : `Analysis history (${showHistory ? "hide" : "show"})`}
         </Button>
 
         {showHistory && (
           <div className="mt-2 space-y-2">
             {historyQuery.isLoading ? (
-              <p className="text-xs text-muted-foreground px-2">Lade Verlauf…</p>
+              <p className="text-xs text-muted-foreground px-2">{lang === "de" ? "Lade Verlauf…" : "Loading history..."}</p>
             ) : (historyQuery.data?.length ?? 0) <= 1 ? (
-              <p className="text-xs text-muted-foreground px-2">Keine früheren Analysen vorhanden.</p>
+              <p className="text-xs text-muted-foreground px-2">{lang === "de" ? "Keine früheren Analysen vorhanden." : "No previous analyses available."}</p>
             ) : (
               historyQuery.data?.slice(1).map((h: any) => {
                 const s = Number(h.overallScore ?? 0);
@@ -385,7 +394,7 @@ export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCard
                   >
                     <span className="text-muted-foreground flex items-center gap-1.5">
                       <Clock className="h-3.5 w-3.5" />
-                      {new Date(h.createdAt).toLocaleString("de-DE")}
+                      {new Date(h.createdAt).toLocaleString(lang === "de" ? "de-DE" : "en-GB")}
                     </span>
                     <div className="flex items-center gap-2">
                       <span className={`font-semibold text-xs ${c.text}`}>{s}%</span>

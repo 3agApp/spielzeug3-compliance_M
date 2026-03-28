@@ -66,12 +66,12 @@ export default function AdminSettings() {
   const revokeNowMutation = trpc.documents.revokeExpiredPublic.useMutation({
     onSuccess: (data) => {
       if (data.skipped) {
-        toast.info("Auto-Revoke ist deaktiviert – keine Aktion ausgeführt.");
+        toast.info(lang === "de" ? "Auto-Revoke ist deaktiviert – keine Aktion ausgeführt." : "Auto-Revoke is disabled – no action performed.");
       } else {
         toast.success(
           data.revokedCount > 0
-            ? `${data.revokedCount} abgelaufene${data.revokedCount === 1 ? "s" : ""} Dokument${data.revokedCount === 1 ? "" : "e"} aus der öffentlichen Freigabe entfernt.`
-            : "Keine abgelaufenen Dokumente gefunden."
+            ? (lang === "de" ? `${data.revokedCount} abgelaufene${data.revokedCount === 1 ? "s" : ""} Dokument${data.revokedCount === 1 ? "" : "e"} aus der öffentlichen Freigabe entfernt.` : `${data.revokedCount} expired document${data.revokedCount === 1 ? "" : "s"} removed from public access.`)
+            : (lang === "de" ? "Keine abgelaufenen Dokumente gefunden." : "No expired documents found.")
         );
       }
     },
@@ -140,11 +140,11 @@ export default function AdminSettings() {
     if (!file) return;
     const allowedTypes = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
     if (!allowedTypes.includes(file.type)) {
-      toast.error("Ungültiges Format", { description: "Erlaubt: PNG, JPG, WebP, SVG" });
+      toast.error(lang === "de" ? "Ungültiges Format" : "Invalid format", { description: lang === "de" ? "Erlaubt: PNG, JPG, WebP, SVG" : "Allowed: PNG, JPG, WebP, SVG" });
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("Datei zu groß", { description: "Maximale Dateigröße: 5 MB" });
+      toast.error(lang === "de" ? "Datei zu groß" : "File too large", { description: lang === "de" ? "Maximale Dateigröße: 5 MB" : "Maximum file size: 5 MB" });
       return;
     }
     // Show preview
@@ -189,7 +189,7 @@ export default function AdminSettings() {
   const apiKeyStatusQuery = trpc.aiAnalysis.getApiKeyStatus.useQuery();
   const saveKeyMutation = trpc.aiAnalysis.saveApiKey.useMutation({
     onSuccess: () => {
-      toast.success("OpenAI API-Schlüssel gespeichert");
+      toast.success(lang === "de" ? "OpenAI API-Schlüssel gespeichert" : "OpenAI API key saved");
       setOpenAiKey("");
       apiKeyStatusQuery.refetch();
     },
@@ -215,8 +215,8 @@ export default function AdminSettings() {
   };
 
   const handleTestConnection = () => {
-    toast.info("Verbindungstest wird durchgeführt…");
-    setTimeout(() => toast.success("Verbindung zu Kontor ERP erfolgreich"), 1500);
+    toast.info(lang === "de" ? "Verbindungstest wird durchgeführt…" : "Testing connection...");
+    setTimeout(() => toast.success(lang === "de" ? "Verbindung zu Kontor ERP erfolgreich" : "Connection to Kontor ERP successful"), 1500);
   };
 
   return (
@@ -227,7 +227,7 @@ export default function AdminSettings() {
           {t.nav.settings}
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Systemkonfiguration und Integrationseinstellungen
+          {lang === "de" ? "Systemkonfiguration und Integrationseinstellungen" : "System configuration and integration settings"}
         </p>
       </div>
 
@@ -239,7 +239,7 @@ export default function AdminSettings() {
           </TabsTrigger>
           <TabsTrigger value="notifications" className="gap-1.5">
             <Bell className="h-3.5 w-3.5" />
-            Benachrichtigungen
+            {lang === "de" ? "Benachrichtigungen" : "Notifications"}
           </TabsTrigger>
           <TabsTrigger value="portal" className="gap-1.5">
             <Globe className="h-3.5 w-3.5" />
@@ -247,19 +247,19 @@ export default function AdminSettings() {
           </TabsTrigger>
           <TabsTrigger value="security" className="gap-1.5">
             <Shield className="h-3.5 w-3.5" />
-            Sicherheit
+            {lang === "de" ? "Sicherheit" : "Security"}
           </TabsTrigger>
           <TabsTrigger value="ai" className="gap-1.5">
             <Sparkles className="h-3.5 w-3.5" />
-            KI-Analyse
+            {lang === "de" ? "KI-Analyse" : "AI Analysis"}
           </TabsTrigger>
           <TabsTrigger value="bunnydoc" className="gap-1.5">
             <FileSignature className="h-3.5 w-3.5" />
-            Signaturen
+            {lang === "de" ? "Signaturen" : "Signatures"}
           </TabsTrigger>
           <TabsTrigger value="seal" className="gap-1.5">
             <Shield className="h-3.5 w-3.5" />
-            Siegel
+            {lang === "de" ? "Siegel" : "Seal"}
           </TabsTrigger>
         </TabsList>
 
@@ -269,16 +269,16 @@ export default function AdminSettings() {
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <Database className="h-4 w-4" />
-                Kontor ERP API-Verbindung
+                {lang === "de" ? "Kontor ERP API-Verbindung" : "Kontor ERP API Connection"}
               </CardTitle>
               <CardDescription>
-                Konfigurieren Sie die bidirektionale Datensynchronisation mit Kontor ERP.
+                {lang === "de" ? "Konfigurieren Sie die bidirektionale Datensynchronisation mit Kontor ERP." : "Configure the bidirectional data synchronisation with Kontor ERP."}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="kontor-url">API-URL</Label>
+                  <Label htmlFor="kontor-url">{lang === "de" ? "API-URL" : "API URL"}</Label>
                   <Input
                     id="kontor-url"
                     value={kontorApiUrl}
@@ -287,13 +287,13 @@ export default function AdminSettings() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="kontor-key">API-Schlüssel</Label>
+                  <Label htmlFor="kontor-key">{lang === "de" ? "API-Schlüssel" : "API Key"}</Label>
                   <Input
                     id="kontor-key"
                     type="password"
                     value={kontorApiKey}
                     onChange={(e) => setKontorApiKey(e.target.value)}
-                    placeholder="Ihr Kontor API-Schlüssel"
+                    placeholder={lang === "de" ? "Ihr Kontor API-Schlüssel" : "Your Kontor API key"}
                   />
                 </div>
               </div>
@@ -302,9 +302,9 @@ export default function AdminSettings() {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium">Automatische Synchronisation</p>
+                  <p className="text-sm font-medium">{lang === "de" ? "Automatische Synchronisation" : "Automatic Synchronisation"}</p>
                   <p className="text-xs text-muted-foreground">
-                    Daten automatisch in regelmäßigen Abständen synchronisieren
+                    {lang === "de" ? "Daten automatisch in regelmäßigen Abständen synchronisieren" : "Automatically synchronise data at regular intervals"}
                   </p>
                 </div>
                 <Switch checked={autoSync} onCheckedChange={setAutoSync} />
@@ -312,7 +312,7 @@ export default function AdminSettings() {
 
               {autoSync && (
                 <div className="space-y-1.5">
-                  <Label htmlFor="sync-interval">Sync-Intervall (Minuten)</Label>
+                  <Label htmlFor="sync-interval">{lang === "de" ? "Sync-Intervall (Minuten)" : "Sync interval (minutes)"}</Label>
                   <Input
                     id="sync-interval"
                     type="number"
@@ -328,11 +328,11 @@ export default function AdminSettings() {
               <div className="flex gap-2 pt-2">
                 <Button onClick={handleSaveKontor}>
                   <Save className="mr-2 h-4 w-4" />
-                  Speichern
+                  {t.action.save}
                 </Button>
                 <Button variant="outline" onClick={handleTestConnection}>
                   <RefreshCw className="mr-2 h-4 w-4" />
-                  Verbindung testen
+                  {lang === "de" ? "Verbindung testen" : "Test connection"}
                 </Button>
               </div>
             </CardContent>
@@ -340,17 +340,17 @@ export default function AdminSettings() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Sync-Konfiguration</CardTitle>
+              <CardTitle className="text-base">{lang === "de" ? "Sync-Konfiguration" : "Sync Configuration"}</CardTitle>
               <CardDescription>
-                Definieren Sie, welche Entitäten synchronisiert werden sollen.
+                {lang === "de" ? "Definieren Sie, welche Entitäten synchronisiert werden sollen." : "Define which entities should be synchronised."}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {[
-                { label: "Lieferanten importieren", desc: "Lieferantenstammdaten aus Kontor importieren" },
-                { label: "Produkte importieren", desc: "Produktdaten und Bestellungen aus Kontor importieren" },
-                { label: "Compliance-Status exportieren", desc: "Genehmigungsstatus nach Kontor exportieren" },
-                { label: "Vollständigkeits-Flags exportieren", desc: "Completeness-Score nach Kontor exportieren" },
+                { label: lang === "de" ? "Lieferanten importieren" : "Import suppliers", desc: lang === "de" ? "Lieferantenstammdaten aus Kontor importieren" : "Import supplier master data from Kontor" },
+                { label: lang === "de" ? "Produkte importieren" : "Import products", desc: lang === "de" ? "Produktdaten und Bestellungen aus Kontor importieren" : "Import product data and orders from Kontor" },
+                { label: lang === "de" ? "Compliance-Status exportieren" : "Export compliance status", desc: lang === "de" ? "Genehmigungsstatus nach Kontor exportieren" : "Export approval status to Kontor" },
+                { label: lang === "de" ? "Vollständigkeits-Flags exportieren" : "Export completeness flags", desc: lang === "de" ? "Completeness-Score nach Kontor exportieren" : "Export completeness score to Kontor" },
               ].map(({ label, desc }) => (
                 <div key={label} className="flex items-center justify-between py-1">
                   <div>
@@ -379,26 +379,26 @@ export default function AdminSettings() {
             <CardContent className="space-y-4">
               {[
                 {
-                  label: "Bei Einreichung",
-                  desc: "Interne Mitarbeiter werden benachrichtigt, wenn ein Lieferant ein Produkt einreicht",
+                  label: lang === "de" ? "Bei Einreichung" : "On submission",
+                  desc: lang === "de" ? "Interne Mitarbeiter werden benachrichtigt, wenn ein Lieferant ein Produkt einreicht" : "Internal staff are notified when a supplier submits a product",
                   checked: notifyOnSubmit,
                   onChange: setNotifyOnSubmit,
                 },
                 {
-                  label: "Bei Genehmigung",
-                  desc: "Lieferanten werden benachrichtigt, wenn ein Produkt genehmigt wird",
+                  label: lang === "de" ? "Bei Genehmigung" : "On approval",
+                  desc: lang === "de" ? "Lieferanten werden benachrichtigt, wenn ein Produkt genehmigt wird" : "Suppliers are notified when a product is approved",
                   checked: notifyOnApprove,
                   onChange: setNotifyOnApprove,
                 },
                 {
-                  label: "Bei Ablehnung",
-                  desc: "Lieferanten werden benachrichtigt, wenn ein Produkt abgelehnt wird",
+                  label: lang === "de" ? "Bei Ablehnung" : "On rejection",
+                  desc: lang === "de" ? "Lieferanten werden benachrichtigt, wenn ein Produkt abgelehnt wird" : "Suppliers are notified when a product is rejected",
                   checked: notifyOnReject,
                   onChange: setNotifyOnReject,
                 },
                 {
-                  label: "Bei Rückfrage",
-                  desc: "Lieferanten werden benachrichtigt, wenn eine Rückfrage gestellt wird",
+                  label: lang === "de" ? "Bei Rückfrage" : "On clarification request",
+                  desc: lang === "de" ? "Lieferanten werden benachrichtigt, wenn eine Rückfrage gestellt wird" : "Suppliers are notified when a clarification is requested",
                   checked: notifyOnClarification,
                   onChange: setNotifyOnClarification,
                 },
@@ -415,7 +415,7 @@ export default function AdminSettings() {
               <div className="pt-2">
                 <Button onClick={handleSaveNotifications}>
                   <Save className="mr-2 h-4 w-4" />
-                  Speichern
+                  {t.action.save}
                 </Button>
               </div>
             </CardContent>
@@ -460,17 +460,17 @@ export default function AdminSettings() {
                 </p>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="portal-email">Kontakt-E-Mail</Label>
+                  <Label htmlFor="portal-email">{lang === "de" ? "Kontakt-E-Mail" : "Contact email"}</Label>
                 <Input
                   id="portal-email"
                   type="email"
                   value={portalContactEmail}
                   onChange={(e) => setPortalContactEmail(e.target.value)}
-                  placeholder="z. B. compliance@spielzeug3.ch"
+                    placeholder={lang === "de" ? "z. B. compliance@spielzeug3.ch" : "e.g. compliance@spielzeug3.ch"}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Primärfarbe (Siegel-Rahmen &amp; Akzent)</Label>
+                <Label>{lang === "de" ? "Primärfarbe (Siegel-Rahmen & Akzent)" : "Primary colour (seal frame & accent)"}</Label>
                 <div className="flex items-center gap-3">
                   <div className="relative">
                     <input
@@ -481,7 +481,7 @@ export default function AdminSettings() {
                         setPortalColorHex(e.target.value);
                       }}
                       className="w-10 h-10 rounded-lg border cursor-pointer p-0.5 bg-white"
-                      title="Farbe wählen"
+                      title={lang === "de" ? "Farbe wählen" : "Choose colour"}
                     />
                   </div>
                   <Input
@@ -505,16 +505,16 @@ export default function AdminSettings() {
                     onClick={() => { setPortalPrimaryColor("#C8102E"); setPortalColorHex("#C8102E"); }}
                     className="text-xs text-muted-foreground hover:text-foreground underline"
                   >
-                    Zurücksetzen
+                    {lang === "de" ? "Zurücksetzen" : "Reset"}
                   </button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Diese Farbe wird für den Rahmen und die Akzente des Siegel-Etiketts (HTML &amp; PDF) verwendet.
+                  {lang === "de" ? "Diese Farbe wird für den Rahmen und die Akzente des Siegel-Etiketts (HTML & PDF) verwendet." : "This colour is used for the frame and accents of the seal label (HTML & PDF)."}
                 </p>
               </div>
               <Separator />
               <div className="space-y-1.5">
-                <Label>Standard-Sprache</Label>
+                <Label>{lang === "de" ? "Standard-Sprache" : "Default language"}</Label>
                 <div className="flex gap-2">
                   <Button
                     variant={lang === "de" ? "default" : "outline"}
@@ -646,12 +646,10 @@ export default function AdminSettings() {
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <Bot className="h-4 w-4" />
-                KI-Plausibilitätsprüfung
+                {lang === "de" ? "KI-Plausibilitätsprüfung" : "AI Plausibility Check"}
               </CardTitle>
               <CardDescription>
-                Hinterlegen Sie Ihren OpenAI API-Schlüssel, um Produktdokumente automatisch auf
-                Plausibilität und Vollständigkeit zu prüfen. Der Schlüssel wird verschlüsselt
-                gespeichert und ausschließlich serverseitig verwendet.
+                {lang === "de" ? "Hinterlegen Sie Ihren OpenAI API-Schlüssel, um Produktdokumente automatisch auf Plausibilität und Vollständigkeit zu prüfen. Der Schlüssel wird verschlüsselt gespeichert und ausschließlich serverseitig verwendet." : "Enter your OpenAI API key to automatically check product documents for plausibility and completeness. The key is stored encrypted and used exclusively server-side."}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
@@ -670,8 +668,8 @@ export default function AdminSettings() {
                   <div>
                     <p className="text-sm font-medium">
                       {apiKeyStatusQuery.data?.configured
-                        ? "API-Schlüssel konfiguriert"
-                        : "Kein API-Schlüssel hinterlegt"}
+                        ? (lang === "de" ? "API-Schlüssel konfiguriert" : "API key configured")
+                        : (lang === "de" ? "Kein API-Schlüssel hinterlegt" : "No API key stored")}
                     </p>
                     {apiKeyStatusQuery.data?.maskedKey && (
                       <p className="text-xs text-muted-foreground font-mono mt-0.5">
@@ -685,7 +683,7 @@ export default function AdminSettings() {
               {/* New key input */}
               <div className="space-y-1.5">
                 <Label htmlFor="openai-key">
-                  {apiKeyStatusQuery.data?.configured ? "Schlüssel ersetzen" : "API-Schlüssel eingeben"}
+                  {apiKeyStatusQuery.data?.configured ? (lang === "de" ? "Schlüssel ersetzen" : "Replace key") : (lang === "de" ? "API-Schlüssel eingeben" : "Enter API key")}
                 </Label>
                 <div className="flex gap-2">
                   <div className="relative flex-1">
@@ -718,7 +716,7 @@ export default function AdminSettings() {
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Den Schlüssel erhalten Sie unter{" "}
+                  {lang === "de" ? "Den Schlüssel erhalten Sie unter" : "Get your key at"}{" "}
                   <a
                     href="https://platform.openai.com/api-keys"
                     target="_blank"
@@ -736,9 +734,9 @@ export default function AdminSettings() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium">Verbindungstest</p>
+                    <p className="text-sm font-medium">{lang === "de" ? "Verbindungstest" : "Connection test"}</p>
                     <p className="text-xs text-muted-foreground">
-                      Prüft den gespeicherten Schlüssel mit einem minimalen API-Aufruf
+                      {lang === "de" ? "Prüft den gespeicherten Schlüssel mit einem minimalen API-Aufruf" : "Tests the stored key with a minimal API call"}
                     </p>
                   </div>
                   <Button
@@ -755,7 +753,7 @@ export default function AdminSettings() {
                     ) : (
                       <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
                     )}
-                    Testen
+                    {lang === "de" ? "Testen" : "Test"}
                   </Button>
                 </div>
 
@@ -781,14 +779,14 @@ export default function AdminSettings() {
               <div className="rounded-lg bg-blue-50 border border-blue-200 p-4 space-y-2">
                 <p className="text-sm font-semibold text-blue-800 flex items-center gap-1.5">
                   <Sparkles className="h-4 w-4" />
-                  So funktioniert die KI-Analyse
+                  {lang === "de" ? "So funktioniert die KI-Analyse" : "How AI analysis works"}
                 </p>
                 <ul className="text-xs text-blue-700 space-y-1">
-                  <li>• Wählen Sie in der Produktliste ein oder mehrere Produkte per Checkbox aus</li>
-                  <li>• Klicken Sie auf "KI-Analyse starten" – GPT-4o analysiert alle hochgeladenen Dokumente</li>
-                  <li>• Das Modell prüft Vollständigkeit, Plausibilität, formale Korrektheit und Konsistenz</li>
-                  <li>• Das Ergebnis erscheint als Score (0–100%) mit Begründung direkt beim Produkt</li>
-                  <li>• Alle Analysen werden gespeichert und können jederzeit abgerufen werden</li>
+                  <li>• {lang === "de" ? "Wählen Sie in der Produktliste ein oder mehrere Produkte per Checkbox aus" : "Select one or more products in the product list using the checkbox"}</li>
+                  <li>• {lang === "de" ? "Klicken Sie auf \"KI-Analyse starten\" – GPT-4o analysiert alle hochgeladenen Dokumente" : "Click \"Start AI analysis\" – GPT-4o analyses all uploaded documents"}</li>
+                  <li>• {lang === "de" ? "Das Modell prüft Vollständigkeit, Plausibilität, formale Korrektheit und Konsistenz" : "The model checks completeness, plausibility, formal correctness and consistency"}</li>
+                  <li>• {lang === "de" ? "Das Ergebnis erscheint als Score (0–100%) mit Begründung direkt beim Produkt" : "The result appears as a score (0–100%) with reasoning directly on the product"}</li>
+                  <li>• {lang === "de" ? "Alle Analysen werden gespeichert und können jederzeit abgerufen werden" : "All analyses are saved and can be retrieved at any time"}</li>
                 </ul>
               </div>
             </CardContent>
@@ -801,29 +799,29 @@ export default function AdminSettings() {
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <Shield className="h-4 w-4" />
-                Sicherheitseinstellungen
+                {lang === "de" ? "Sicherheitseinstellungen" : "Security settings"}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {[
                 {
-                  label: "Audit-Log aktiviert",
-                  desc: "Alle Benutzeraktionen werden protokolliert",
+                  label: lang === "de" ? "Audit-Log aktiviert" : "Audit log enabled",
+                  desc: lang === "de" ? "Alle Benutzeraktionen werden protokolliert" : "All user actions are logged",
                   defaultChecked: true,
                 },
                 {
-                  label: "Session-Timeout",
-                  desc: "Benutzer werden nach Inaktivität automatisch abgemeldet",
+                  label: lang === "de" ? "Session-Timeout" : "Session timeout",
+                  desc: lang === "de" ? "Benutzer werden nach Inaktivität automatisch abgemeldet" : "Users are automatically signed out after inactivity",
                   defaultChecked: true,
                 },
                 {
-                  label: "Dokument-Zugriff einschränken",
-                  desc: "Lieferanten können nur eigene Dokumente einsehen",
+                  label: lang === "de" ? "Dokument-Zugriff einschränken" : "Restrict document access",
+                  desc: lang === "de" ? "Lieferanten können nur eigene Dokumente einsehen" : "Suppliers can only view their own documents",
                   defaultChecked: true,
                 },
                 {
-                  label: "Kommentare moderieren",
-                  desc: "Externe Kommentare werden vor Veröffentlichung geprüft",
+                  label: lang === "de" ? "Kommentare moderieren" : "Moderate comments",
+                  desc: lang === "de" ? "Externe Kommentare werden vor Veröffentlichung geprüft" : "External comments are reviewed before publication",
                   defaultChecked: false,
                 },
               ].map(({ label, desc, defaultChecked }) => (
@@ -836,9 +834,9 @@ export default function AdminSettings() {
                 </div>
               ))}
               <div className="pt-2">
-                <Button onClick={() => toast.success("Sicherheitseinstellungen gespeichert")}>
+                <Button onClick={() => toast.success(lang === "de" ? "Sicherheitseinstellungen gespeichert" : "Security settings saved")}>
                   <Save className="mr-2 h-4 w-4" />
-                  Speichern
+                  {t.action.save}
                 </Button>
               </div>
             </CardContent>
@@ -855,10 +853,10 @@ export default function AdminSettings() {
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <Shield className="h-4 w-4" />
-                Siegel-Grafiken verwalten
+                {lang === "de" ? "Siegel-Grafiken verwalten" : "Manage seal graphics"}
               </CardTitle>
               <CardDescription>
-                Laden Sie eigene Grafiken für jeden Prüfstatus hoch. Die Grafiken werden in der Vorschau, im PDF-Export und im Einbettungscode verwendet. Mit „Standard wiederherstellen“ kehren Sie zur Original-Grafik zurück.
+                {lang === "de" ? "Laden Sie eigene Grafiken für jeden Prüfstatus hoch. Die Grafiken werden in der Vorschau, im PDF-Export und im Einbettungscode verwendet. Mit „Standard wiederherstellen“ kehren Sie zur Original-Grafik zurück." : "Upload custom graphics for each review status. The graphics are used in the preview, PDF export and embed code. Use \"Restore default\" to revert to the original graphic."}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -871,10 +869,10 @@ export default function AdminSettings() {
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <Shield className="h-4 w-4" />
-                Siegel-Vorschau
+                {lang === "de" ? "Siegel-Vorschau" : "Seal preview"}
               </CardTitle>
               <CardDescription>
-                So sieht das Etikett auf einer Produktverpackung aus. Klicken Sie auf die Status-Buttons, um alle Varianten zu sehen.
+                {lang === "de" ? "So sieht das Etikett auf einer Produktverpackung aus. Klicken Sie auf die Status-Buttons, um alle Varianten zu sehen." : "This is how the label looks on a product package. Click the status buttons to see all variants."}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -892,19 +890,20 @@ export default function AdminSettings() {
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <Shield className="h-4 w-4" />
-                Swiss Product Seal – Automatisierung
+                {lang === "de" ? "Swiss Product Seal – Automatisierung" : "Swiss Product Seal – Automation"}
               </CardTitle>
               <CardDescription>
-                Steuern Sie, wann das Siegel und der QR-Code automatisch generiert werden.
+                {lang === "de" ? "Steuern Sie, wann das Siegel und der QR-Code automatisch generiert werden." : "Control when the seal and QR code are automatically generated."}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
               <div className="flex items-center justify-between py-2">
                 <div>
-                  <p className="text-sm font-medium">Siegel bei Genehmigung automatisch aktivieren</p>
+                  <p className="text-sm font-medium">
+                    {lang === "de" ? "Siegel bei Genehmigung automatisch aktivieren" : "Automatically activate seal on approval"}
+                  </p>
                   <p className="text-xs text-muted-foreground">
-                    Wenn ein Produkt genehmigt wird, wird das Siegel und der QR-Code automatisch
-                    generiert – ohne manuellen Schritt im Siegel-Tab.
+                    {lang === "de" ? "Wenn ein Produkt genehmigt wird, wird das Siegel und der QR-Code automatisch generiert – ohne manuellen Schritt im Siegel-Tab." : "When a product is approved, the seal and QR code are automatically generated – without a manual step in the seal tab."}
                   </p>
                 </div>
                 <Switch
@@ -915,16 +914,13 @@ export default function AdminSettings() {
               </div>
 
               <div className="rounded-lg border p-3 bg-muted/20 text-sm text-muted-foreground">
-                <p className="font-medium text-foreground mb-1">Wie funktioniert das?</p>
+                <p className="font-medium text-foreground mb-1">{lang === "de" ? "Wie funktioniert das?" : "How does it work?"}</p>
                 <p>
-                  Sobald ein Compliance Manager oder Administrator ein Produkt genehmigt,
-                  wird automatisch ein eindeutiger QR-Code generiert und auf der öffentlichen
-                  Produktlandingpage unter{" "}
+                  {lang === "de" ? "Sobald ein Compliance Manager oder Administrator ein Produkt genehmigt, wird automatisch ein eindeutiger QR-Code generiert und auf der öffentlichen Produktlandingpage unter" : "As soon as a Compliance Manager or Administrator approves a product, a unique QR code is automatically generated and published on the public product landing page at"}{" "}
                   <code className="font-mono text-xs bg-background border rounded px-1">
                     {window.location.origin}/p/:uuid
                   </code>{" "}
-                  veröffentlicht. Das Siegel kann jederzeit im Siegel-Tab des Produkts
-                  manuell deaktiviert werden.
+                  {lang === "de" ? "veröffentlicht. Das Siegel kann jederzeit im Siegel-Tab des Produkts manuell deaktiviert werden." : "The seal can be manually deactivated at any time in the product's seal tab."}
                 </p>
               </div>
 
@@ -950,12 +946,10 @@ export default function AdminSettings() {
                 <div className="flex items-center justify-between py-2">
                   <div>
                     <p className="text-sm font-medium">
-                      Abgelaufene Dokumente automatisch aus der öffentlichen Freigabe entfernen
+                      {lang === "de" ? "Abgelaufene Dokumente automatisch aus der öffentlichen Freigabe entfernen" : "Automatically remove expired documents from public access"}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Dokumente mit abgelaufenem Gültigkeitsdatum werden täglich automatisch
-                      aus der Endkunden-Landingpage entfernt (publicDownload = false).
-                      Der Cron-Job läuft täglich um 02:00 Uhr.
+                      {lang === "de" ? "Dokumente mit abgelaufenem Gültigkeitsdatum werden täglich automatisch aus der Endkunden-Landingpage entfernt (publicDownload = false). Der Cron-Job läuft täglich um 02:00 Uhr." : "Documents with an expired validity date are automatically removed from the customer landing page daily (publicDownload = false). The cron job runs daily at 02:00."}
                     </p>
                   </div>
                   <Switch
@@ -988,26 +982,25 @@ export default function AdminSettings() {
                     variant="secondary"
                     onClick={() => revokeNowMutation.mutate({ force: true })}
                     disabled={revokeNowMutation.isPending}
-                    title="Jetzt alle abgelaufenen Dokumente aus der öffentlichen Freigabe entfernen"
+                    title={lang === "de" ? "Jetzt alle abgelaufenen Dokumente aus der öffentlichen Freigabe entfernen" : "Remove all expired documents from public access now"}
                   >
                     {revokeNowMutation.isPending ? (
                       <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
                       <Shield className="mr-2 h-4 w-4" />
                     )}
-                    Jetzt ausführen
+                    {t.action.runNow}
                   </Button>
                 </div>
 
                 <div className="rounded-lg border p-3 bg-muted/20 text-sm text-muted-foreground mt-3">
-                  <p className="font-medium text-foreground mb-1">Was passiert dabei?</p>
+                  <p className="font-medium text-foreground mb-1">{lang === "de" ? "Was passiert dabei?" : "What happens?"}</p>
                   <p>
-                    Alle Dokumente, bei denen das Ablaufdatum überschritten ist und
+                    {lang === "de" ? "Alle Dokumente, bei denen das Ablaufdatum überschritten ist und" : "All documents where the expiry date has passed and"}
                     <code className="font-mono text-xs bg-background border rounded px-1 mx-1">publicDownload = true</code>
-                    gesetzt ist, werden automatisch auf
+                    {lang === "de" ? "gesetzt ist, werden automatisch auf" : "is set will be automatically reset to"}
                     <code className="font-mono text-xs bg-background border rounded px-1 mx-1">publicDownload = false</code>
-                    zurückgesetzt. Jede Änderung wird im Audit-Log protokolliert.
-                    Das Dokument bleibt im System erhalten und kann jederzeit manuell wieder freigegeben werden.
+                    {lang === "de" ? "zurückgesetzt. Jede Änderung wird im Audit-Log protokolliert. Das Dokument bleibt im System erhalten und kann jederzeit manuell wieder freigegeben werden." : "Every change is logged in the audit log. The document remains in the system and can be manually re-released at any time."}
                   </p>
                 </div>
               </div>
@@ -1020,10 +1013,11 @@ export default function AdminSettings() {
 }
 
 function BunnyDocSettingsTab() {
+  const { lang } = useLang();
   const settingsQuery = trpc.bunnydoc.getSettings.useQuery();
   const saveSettingsMutation = trpc.bunnydoc.saveSettings.useMutation({
     onSuccess: () => {
-      toast.success("BunnyDoc-Einstellungen gespeichert");
+      toast.success(lang === "de" ? "BunnyDoc-Einstellungen gespeichert" : "BunnyDoc settings saved");
       settingsQuery.refetch();
       setBunnyApiKey("");
       setBunnyTemplateId("");
@@ -1041,10 +1035,10 @@ function BunnyDocSettingsTab() {
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <FileSignature className="h-4 w-4" />
-            BunnyDoc – Digitale Signaturen
+            {lang === "de" ? "BunnyDoc – Digitale Signaturen" : "BunnyDoc – Digital Signatures"}
           </CardTitle>
           <CardDescription>
-            Verbinden Sie BunnyDoc, um Compliance-Dokumente automatisch zur digitalen Unterzeichnung zu versenden.
+            {lang === "de" ? "Verbinden Sie BunnyDoc, um Compliance-Dokumente automatisch zur digitalen Unterzeichnung zu versenden." : "Connect BunnyDoc to automatically send compliance documents for digital signing."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -1059,7 +1053,7 @@ function BunnyDocSettingsTab() {
             </div>
             <div>
               <p className="text-sm font-medium">
-                {settingsQuery.data?.hasApiKey ? "API-Schlüssel konfiguriert" : "Kein API-Schlüssel hinterlegt"}
+                {settingsQuery.data?.hasApiKey ? (lang === "de" ? "API-Schlüssel konfiguriert" : "API key configured") : (lang === "de" ? "Kein API-Schlüssel hinterlegt" : "No API key stored")}
               </p>
               {settingsQuery.data?.templateId && (
                 <p className="text-xs text-muted-foreground font-mono mt-0.5">
@@ -1072,7 +1066,7 @@ function BunnyDocSettingsTab() {
           {/* API Key */}
           <div className="space-y-1.5">
             <Label htmlFor="bunny-api-key">
-              {settingsQuery.data?.hasApiKey ? "API-Schlüssel ersetzen" : "API-Schlüssel eingeben"}
+              {settingsQuery.data?.hasApiKey ? (lang === "de" ? "API-Schlüssel ersetzen" : "Replace API key") : (lang === "de" ? "API-Schlüssel eingeben" : "Enter API key")}
             </Label>
             <div className="relative">
               <Input
@@ -1080,7 +1074,7 @@ function BunnyDocSettingsTab() {
                 type={showBunnyKey ? "text" : "password"}
                 value={bunnyApiKey}
                 onChange={(e) => setBunnyApiKey(e.target.value)}
-                placeholder="Ihr BunnyDoc API-Schlüssel"
+                placeholder={lang === "de" ? "Ihr BunnyDoc API-Schlüssel" : "Your BunnyDoc API key"}
                 className="pr-10 font-mono text-sm"
               />
               <button
@@ -1092,17 +1086,17 @@ function BunnyDocSettingsTab() {
               </button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Den Schlüssel finden Sie unter{" "}
+              {lang === "de" ? "Den Schlüssel finden Sie unter" : "Find your key at"}{" "}
               <a href="https://bunnydoc.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                 bunnydoc.com
               </a>{" "}
-              → Einstellungen → API
+              {lang === "de" ? "→ Einstellungen → API" : "→ Settings → API"}
             </p>
           </div>
 
           {/* Template ID */}
           <div className="space-y-1.5">
-            <Label htmlFor="bunny-template-id">Template-ID</Label>
+              <Label htmlFor="bunny-template-id">{lang === "de" ? "Template-ID" : "Template ID"}</Label>
             <Input
               id="bunny-template-id"
               value={bunnyTemplateId}
@@ -1111,7 +1105,7 @@ function BunnyDocSettingsTab() {
               className="font-mono text-sm"
             />
             <p className="text-xs text-muted-foreground">
-              Die UUID der BunnyDoc-Vorlage, die für Compliance-Dokumente verwendet werden soll.
+              {lang === "de" ? "Die UUID der BunnyDoc-Vorlage, die für Compliance-Dokumente verwendet werden soll." : "The UUID of the BunnyDoc template to be used for compliance documents."}
             </p>
           </div>
 
@@ -1119,10 +1113,9 @@ function BunnyDocSettingsTab() {
 
           {/* Webhook Info */}
           <div className="rounded-lg border p-3 bg-muted/20 space-y-1">
-            <p className="text-sm font-medium">Webhook-URL</p>
+            <p className="text-sm font-medium">{lang === "de" ? "Webhook-URL" : "Webhook URL"}</p>
             <p className="text-xs text-muted-foreground">
-              Tragen Sie diese URL in Ihrem BunnyDoc-Konto unter Einstellungen → Webhooks ein,
-              damit Signatur-Status-Updates automatisch synchronisiert werden:
+              {lang === "de" ? "Tragen Sie diese URL in Ihrem BunnyDoc-Konto unter Einstellungen → Webhooks ein, damit Signatur-Status-Updates automatisch synchronisiert werden:" : "Enter this URL in your BunnyDoc account under Settings → Webhooks so that signature status updates are automatically synchronised:"}
             </p>
             <code className="block text-xs font-mono bg-background border rounded px-2 py-1 mt-1 break-all">
               {window.location.origin}/api/webhooks/bunnydoc
@@ -1132,7 +1125,7 @@ function BunnyDocSettingsTab() {
           <Button
             onClick={() => {
               if (!bunnyApiKey || !bunnyTemplateId) {
-                toast.error("Bitte API-Schlüssel und Template-ID eingeben.");
+                toast.error(lang === "de" ? "Bitte API-Schlüssel und Template-ID eingeben." : "Please enter API key and template ID.");
                 return;
               }
               saveSettingsMutation.mutate({ apiKey: bunnyApiKey, templateId: bunnyTemplateId });

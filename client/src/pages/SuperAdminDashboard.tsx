@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useLang } from "@/lib/i18n";
 import ComplianceLayout from "@/components/ComplianceLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -75,13 +76,16 @@ const PLAN_COLORS: Record<Plan, string> = {
   enterprise: "bg-amber-50 text-amber-700 border-amber-200",
 };
 
-const MODULE_OPTIONS = [
-  { id: "compliance", label: "Compliance" },
-  { id: "seal", label: "Siegel / QR" },
-  { id: "ai_analysis", label: "KI-Analyse" },
-  { id: "bunnydoc", label: "Digitale Signaturen" },
-  { id: "api_access", label: "API-Zugang" },
-];
+function useModuleOptions() {
+  const { lang } = useLang();
+  return [
+    { id: "compliance", label: "Compliance" },
+    { id: "seal", label: lang === "de" ? "Siegel / QR" : "Seal / QR" },
+    { id: "ai_analysis", label: lang === "de" ? "KI-Analyse" : "AI Analysis" },
+    { id: "bunnydoc", label: lang === "de" ? "Digitale Signaturen" : "Digital Signatures" },
+    { id: "api_access", label: lang === "de" ? "API-Zugang" : "API Access" },
+  ];
+}
 
 function PlanBadge({ plan }: { plan: string }) {
   const cls = PLAN_COLORS[plan as Plan] ?? "bg-slate-100 text-slate-700 border-slate-200";
@@ -95,12 +99,13 @@ function PlanBadge({ plan }: { plan: string }) {
 
 function ModuleChips({ modules }: { modules: unknown }) {
   const list = Array.isArray(modules) ? (modules as string[]) : [];
+  const moduleOptions = useModuleOptions();
   if (list.length === 0) return <span className="text-muted-foreground text-xs">–</span>;
   return (
     <div className="flex flex-wrap gap-1">
       {list.map((m) => (
         <span key={m} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary border border-primary/20">
-          {MODULE_OPTIONS.find((o) => o.id === m)?.label ?? m}
+          {moduleOptions.find((o: {id:string;label:string}) => o.id === m)?.label ?? m}
         </span>
       ))}
     </div>
@@ -117,11 +122,16 @@ function CreateTenantDialog({
   onClose: () => void;
   onCreated: () => void;
 }) {
+  const { lang } = useLang();
+  const moduleOptions = useModuleOptions();
   const utils = trpc.useUtils();
   const createMutation = trpc.tenant.create.useMutation({
     onSuccess: () => {
       utils.tenant.list.invalidate();
-      toast.success("Mandant angelegt", { description: "Der neue Mandant wurde erfolgreich erstellt." });
+      toast.success(
+        lang === "de" ? "Mandant angelegt" : "Tenant created",
+        { description: lang === "de" ? "Der neue Mandant wurde erfolgreich erstellt." : "The new tenant was created successfully." }
+      );
       onCreated();
     },
     onError: (err) => {
@@ -286,9 +296,9 @@ function CreateTenantDialog({
 
           {/* Module */}
           <div className="space-y-2">
-            <Label>Freigeschaltete Module</Label>
+            <Label>{lang === "de" ? "Freigeschaltete Module" : "Enabled modules"}</Label>
             <div className="grid grid-cols-2 gap-2 p-3 rounded-lg border bg-muted/30">
-              {MODULE_OPTIONS.map((opt) => (
+              {moduleOptions.map((opt) => (
                 <div key={opt.id} className="flex items-center gap-2">
                   <Checkbox
                     id={`mod-${opt.id}`}
@@ -325,11 +335,16 @@ function EditTenantDialog({
   tenant: TenantRow;
   onClose: () => void;
 }) {
+  const { lang } = useLang();
+  const moduleOptions = useModuleOptions();
   const utils = trpc.useUtils();
   const updateMutation = trpc.tenant.update.useMutation({
     onSuccess: () => {
       utils.tenant.list.invalidate();
-      toast.success("Gespeichert", { description: "Mandant wurde aktualisiert." });
+      toast.success(
+        lang === "de" ? "Gespeichert" : "Saved",
+        { description: lang === "de" ? "Mandant wurde aktualisiert." : "Tenant has been updated." }
+      );
       onClose();
     },
     onError: (err) => {
@@ -437,9 +452,9 @@ function EditTenantDialog({
 
           {/* Module */}
           <div className="space-y-2">
-            <Label>Freigeschaltete Module</Label>
+            <Label>{lang === "de" ? "Freigeschaltete Module" : "Enabled modules"}</Label>
             <div className="grid grid-cols-2 gap-2 p-3 rounded-lg border bg-muted/30">
-              {MODULE_OPTIONS.map((opt) => (
+              {moduleOptions.map((opt) => (
                 <div key={opt.id} className="flex items-center gap-2">
                   <Checkbox
                     id={`edit-mod-${opt.id}`}

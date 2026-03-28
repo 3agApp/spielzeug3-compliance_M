@@ -23,7 +23,7 @@ type ReviewAction = "approve" | "reject" | "clarification";
 
 export default function ReviewQueue() {
   const { user } = useAuth();
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [, setLocation] = useLocation();
   const role = (user as any)?.complianceRole ?? "internal_employee";
 
@@ -81,7 +81,7 @@ export default function ReviewQueue() {
 
   const startReviewMutation = trpc.products.requestClarification.useMutation({
     onSuccess: () => {
-      toast.success("Status aktualisiert");
+      toast.success(lang === "de" ? "Status aktualisiert" : "Status updated");
       utils.products.list.invalidate();
     },
     onError: (e: any) => toast.error(e.message),
@@ -143,7 +143,7 @@ export default function ReviewQueue() {
           {products.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">
               <ClipboardList className="h-10 w-10 opacity-30" />
-              <p className="text-sm">Keine Artikel in der Warteschlange</p>
+              <p className="text-sm">{lang === "de" ? "Keine Artikel in der Warteschlange" : "No items in the queue"}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -156,7 +156,7 @@ export default function ReviewQueue() {
                     <th>{t.product.status}</th>
                     <th>{t.product.completenessScore}</th>
                     <th>{t.product.missingRequirements}</th>
-                    <th>Aktionen</th>
+                    <th>{lang === "de" ? "Aktionen" : "Actions"}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -196,10 +196,10 @@ export default function ReviewQueue() {
                               size="sm"
                               variant="outline"
                               onClick={() =>
-                                startReviewMutation.mutate({ productId: p.id, note: "Prüfung gestartet" })
+                                startReviewMutation.mutate({ productId: p.id, note: lang === "de" ? "Prüfung gestartet" : "Review started" })
                               }
                             >
-                              Prüfung starten
+                              {lang === "de" ? "Prüfung starten" : "Start review"}
                             </Button>
                           )}
 
