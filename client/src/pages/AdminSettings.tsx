@@ -22,6 +22,9 @@ import {
   FileSignature,
   Globe,
   ImagePlus,
+  Download,
+  ExternalLink,
+  Info,
   Key,
   RefreshCw,
   Save,
@@ -1004,6 +1007,89 @@ export default function AdminSettings() {
                     {lang === "de" ? "zurückgesetzt. Jede Änderung wird im Audit-Log protokolliert. Das Dokument bleibt im System erhalten und kann jederzeit manuell wieder freigegeben werden." : "Every change is logged in the audit log. The document remains in the system and can be manually re-released at any time."}
                   </p>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* ─── Beispiel-Siegel Download ─── */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Download className="h-4 w-4" />
+                {lang === "de" ? "Beispiel-Siegel herunterladen" : "Download sample seal"}
+              </CardTitle>
+              <CardDescription>
+                {lang === "de"
+                  ? "Laden Sie ein generisches VERIFIED-Siegel als PDF herunter. Der enthaltene QR-Code führt auf eine öffentliche Informationsseite, die das Swiss Product Seal System erklärt – ohne einen produktspezifischen Code preiszugeben."
+                  : "Download a generic VERIFIED seal as PDF. The embedded QR code leads to a public information page explaining the Swiss Product Seal system – without revealing a product-specific code."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Info-Box */}
+              <div className="rounded-lg border bg-blue-50 border-blue-200 p-4 space-y-2">
+                <div className="flex items-center gap-2 text-blue-800 font-medium text-sm">
+                  <Info className="h-4 w-4 flex-shrink-0" />
+                  {lang === "de" ? "Wozu dient das Beispiel-Siegel?" : "What is the sample seal for?"}
+                </div>
+                <ul className="space-y-1.5 text-sm text-blue-900">
+                  {(lang === "de" ? [
+                    "Das Siegel enthält einen QR-Code, der auf eine allgemeine Informationsseite führt – nicht auf ein konkretes Produkt.",
+                    "Es kann manuell in ein Produktbild eingebunden werden, um das Siegel-Konzept zu kommunizieren, bevor das echte Siegel aktiviert ist.",
+                    "Die verlinkte Seite erklärt das Swiss Product Seal und enthält einen Hinweis: Produkte ohne Siegel wurden möglicherweise nicht über die offizielle Distribution vertrieben.",
+                  ] : [
+                    "The seal contains a QR code leading to a general information page – not a specific product.",
+                    "It can be manually embedded in a product image to communicate the seal concept before the real seal is activated.",
+                    "The linked page explains the Swiss Product Seal and includes a notice: products without a seal may not have been sold through official distribution.",
+                  ]).map((item, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* QR-Ziel-Vorschau */}
+              <div className="rounded-lg border bg-muted/20 p-4">
+                <p className="text-xs text-muted-foreground mb-2 font-medium">
+                  {lang === "de" ? "QR-Code-Ziel (öffentliche Informationsseite):" : "QR code target (public information page):"}
+                </p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <code className="font-mono text-xs bg-background border rounded px-2 py-1">
+                    {window.location.origin}/seal-info
+                  </code>
+                  <a
+                    href="/seal-info"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    {lang === "de" ? "Seite ansehen" : "View page"}
+                  </a>
+                </div>
+              </div>
+
+              {/* Download-Button */}
+              <div className="flex items-center gap-3 flex-wrap">
+                <Button
+                  onClick={() => {
+                    const url = `/api/reports/seal-label-example?tenantId=${tenantId}`;
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `Swiss-Product-Seal_BEISPIEL_verified_${new Date().toISOString().slice(0, 10)}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                  }}
+                  className="gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  {lang === "de" ? "Beispiel-Siegel als PDF herunterladen" : "Download sample seal as PDF"}
+                </Button>
+                <span className="text-xs text-muted-foreground">
+                  {lang === "de" ? "Status: VERIFIED · A6-Format · mit QR-Code" : "Status: VERIFIED · A6 format · with QR code"}
+                </span>
               </div>
             </CardContent>
           </Card>

@@ -28,6 +28,7 @@ import TemplatesManager from "./pages/TemplatesManager";
 import AcceptInvite from "./pages/AcceptInvite";
 import PublicProductPage from "./pages/PublicProductPage";
 import AboutSealPage from "./pages/AboutSealPage";
+import SealInfoPage from "./pages/SealInfoPage";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 
 // Wrapper that applies the ComplianceLayout to protected routes
@@ -107,6 +108,7 @@ function Router() {
       <Route path="/p/:uuid" component={PublicProductPage} />
       {/* About the Swiss Product Seal (no auth) */}
       <Route path="/about-seal" component={AboutSealPage} />
+      <Route path="/seal-info" component={SealInfoPage} />
 
       {/* 404 */}
       <Route path="/404" component={NotFound} />

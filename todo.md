@@ -555,3 +555,9 @@
 - [x] Backend: assertProductAccess nutzt user.supplierId statt user.id für Supplier-Vergleich
 - [x] Frontend: Bilder-Tab readOnly=false für Lieferanten (eigene Produkte)
 - [x] Test: Lieferant kann Bild für eigenes Produkt hochladen, nicht für fremdes
+
+## Beispiel-Siegel in Settings → Seal
+- [x] Öffentliche Informations-Landingpage /seal-info (kein Login, DE/EN, erklärt das System, Warnung bei fehlendem Siegel)
+- [x] Backend: /api/reports/seal-label-example (kein Auth, QR zeigt auf /seal-info, status=verified)
+- [x] Frontend: Beispiel-Siegel-Karte in AdminSettings Seal-Tab (Vorschau + PDF Download)
+- [x] i18n direkt inline (DE/EN)

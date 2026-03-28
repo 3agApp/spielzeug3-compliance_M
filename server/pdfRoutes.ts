@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { sdk } from "./_core/sdk";
+import QRCode from "qrcode";
 import {
   getAiAnalysisHistory,
   getLatestAiAnalysisByProduct,
@@ -185,6 +186,64 @@ export function registerPdfRoutes(app: Express) {
       res.send(pdfBuffer);
     } catch (err: any) {
       console.error("[PDF] Seal label generation failed:", err);
+      res.status(500).json({ error: "PDF-Generierung fehlgeschlagen", details: err.message });
+    }
+  });
+
+  /**
+   * GET /api/reports/seal-label-example
+   * Generates a sample Swiss Product Seal PDF (status=verified).
+   * The embedded QR code points to /seal-info – NOT to a real product page.
+   * No authentication required so the file can be shared freely.
+   * Query params:
+   *   tenantId=1  (optional, for tenant branding)
+   *   format=pdf|png  (default: pdf)
+   */
+  app.get("/api/reports/seal-label-example", async (req, res) => {
+    try {
+      const tenantId = parseInt(String(req.query.tenantId ?? "1"));
+      const format = String(req.query.format ?? "pdf") === "png" ? "png" : "pdf";
+
+      // Load tenant branding (best-effort)
+      const tenant = await getTenantById(isNaN(tenantId) ? 1 : tenantId).catch(() => null);
+      const tenantName = (tenant as any)?.name ?? "Swiss Product Seal";
+      const tenantUrl = (tenant as any)?.websiteUrl ?? "swiss-product-seal.ch";
+      const tenantLogoUrl: string | null = (tenant as any)?.logoUrl ?? null;
+      const tenantPrimaryColor: string | null = (tenant as any)?.primaryColor ?? null;
+
+      // Build QR code pointing to /seal-info (absolute URL based on request host)
+      const proto = req.headers["x-forwarded-proto"] ?? "https";
+      const host = req.headers["x-forwarded-host"] ?? req.headers.host ?? "swiss-product-seal.ch";
+      const sealInfoUrl = `${proto}://${host}/seal-info`;
+      const qrCodeBuffer = Buffer.from(
+        await QRCode.toBuffer(sealInfoUrl, {
+          errorCorrectionLevel: "M",
+          margin: 1,
+          width: 300,
+          color: { dark: "#1f2937", light: "#ffffff" },
+        })
+      );
+
+      const pdfBuffer = await generateSealLabelPdf({
+        status: "verified",
+        tenantName,
+        tenantUrl,
+        tenantLogoUrl,
+        tenantPrimaryColor,
+        qrCodeBuffer,
+        tenantId: isNaN(tenantId) ? 1 : tenantId,
+      });
+
+      const date = new Date().toISOString().slice(0, 10);
+      const filename = `Swiss-Product-Seal_BEISPIEL_verified_${date}.pdf`;
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      res.setHeader("Content-Length", pdfBuffer.length);
+      // Allow caching for 1 hour (static example)
+      res.setHeader("Cache-Control", "public, max-age=3600");
+      res.send(pdfBuffer);
+    } catch (err: any) {
+      console.error("[PDF] Example seal label generation failed:", err);
       res.status(500).json({ error: "PDF-Generierung fehlgeschlagen", details: err.message });
     }
   });
