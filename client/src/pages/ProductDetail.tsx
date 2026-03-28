@@ -118,10 +118,10 @@ export default function ProductDetail() {
       setDeleteComment("");
       documentsQuery.refetch();
       utils.products.getById.invalidate({ id: productId });
-      toast.success("Dokument gelöscht");
+      toast.success(t.msg.deleteSuccess);
       if (res?.confirmedAtReset) {
-        toast.warning("Vollständigkeitserklärung zurückgesetzt", {
-          description: "Da ein Dokument entfernt wurde, muss die Vollständigkeit im Siegel-Tab erneut bestätigt werden.",
+        toast.warning(t.seal.confirmedReset, {
+          description: t.seal.confirmedResetDesc,
           duration: 6000,
         });
       }
@@ -151,7 +151,7 @@ export default function ProductDetail() {
   if (!product) {
     return (
       <div className="p-6">
-        <p className="text-muted-foreground">Produkt nicht gefunden.</p>
+        <p className="text-muted-foreground">{t.product.notFound ?? "Produkt nicht gefunden."}</p>
         <Button variant="ghost" onClick={() => setLocation("/products")} className="mt-4">
           <ArrowLeft className="mr-2 h-4 w-4" /> {t.common.back}
         </Button>
@@ -186,7 +186,7 @@ export default function ProductDetail() {
                 <button
                   type="button"
                   onClick={() => setActiveTab("seal")}
-                  title="Zum Siegel-Tab"
+                  title={t.seal.title}
                   className="focus:outline-none focus:ring-2 focus:ring-ring rounded-full"
                 >
                   <SealStatusPill status={(sealInfo.sealStatus ?? "not_verified") as SealStatus} />
@@ -198,7 +198,7 @@ export default function ProductDetail() {
                   type="button"
                   onClick={() => setActiveTab("signatures")}
                   className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-ring"
-                  title="Zum Signaturen-Tab"
+                  title={t.signatures.title}
                   style={{
                     backgroundColor:
                       latestSig.status === "completed" ? "#d1fae5" :
@@ -224,12 +224,12 @@ export default function ProductDetail() {
                   }}
                 >
                   <FileSignature className="h-3 w-3" />
-                  {latestSig.status === "completed" ? "Signiert" :
-                   latestSig.status === "signed"    ? "Unterzeichnet" :
-                   latestSig.status === "viewed"    ? "Geöffnet" :
-                   latestSig.status === "declined"  ? "Abgelehnt" :
-                   latestSig.status === "expired"   ? "Abgelaufen" :
-                                                      "Signatur ausstehend"}
+                  {latestSig.status === "completed" ? t.signatures.status.completed :
+                   latestSig.status === "signed"    ? t.signatures.status.completed :
+                   latestSig.status === "viewed"    ? t.signatures.status.viewed :
+                   latestSig.status === "declined"  ? t.signatures.status.declined :
+                   latestSig.status === "expired"   ? t.signatures.status.expired :
+                                                      t.signatures.status.pending}
                 </button>
               )}
               {product.internalArticleNumber && (
@@ -248,15 +248,15 @@ export default function ProductDetail() {
                 {submitBlocked && (
                   <div className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-1.5 max-w-xs text-right">
                     <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
-                    <span>Bitte zuerst die <strong>Vollständigkeitserklärung</strong> im Siegel-Tab abgeben.</span>
+                    <span>{t.msg.submitBlockedHint} <strong>{t.msg.submitBlockedBold}</strong> {t.msg.submitBlockedSuffix}</span>
                   </div>
                 )}
                 <Button
                   onClick={() => {
                     if (submitBlocked) {
                       setActiveTab("seal");
-                      toast.warning("Vollständigkeitserklärung erforderlich", {
-                        description: "Bitte bestätigen Sie zuerst die Vollständigkeit im Siegel-Tab.",
+                      toast.warning(t.msg.submitBlockedToast, {
+                        description: t.msg.submitBlockedToastDesc,
                       });
                       return;
                     }
@@ -331,7 +331,7 @@ export default function ProductDetail() {
             )}
             {product.reviewNote && (
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
-                <p className="text-xs font-medium text-blue-700 mb-1">Anmerkung</p>
+                <p className="text-xs font-medium text-blue-700 mb-1">{t.review.note}</p>
                 <p className="text-xs text-blue-600">{product.reviewNote}</p>
               </div>
             )}
@@ -344,7 +344,7 @@ export default function ProductDetail() {
         <TabsList>
           <TabsTrigger value="components" className="gap-2">
             <Package className="h-4 w-4" />
-            Komponenten
+            {t.components.title}
           </TabsTrigger>
           <TabsTrigger value="documents" className="gap-2">
             <FileText className="h-4 w-4" />
@@ -360,7 +360,7 @@ export default function ProductDetail() {
           </TabsTrigger>
           <TabsTrigger value="ai" className="gap-2">
             <Bot className="h-4 w-4" />
-            KI-Analyse
+            {t.aiAnalysis.title}
           </TabsTrigger>
           <TabsTrigger value="timeline" className="gap-2">
             <Clock className="h-4 w-4" />
@@ -368,16 +368,16 @@ export default function ProductDetail() {
           </TabsTrigger>
           <TabsTrigger value="signatures" className="gap-2">
             <FileSignature className="h-4 w-4" />
-            Signaturen
+            {t.signatures.title}
           </TabsTrigger>
           <TabsTrigger value="batch" className="gap-2">
             <Package className="h-4 w-4" />
-            Chargen-Info
+            {t.batch.tabLabel}
           </TabsTrigger>
           {(isInternalRole || role === "supplier") && (
             <TabsTrigger value="seal" className="gap-2">
               <ShieldCheck className="h-5 w-5" />
-              Siegel
+              {t.seal.title}
             </TabsTrigger>
           )}
         </TabsList>
@@ -399,8 +399,8 @@ export default function ProductDetail() {
                 documentsQuery.refetch();
                 utils.products.getById.invalidate({ id: productId });
                 if (confirmedAtReset) {
-                  toast.warning("Vollständigkeitserklärung zurückgesetzt", {
-                    description: "Da Sie ein Dokument geändert haben, müssen Sie die Vollständigkeit im Siegel-Tab erneut bestätigen.",
+                  toast.warning(t.seal.confirmedReset, {
+                    description: t.seal.confirmedResetDesc,
                     duration: 6000,
                   });
                 }
@@ -418,8 +418,8 @@ export default function ProductDetail() {
                 <table className="w-full data-table">
                   <thead>
                     <tr>
-                      <th>{t.common.version === "Version" ? "Typ" : "Type"}</th>
-                      <th>Dateiname</th>
+                      <th>{t.documents.typeLabel}</th>
+                      <th>{t.documents.filenameLabel}</th>
                       <th>{t.common.version}</th>
                       <th>Status</th>
                       <th>{t.common.uploadedAt}</th>
@@ -455,27 +455,27 @@ export default function ProductDetail() {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-red-600">
                 <Trash2 className="h-5 w-5" />
-                Dokument löschen
+                {t.documents.deleteTitle}
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-2">
               <p className="text-sm text-muted-foreground">
-                Soll das Dokument <span className="font-semibold text-foreground">{deleteDocName}</span> unwiderruflich gelöscht werden?
+                {t.documents.deleteConfirmText} <span className="font-semibold text-foreground">{deleteDocName}</span> {t.documents.deleteConfirmSuffix}
               </p>
               {isInternalRole && (
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-2">
                     <Label htmlFor="deleteComment" className="text-sm">
-                      Begründung
-                      <span className="ml-1 text-xs text-muted-foreground">(optional)</span>
+                      {t.documents.deleteReason}
+                      <span className="ml-1 text-xs text-muted-foreground">({t.common.optional})</span>
                     </Label>
                     <Badge variant="outline" className="text-xs text-blue-700 border-blue-300 bg-blue-50">
-                      Betreiber
+                      {t.documents.operatorBadge}
                     </Badge>
                   </div>
                   <Textarea
                     id="deleteComment"
-                    placeholder="z. B. Ersetzt durch aktualisiertes Prüfprotokoll…"
+                    placeholder={t.documents.deleteReasonPlaceholder}
                     value={deleteComment}
                     onChange={(e) => setDeleteComment(e.target.value)}
                     rows={3}
@@ -488,7 +488,7 @@ export default function ProductDetail() {
             </div>
             <DialogFooter className="gap-2">
               <Button variant="outline" onClick={() => { setDeleteDocId(null); setDeleteComment(""); }}>
-                Abbrechen
+                {t.action.cancel}
               </Button>
               <Button
                 variant="destructive"
@@ -503,7 +503,7 @@ export default function ProductDetail() {
                 }}
               >
                 {deleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
-                Löschen
+                {t.action.delete}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -697,6 +697,7 @@ function SealTab({
   isSupplier?: boolean;
   onSealActivated?: () => void;
 }) {
+  const { t } = useLang();
   const utils = trpc.useUtils();
   const sealQuery = trpc.tenant.getSealInfo.useQuery({ productId });
   const seal = sealQuery.data;
@@ -720,17 +721,17 @@ function SealTab({
 
   const confirmMutation = trpc.products.supplierConfirm.useMutation({
     onSuccess: (data) => {
-      toast.success("Bestätigung gespeichert", {
-        description: `Vollständigkeit wurde am ${new Date(data.confirmedAt).toLocaleDateString("de-CH")} bestätigt.`,
+      toast.success(t.seal.confirmSuccess, {
+        description: `${t.seal.confirmedOn} ${new Date(data.confirmedAt).toLocaleDateString()}.`,
       });
       productQuery.refetch();
     },
-    onError: (e) => toast.error("Bestätigung fehlgeschlagen", { description: e.message }),
+    onError: (e) => toast.error(t.seal.confirmFailed, { description: e.message }),
   });
 
   const activateMutation = trpc.tenant.activateSeal.useMutation({
     onSuccess: () => {
-      toast.success("Siegel aktiviert! QR-Code wurde generiert.");
+      toast.success(t.seal.activateSuccess);
       sealQuery.refetch();
       onSealActivated?.();
     },
@@ -739,7 +740,7 @@ function SealTab({
 
   const setVisibleMutation = trpc.tenant.setPublicVisible.useMutation({
     onSuccess: (_, vars) => {
-      toast.success(vars.visible ? "Produktseite ist jetzt öffentlich sichtbar." : "Produktseite ist jetzt privat (nicht öffentlich).");
+      toast.success(vars.visible ? t.seal.visibleOn : t.seal.visibleOff);
       sealQuery.refetch();
     },
     onError: (e) => toast.error(e.message),
@@ -747,7 +748,7 @@ function SealTab({
 
   const setOverrideMutation = trpc.tenant.setSealStatusOverride.useMutation({
     onSuccess: () => {
-      toast.success("Siegel-Status-Override gespeichert.");
+      toast.success(t.seal.overrideSaved);
       sealQuery.refetch();
     },
     onError: (e) => toast.error(e.message),
@@ -766,34 +767,34 @@ function SealTab({
               ) : (
                 <AlertCircle className="h-5 w-5 text-amber-500" />
               )}
-              Vollständigkeitserklärung
+              {t.seal.completenessDeclaration}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {supplierConfirmedAt ? (
               <div className="space-y-2">
                 <p className="text-sm text-green-800 font-medium">
-                  ✅ Vollständigkeit bestätigt
+                  ✅ {t.seal.completenessConfirmed}
                 </p>
                 <p className="text-xs text-green-700">
-                  Bestätigt von <strong>{supplierConfirmedBy}</strong> am{" "}
+                  {t.seal.confirmedBy} <strong>{supplierConfirmedBy}</strong> {t.seal.confirmedOn2}{" "}
                   {new Date(supplierConfirmedAt).toLocaleDateString("de-CH", {
                     day: "2-digit", month: "long", year: "numeric",
                   })}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Sie können die Bestätigung erneuern, falls Sie Unterlagen aktualisiert haben.
+                  {t.seal.renewHint}
                 </p>
               </div>
             ) : (
               <div className="space-y-3">
                 <p className="text-sm text-amber-800">
-                  Bitte bestätigen Sie, dass alle Angaben und Unterlagen vollständig und korrekt sind.
+                  {t.seal.completenessPrompt}
                 </p>
                 <ul className="text-xs text-amber-700 space-y-1 list-none">
-                  <li className="flex items-start gap-2"><span className="mt-0.5">&#9675;</span>Alle erforderlichen Dokumente wurden hochgeladen</li>
-                  <li className="flex items-start gap-2"><span className="mt-0.5">&#9675;</span>Die Angaben zu Sicherheit und Material sind korrekt</li>
-                  <li className="flex items-start gap-2"><span className="mt-0.5">&#9675;</span>Die Produktinformationen entsprechen dem aktuellen Stand</li>
+                  <li className="flex items-start gap-2"><span className="mt-0.5">&#9675;</span>{t.seal.checklistDocs}</li>
+                  <li className="flex items-start gap-2"><span className="mt-0.5">&#9675;</span>{t.seal.checklistSafety}</li>
+                  <li className="flex items-start gap-2"><span className="mt-0.5">&#9675;</span>{t.seal.checklistProduct}</li>
                 </ul>
               </div>
             )}
@@ -802,41 +803,41 @@ function SealTab({
               <div className="border rounded-lg overflow-hidden">
                 <div className="bg-muted/50 px-3 py-2 flex items-center justify-between">
                   <span className="text-xs font-semibold text-foreground">
-                    Pflichtdokumente
+                    {t.seal.mandatoryDocs}
                   </span>
                   <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                     allMandatoryMet
                       ? "bg-green-100 text-green-700"
                       : "bg-red-100 text-red-700"
                   }`}>
-                    {mandatoryReqs.length - missingMandatory.length} / {mandatoryReqs.length} vollständig
+                    {mandatoryReqs.length - missingMandatory.length} / {mandatoryReqs.length} {t.seal.completeCount}
                   </span>
                 </div>
                 <ul className="divide-y">
                   {mandatoryReqs.map((req: any) => {
                     const isMet = req.status !== "missing" && req.status !== "rejected";
                     const label = ({
-                      test_report: "Prüfbericht",
-                      declaration_of_conformity: "Konformitätserklärung",
-                      manual: "Bedienungsanleitung",
-                      certificate: "Zertifikat",
-                      product_image: "Produktbild",
-                      safety_image: "Sicherheitsbild",
-                      regulatory_document: "Regulatorisches Dokument",
-                      safety_text: "Sicherheitstext",
-                      warning_text: "Warnhinweis",
-                      age_grading: "Altersangabe",
-                      material_information: "Materialangaben",
-                      usage_restrictions: "Verwendungseinschränkungen",
-                      safety_instructions: "Sicherheitshinweise",
-                      additional_notes: "Zusätzliche Hinweise",
+                      test_report: (t.reqType as any).test_report,
+                      declaration_of_conformity: (t.reqType as any).declaration_of_conformity,
+                      manual: (t.reqType as any).manual,
+                      certificate: (t.reqType as any).certificate,
+                      product_image: (t.reqType as any).product_image,
+                      safety_image: (t.reqType as any).safety_image,
+                      regulatory_document: (t.reqType as any).regulatory_document,
+                      safety_text: (t.reqType as any).safety_text,
+                      warning_text: (t.reqType as any).warning_text,
+                      age_grading: (t.reqType as any).age_grading,
+                      material_information: (t.reqType as any).material_information,
+                      usage_restrictions: (t.reqType as any).usage_restrictions,
+                      safety_instructions: (t.reqType as any).safety_instructions,
+                      additional_notes: (t.reqType as any).additional_notes,
                     } as Record<string, string>)[req.requirementType] ?? req.requirementType;
                     const statusLabel = ({
-                      missing: "Fehlend",
-                      provided: "Hochgeladen",
-                      under_review: "In Prüfung",
-                      approved: "Genehmigt",
-                      rejected: "Abgelehnt",
+                      missing: (t.status as any).missing ?? "Fehlend",
+                      provided: (t.status as any).provided ?? "Hochgeladen",
+                      under_review: t.status.under_review,
+                      approved: (t.status as any).approved ?? "Genehmigt",
+                      rejected: (t.status as any).rejected ?? "Abgelehnt",
                     } as Record<string, string>)[req.status] ?? req.status;
                     return (
                       <li key={req.id} className="flex items-center gap-3 px-3 py-2 text-xs">
@@ -862,18 +863,17 @@ function SealTab({
                 {!allMandatoryMet && (
                   <div className="bg-red-50 border-t border-red-100 px-3 py-2">
                     <p className="text-xs text-red-700">
-                      Bitte laden Sie alle fehlenden Pflichtdokumente im{" "}
+                      {t.seal.mandatoryMissing}{" "}
                       <button
                         className="underline font-medium hover:text-red-900"
                         onClick={() => {
-                          // Navigate to documents tab via parent
                           const tabTrigger = document.querySelector('[data-value="documents"]') as HTMLElement;
                           tabTrigger?.click();
                         }}
                       >
-                        Dokumente-Tab
+                        {t.seal.mandatoryMissingLink}
                       </button>{" "}
-                      hoch, bevor Sie die Vollständigkeit bestätigen.
+                      {t.seal.mandatoryMissingSuffix}
                     </p>
                   </div>
                 )}
@@ -892,8 +892,8 @@ function SealTab({
               }`}
               onClick={() => {
                 if (!allMandatoryMet && !supplierConfirmedAt) {
-                  toast.warning("Pflichtdokumente fehlen", {
-                    description: `${missingMandatory.length} Pflichtdokument(e) fehlen noch. Bitte laden Sie diese zuerst hoch.`,
+                  toast.warning(t.seal.mandatoryMissingToast, {
+                    description: `${missingMandatory.length} ${t.seal.mandatoryMissingToastDesc}`,
                   });
                   return;
                 }
@@ -906,7 +906,7 @@ function SealTab({
               ) : (
                 <CheckCircle2 className="mr-2 h-4 w-4" />
               )}
-              {supplierConfirmedAt ? "Bestätigung erneuern" : "Vollständigkeit bestätigen"}
+              {supplierConfirmedAt ? t.seal.renewConfirm : t.seal.confirmBtn}
             </Button>
           </CardContent>
         </Card>
@@ -922,12 +922,12 @@ function SealTab({
         <CardContent className="space-y-4">
           <div className="flex items-center gap-4">
             <div className="flex-1">
-              <p className="text-sm text-muted-foreground mb-1">Siegel-Status</p>
+              <p className="text-sm text-muted-foreground mb-1">{t.seal.sealStatusLabel}</p>
               <SealStatusPill status={sealStatus} />
             </div>
             {seal?.sealEnabledAt && (
               <div>
-                <p className="text-xs text-muted-foreground">Aktiviert am</p>
+                <p className="text-xs text-muted-foreground">{t.seal.activatedAt}</p>
                 <p className="text-sm font-medium">
                   {new Date(seal.sealEnabledAt).toLocaleDateString("de-CH")}
                 </p>
@@ -937,9 +937,9 @@ function SealTab({
 
           {!seal?.publicUuid && canManage && (
             <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-              <p className="text-sm text-amber-800 font-medium mb-2">Siegel noch nicht aktiviert</p>
+              <p className="text-sm text-amber-800 font-medium mb-2">{t.seal.notActivatedTitle}</p>
               <p className="text-xs text-amber-700 mb-3">
-                Aktivieren Sie das Siegel, um einen QR-Code zu generieren und eine öffentliche Produktseite zu erstellen.
+                {t.seal.notActivatedDesc}
               </p>
               <Button
                 size="sm"
@@ -948,7 +948,7 @@ function SealTab({
                 className="bg-[#C8102E] hover:bg-[#a00d24] text-white"
               >
                 <ShieldCheck className="mr-2 h-4 w-4" />
-                {activateMutation.isPending ? "Wird aktiviert…" : "Siegel aktivieren & QR-Code generieren"}
+                {activateMutation.isPending ? t.seal.activating : t.seal.activateWithQr}
               </Button>
             </div>
           )}
@@ -958,11 +958,11 @@ function SealTab({
               {/* Public URL + Visibility Toggle */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs text-muted-foreground">Öffentliche Produktseite</p>
+                  <p className="text-xs text-muted-foreground">{t.seal.publicPage}</p>
                   {canManage && (
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-muted-foreground">
-                        {seal.publicVisible !== false ? "Öffentlich" : "Privat"}
+                        {seal.publicVisible !== false ? t.seal.publicToggleOn : t.seal.publicToggleOff}
                       </span>
                       <button
                         type="button"
@@ -971,7 +971,7 @@ function SealTab({
                         className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-ring ${
                           seal.publicVisible !== false ? "bg-green-500" : "bg-gray-300"
                         }`}
-                        title={seal.publicVisible !== false ? "Klicken um privat zu schalten" : "Klicken um öffentlich zu schalten"}
+                        title={seal.publicVisible !== false ? t.seal.publicToggleTitleOn : t.seal.publicToggleTitleOff}
                       >
                         <span
                           className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
@@ -987,7 +987,7 @@ function SealTab({
                     {seal.publicUrl}
                   </code>
                   <a href={seal.publicUrl ?? ""} target="_blank" rel="noopener noreferrer">
-                    <Button variant="ghost" size="sm" title="Seite öffnen">
+                    <Button variant="ghost" size="sm" title={t.seal.openPage}>
                       <ExternalLink className="h-4 w-4" />
                     </Button>
                   </a>
@@ -1006,7 +1006,7 @@ function SealTab({
                       className="w-full gap-2 mt-1 border-dashed hover:border-solid hover:bg-accent"
                     >
                       <ExternalLink className="h-4 w-4" />
-                      Landingpage-Vorschau (Endkunden-Ansicht)
+                      {t.seal.landingPreview}
                     </Button>
                   </a>
                 )}
@@ -1015,7 +1015,7 @@ function SealTab({
               {/* Admin: Status Override */}
               {isAdmin && (
                 <div className="p-3 bg-muted/50 rounded-lg border">
-                  <p className="text-xs font-medium mb-2 text-muted-foreground">Admin: Siegel-Status manuell überschreiben</p>
+                  <p className="text-xs font-medium mb-2 text-muted-foreground">{t.seal.overrideLabel}</p>
                   <Select
                     value={seal.sealStatusOverride ?? "__auto"}
                     onValueChange={(val) =>
@@ -1029,14 +1029,14 @@ function SealTab({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="__auto">Automatisch (aus Produktstatus)</SelectItem>
-                      <SelectItem value="verified">Verifiziert (VERIFIED)</SelectItem>
-                      <SelectItem value="in_progress">In Bearbeitung (IN PROGRESS)</SelectItem>
-                      <SelectItem value="not_verified">Nicht verifiziert (NOT VERIFIED)</SelectItem>
+                      <SelectItem value="__auto">{t.seal.overrideAuto}</SelectItem>
+                      <SelectItem value="verified">{t.seal.overrideVerified}</SelectItem>
+                      <SelectItem value="in_progress">{t.seal.overrideInProgress}</SelectItem>
+                      <SelectItem value="not_verified">{t.seal.overrideNotVerified}</SelectItem>
                     </SelectContent>
                   </Select>
                   {seal.sealStatusOverride && (
-                    <p className="text-xs text-amber-600 mt-1">⚠️ Override aktiv – automatische Berechnung ist deaktiviert</p>
+                    <p className="text-xs text-amber-600 mt-1">{t.seal.overrideActive}</p>
                   )}
                 </div>
               )}
@@ -1044,7 +1044,7 @@ function SealTab({
               {/* QR Code */}
               {seal.qrCodeUrl && (
                 <div>
-                  <p className="text-xs text-muted-foreground mb-2">QR-Code</p>
+                  <p className="text-xs text-muted-foreground mb-2">{t.seal.qrCodeLabel}</p>
                   <div className="flex items-start gap-4">
                     <div className="border rounded-lg p-3 bg-white shadow-sm">
                       <img
@@ -1057,19 +1057,19 @@ function SealTab({
                       <a href={seal.qrCodeUrl} download={`qr-${productName}.png`}>
                         <Button variant="outline" size="sm" className="w-full">
                           <Download className="mr-2 h-4 w-4" />
-                          PNG herunterladen
+                          {t.seal.downloadPng}
                         </Button>
                       </a>
                       {seal.qrCodeSvgUrl && (
                         <a href={seal.qrCodeSvgUrl} download={`qr-${productName}.svg`}>
                           <Button variant="outline" size="sm" className="w-full">
                             <QrCode className="mr-2 h-4 w-4" />
-                            SVG herunterladen
+                            {t.seal.downloadSvg}
                           </Button>
                         </a>
                       )}
                       <p className="text-xs text-muted-foreground">
-                        Druckempfehlung: SVG für Etiketten, PNG für digitale Verwendung
+                        {t.seal.printRecommendation}
                       </p>
                        <SealLabelDownloadButton productId={productId} sealStatus={sealStatus} />
                     </div>
@@ -1108,6 +1108,7 @@ function ProductEmbedCode({
   productName: string;
   sealStatus: SealStatus;
 }) {
+  const { t } = useLang();
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<"dynamic" | "badge" | "widget" | "minimal">("dynamic");
   const [showPreview, setShowPreview] = useState(true);
@@ -1115,7 +1116,7 @@ function ProductEmbedCode({
   // Basis-URL des aktuellen Servers für den API-Aufruf im Widget-Script
   const apiBase = window.location.origin;
 
-  const statusLabel = sealStatus === "verified" ? "Verifiziert" : sealStatus === "in_progress" ? "In Prüfung" : "Nicht verifiziert";
+  const statusLabel = sealStatus === "verified" ? t.seal.statusVerified : sealStatus === "in_progress" ? t.seal.statusInProgress : t.seal.statusNotVerified;
   const statusColor = sealStatus === "verified" ? "#16a34a" : sealStatus === "in_progress" ? "#d97706" : "#6b7280";
   const statusBg = sealStatus === "verified" ? "#f0fdf4" : sealStatus === "in_progress" ? "#fffbeb" : "#f9fafb";
   const statusBorder = sealStatus === "verified" ? "#86efac" : sealStatus === "in_progress" ? "#fcd34d" : "#e5e7eb";
@@ -1286,19 +1287,19 @@ ${currentCode.replace(/<!--.*?-->/g, "").replace(/<\/script>/g, "</script>").tri
 
       {/* Integration Hints */}
       <div className="px-4 py-3 bg-muted/20 border-t">
-        <p className="text-xs text-muted-foreground mb-2 font-medium">Einbindung:</p>
+        <p className="text-xs text-muted-foreground mb-2 font-medium">{t.seal.embedHowTo}</p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-muted-foreground">
           <div className="flex items-start gap-1.5">
             <span className="font-semibold text-foreground mt-0.5">WooCommerce</span>
-            <span>→ Produkt bearbeiten → Kurzbeschreibung → HTML-Ansicht → Code einfügen</span>
+            <span>{t.seal.embedHowToStep1}</span>
           </div>
           <div className="flex items-start gap-1.5">
             <span className="font-semibold text-foreground mt-0.5">Shopify</span>
-            <span>→ Produkte → Beschreibung → &lt;&gt; Quellcode → Code einfügen</span>
+            <span>{t.seal.embedHowToStep2}</span>
           </div>
           <div className="flex items-start gap-1.5">
             <span className="font-semibold text-foreground mt-0.5">Webseite</span>
-            <span>→ Code direkt in die HTML-Seite kopieren, kein Plugin nötig</span>
+            <span>{t.seal.embedHowToStep3}</span>
           </div>
         </div>
       </div>
@@ -1383,12 +1384,12 @@ function DocumentRow({ doc, productId, role, isInternalRole, t, onDelete }: any)
     },
     onError: (_err, _vars, ctx: any) => {
       utils.documents.listByProduct.setData({ productId }, ctx?.prev);
-      toast.error("Freigabe konnte nicht geändert werden");
+      toast.error(t.documents.togglePublicError);
     },
     onSuccess: (data) => {
       toast.success(data.publicDownload
-        ? "Dokument für öffentlichen Download freigegeben"
-        : "Öffentliche Freigabe aufgehoben"
+        ? t.documents.togglePublicOn
+        : t.documents.togglePublicOff
       );
     },
     onSettled: () => utils.documents.listByProduct.invalidate({ productId }),
@@ -1410,7 +1411,7 @@ function DocumentRow({ doc, productId, role, isInternalRole, t, onDelete }: any)
               <button
                 onClick={() => setExpanded(!expanded)}
                 className="inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 transition-colors"
-                title={expanded ? "Versionsverlauf ausblenden" : "Versionsverlauf anzeigen"}
+                title={expanded ? t.documents.versionHistoryHide : t.documents.versionHistoryShow}
               >
                 <History className="h-3 w-3" />
                 {doc.version - 1}
@@ -1442,25 +1443,25 @@ function DocumentRow({ doc, productId, role, isInternalRole, t, onDelete }: any)
                       ? "text-red-600"
                       : "text-muted-foreground"
                   }`}
-                  title={expired ? "Dokument ist abgelaufen" : "Gültig bis"}
+                  title={expired ? t.documents.expiredTitle : t.documents.validUntilTitle}
                 >
                   {expired && <AlertCircle className="h-3 w-3 flex-shrink-0" />}
-                  Gültig bis: {new Date(doc.expiryDate).toLocaleDateString()}
+                  {t.documents.validUntil}: {new Date(doc.expiryDate).toLocaleDateString()}
                 </span>
               );
             })()}
             {/* Warn if expired AND still publicly visible */}
             {doc.expiryDate && doc.publicDownload && new Date(doc.expiryDate) < new Date() && (
-              <span className="inline-flex items-center gap-0.5 text-xs font-semibold text-red-700 bg-red-50 border border-red-200 rounded px-1 py-0.5">
+                <span className="inline-flex items-center gap-0.5 text-xs font-semibold text-red-700 bg-red-50 border border-red-200 rounded px-1 py-0.5">
                 <AlertCircle className="h-3 w-3 flex-shrink-0" />
-                Öffentlich freigegeben – abgelaufen!
+                {t.documents.expiredPublic}
               </span>
             )}
           </div>
         </td>
         <td className="flex items-center gap-1">
           <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer">
-            <Button variant="ghost" size="sm" title="Herunterladen">
+            <Button variant="ghost" size="sm" title={t.action.download}>
               <FileText className="h-4 w-4" />
             </Button>
           </a>
@@ -1471,8 +1472,8 @@ function DocumentRow({ doc, productId, role, isInternalRole, t, onDelete }: any)
               size="sm"
               disabled={togglePublicDownload.isPending}
               title={doc.publicDownload
-                ? "Öffentliche Freigabe aufheben"
-                : "Für öffentlichen Download freigeben"}
+                ? t.documents.togglePublicOnTitle
+                : t.documents.togglePublicOffTitle}
               className={doc.publicDownload
                 ? "text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50"
                 : "text-gray-400 hover:text-emerald-600 hover:bg-emerald-50"}
@@ -1490,7 +1491,7 @@ function DocumentRow({ doc, productId, role, isInternalRole, t, onDelete }: any)
             <Button
               variant="ghost"
               size="sm"
-              title="Dokument löschen"
+              title={t.documents.deleteTitle}
               className="text-red-500 hover:text-red-700 hover:bg-red-50"
               onClick={() => onDelete(doc.id, doc.fileName)}
             >
@@ -1505,22 +1506,22 @@ function DocumentRow({ doc, productId, role, isInternalRole, t, onDelete }: any)
             <div className="bg-amber-50/60 border-t border-amber-100 px-4 py-3">
               <div className="flex items-center gap-1.5 mb-2">
                 <History className="h-3.5 w-3.5 text-amber-600" />
-                <span className="text-xs font-semibold text-amber-800">Versionsverlauf (archiviert)</span>
+                <span className="text-xs font-semibold text-amber-800">{t.documents.archivedVersionsTitle}</span>
               </div>
               {archivedQuery.isLoading ? (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground py-1">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  Lade…
+                  {t.documents.archivedLoading}
                 </div>
               ) : archivedVersions.length === 0 ? (
-                <p className="text-xs text-muted-foreground italic">Keine archivierten Versionen gefunden.</p>
+                <p className="text-xs text-muted-foreground italic">{t.documents.archivedNone}</p>
               ) : (
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="text-muted-foreground">
-                      <th className="text-left font-medium pb-1 pr-4">Dateiname</th>
-                      <th className="text-left font-medium pb-1 pr-4">Version</th>
-                      <th className="text-left font-medium pb-1 pr-4">Hochgeladen am</th>
+                      <th className="text-left font-medium pb-1 pr-4">{t.documents.archivedFilename}</th>
+                      <th className="text-left font-medium pb-1 pr-4">{t.documents.archivedVersionLabel}</th>
+                      <th className="text-left font-medium pb-1 pr-4">{t.documents.archivedUploadedAt}</th>
                       <th className="text-left font-medium pb-1"></th>
                     </tr>
                   </thead>
@@ -1534,7 +1535,7 @@ function DocumentRow({ doc, productId, role, isInternalRole, t, onDelete }: any)
                           <a href={av.fileUrl} target="_blank" rel="noopener noreferrer">
                             <Button variant="ghost" size="sm" className="h-6 px-1.5 text-xs gap-1">
                               <Download className="h-3 w-3" />
-                              Herunterladen
+                              {t.action.download}
                             </Button>
                           </a>
                         </td>
@@ -1600,7 +1601,7 @@ function UploadDocumentCard({ productId, role, isOperator, t, onSuccess }: any) 
         {isOperator && (
           <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 border border-blue-200 px-2 py-0.5 text-xs font-medium text-blue-700">
             <Shield className="h-3 w-3" />
-            Betreiber-Upload
+            {t.documents.operatorUploadBadge}
           </span>
         )}
       </div>
@@ -1608,17 +1609,17 @@ function UploadDocumentCard({ productId, role, isOperator, t, onSuccess }: any) 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{isOperator ? "Dokument hochladen (Betreiber)" : t.action.upload}</DialogTitle>
+            <DialogTitle>{isOperator ? t.documents.operatorUploadTitle : t.action.upload}</DialogTitle>
           </DialogHeader>
           {isOperator && (
             <div className="flex items-start gap-2 rounded-md bg-blue-50 border border-blue-200 p-3 text-xs text-blue-800">
               <Shield className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-              <span>Dieses Dokument wird als <strong>Betreiber-Upload</strong> im Aktivitätsprotokoll gekennzeichnet und ist von Supplier-Uploads unterscheidbar.</span>
+              <span>{t.documents.operatorUploadNote} <strong>{t.documents.operatorUploadNoteBold}</strong> {t.documents.operatorUploadNoteSuffix}</span>
             </div>
           )}
           <div className="space-y-4">
             <div>
-              <Label>{t.common.version === "Version" ? "Dokumenttyp" : "Document Type"}</Label>
+              <Label>{t.documents.typeLabel}</Label>
               <Select value={docType} onValueChange={setDocType}>
                 <SelectTrigger className="mt-1">
                   <SelectValue />
@@ -1633,7 +1634,7 @@ function UploadDocumentCard({ productId, role, isOperator, t, onSuccess }: any) 
               </Select>
             </div>
             <div>
-              <Label>Datei</Label>
+              <Label>{t.documents.fileLabel}</Label>
               <Input
                 ref={fileRef}
                 type="file"
@@ -1654,13 +1655,13 @@ function UploadDocumentCard({ productId, role, isOperator, t, onSuccess }: any) 
               <div>
                 <Label className="flex items-center gap-1.5">
                   <MessageSquare className="h-3.5 w-3.5 text-blue-500" />
-                  Begründung / Kommentar
-                  <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+                  {t.documents.reasonLabel}
+                  <span className="text-xs font-normal text-muted-foreground">({t.common.optional})</span>
                 </Label>
                 <Textarea
                   value={operatorComment}
                   onChange={(e) => setOperatorComment(e.target.value)}
-                  placeholder="z. B. Ersetzt fehlerhaftes Prüfprotokoll vom 01.03.2026"
+                  placeholder={t.documents.reasonPlaceholder}
                   maxLength={500}
                   rows={3}
                   className="mt-1 resize-none text-sm"
@@ -1717,7 +1718,7 @@ function SafetyDataCard({ productId, safety, role, t, onSuccess }: any) {
           {isOperator && (
             <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 border border-blue-200 px-2 py-0.5 text-xs font-medium text-blue-700">
               <Shield className="h-3 w-3" />
-              Betreiber-Zugang
+              {t.documents.operatorAccess}
             </span>
           )}
         </div>
@@ -1825,29 +1826,29 @@ function TimelineCard({ productId, t }: any) {
 
   const getAuditActionLabel = (action: string) => {
     const map: Record<string, string> = {
-      uploaded: "Dokument hochgeladen",
-      operator_document_uploaded: "Dokument hochgeladen",
-      deleted: "Dokument gelöscht",
-      operator_document_deleted: "Dokument gelöscht",
-      document_uploaded: "Dokument hochgeladen",
-      document_deleted: "Dokument gelöscht",
-      document_reviewed: "Dokument geprüft",
-      safety_upserted: "Safety-Daten aktualisiert",
-      safety_updated: "Safety-Daten geändert",
-      supplier_confirmation_reset: "Vollständigkeitserklärung zurückgesetzt",
+      uploaded: t.auditLog.actionUploaded,
+      operator_document_uploaded: t.auditLog.actionUploaded,
+      deleted: t.auditLog.actionDeleted,
+      operator_document_deleted: t.auditLog.actionDeleted,
+      document_uploaded: t.auditLog.actionUploaded,
+      document_deleted: t.auditLog.actionDeleted,
+      document_reviewed: t.auditLog.actionReviewed,
+      safety_upserted: t.auditLog.actionSafetyUpdated,
+      safety_updated: t.auditLog.actionSafetyUpdated,
+      supplier_confirmation_reset: t.auditLog.actionConfirmReset,
     };
     return map[action] ?? action;
   };
 
   const getApprovalActionLabel = (action: string) => {
     const map: Record<string, string> = {
-      submitted: "Eingereicht",
-      approved: "Genehmigt",
-      rejected: "Abgelehnt",
-      clarification_requested: "Klärung angefordert",
-      completed: "Abgeschlossen",
-      reopened: "Wieder geöffnet",
-      updated: "Aktualisiert",
+      submitted: t.auditLog.approvalSubmitted,
+      approved: t.auditLog.approvalApproved,
+      rejected: t.auditLog.approvalRejected,
+      clarification_requested: t.auditLog.approvalClarification,
+      completed: t.auditLog.approvalCompleted,
+      reopened: t.auditLog.approvalReopened,
+      updated: t.auditLog.approvalUpdated,
     };
     return map[action] ?? action;
   };
@@ -1857,16 +1858,16 @@ function TimelineCard({ productId, t }: any) {
       <CardHeader className="pb-3">
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-2">
-            <CardTitle className="text-base">Aktivitätsprotokoll</CardTitle>
-            <span className="text-xs text-muted-foreground">{allEvents.length} Einträge</span>
+            <CardTitle className="text-base">{t.auditLog.activityLog}</CardTitle>
+            <span className="text-xs text-muted-foreground">{allEvents.length} {t.auditLog.entries}</span>
           </div>
           {/* Filter buttons */}
           <div className="flex flex-wrap gap-1.5">
             {([
-              { key: "all",      label: "Alle",           color: "bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200",    active: "bg-slate-700 text-white border-slate-700" },
-              { key: "supplier", label: "Supplier",       color: "bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100", active: "bg-violet-600 text-white border-violet-600" },
-              { key: "operator", label: "Betreiber",      color: "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100",         active: "bg-blue-600 text-white border-blue-600" },
-              { key: "system",   label: "System/Workflow",color: "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100", active: "bg-emerald-600 text-white border-emerald-600" },
+              { key: "all",      label: t.common.filterAll,   color: "bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200",    active: "bg-slate-700 text-white border-slate-700" },
+              { key: "supplier", label: t.auditLog.filterSupplier, color: "bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100", active: "bg-violet-600 text-white border-violet-600" },
+              { key: "operator", label: t.auditLog.filterOperator, color: "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100",         active: "bg-blue-600 text-white border-blue-600" },
+              { key: "system",   label: t.auditLog.filterSystem,  color: "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100", active: "bg-emerald-600 text-white border-emerald-600" },
             ] as const).map(({ key, label, color, active }) => (
               <button
                 key={key}
@@ -1888,9 +1889,9 @@ function TimelineCard({ productId, t }: any) {
       </CardHeader>
       <CardContent className="p-5 pt-0">
         {allEvents.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-6">Noch keine Aktivitäten</p>
+          <p className="text-sm text-muted-foreground text-center py-6">{t.auditLog.noActivity}</p>
         ) : visibleEvents.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-6">Keine Einträge für diesen Filter</p>
+          <p className="text-sm text-muted-foreground text-center py-6">{t.auditLog.noEntriesForFilter}</p>
         ) : (
           <div className="space-y-1">
             {visibleEvents.map((e: any, i: number) => {
@@ -1932,7 +1933,7 @@ function TimelineCard({ productId, t }: any) {
                         {isOperator && (
                           <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 border border-blue-200 px-1.5 py-0.5 text-xs font-medium text-blue-700">
                             <Shield className="h-2.5 w-2.5" />
-                            Betreiber
+                            {t.auditLog.filterOperator}
                           </span>
                         )}
                         {isSupplier && (
@@ -1975,7 +1976,7 @@ function TimelineCard({ productId, t }: any) {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 rounded-full bg-slate-50 border border-slate-200 px-2 py-0.5 text-xs font-medium text-slate-600 hover:bg-slate-100 transition-colors"
-                            title={`Vorgängerversion herunterladen: ${e.payloadSnapshot.previousFileName ?? ""}`}
+                            title={`${t.auditLog.downloadPrevious}: ${e.payloadSnapshot.previousFileName ?? ""}`}
                           >
                             <Download className="h-3 w-3" />
                             {e.payloadSnapshot.previousFileName
@@ -1992,7 +1993,7 @@ function TimelineCard({ productId, t }: any) {
                       <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
                         <span className="inline-flex items-center gap-1 rounded-full bg-red-50 border border-red-200 px-2 py-0.5 text-xs font-semibold text-red-700">
                           <Trash2 className="h-3 w-3" />
-                          v{e.payloadSnapshot.documentVersion} gelöscht
+                          v{e.payloadSnapshot.documentVersion} {t.auditLog.versionDeletedBadge}
                         </span>
                         {e.payloadSnapshot.fileUrl && (
                           <a
@@ -2000,14 +2001,14 @@ function TimelineCard({ productId, t }: any) {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 rounded-full bg-slate-50 border border-slate-200 px-2 py-0.5 text-xs font-medium text-slate-600 hover:bg-slate-100 transition-colors"
-                            title="Gelöschte Version herunterladen (falls noch verfügbar)"
+                            title={t.auditLog.downloadDeleted}
                           >
                             <Download className="h-3 w-3" />
                             {e.payloadSnapshot.fileName
                               ? e.payloadSnapshot.fileName.length > 28
                                 ? e.payloadSnapshot.fileName.slice(0, 25) + "…"
                                 : e.payloadSnapshot.fileName
-                              : "Datei"}
+                              : t.auditLog.fileLabel}
                           </a>
                         )}
                       </div>
@@ -2042,10 +2043,11 @@ function BatchTab({
   productId: number;
   canEdit: boolean;
 }) {
+  const { t } = useLang();
   const batchQuery = trpc.products.getBatchInfo.useQuery({ productId });
   const updateMutation = trpc.products.updateBatchInfo.useMutation({
     onSuccess: () => {
-      toast.success("Chargen-Informationen gespeichert.");
+      toast.success(t.batch.saveBatch);
       batchQuery.refetch();
       setEditing(false);
     },
@@ -2110,15 +2112,15 @@ function BatchTab({
         <div>
           <CardTitle className="flex items-center gap-2 text-base">
             <Package className="h-5 w-5 text-[#C8102E]" />
-            Chargen- &amp; Rückverfolgbarkeits-Informationen
+            {t.batch.fullTitle}
           </CardTitle>
           <p className="text-sm text-muted-foreground mt-1">
-            Diese Daten erscheinen auf der öffentlichen Produktseite (Swiss Product Seal).
+            {t.batch.publicDesc}
           </p>
         </div>
         {canEdit && !editing && (
           <Button variant="outline" size="sm" onClick={handleEdit}>
-            Bearbeiten
+            {t.action.edit}
           </Button>
         )}
       </CardHeader>
@@ -2127,27 +2129,27 @@ function BatchTab({
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="batchNumber">Chargennummer</Label>
+                <Label htmlFor="batchNumber">{t.batch.batchNumber}</Label>
                 <Input
                   id="batchNumber"
-                  placeholder="z.B. CH-2025-001"
+                  placeholder={t.batch.batchNumberPlaceholder}
                   value={batchNumber}
                   onChange={(e) => setBatchNumber(e.target.value)}
                 />
-                <p className="text-xs text-muted-foreground">Interne Chargennummer oder Lot-Nummer</p>
+                <p className="text-xs text-muted-foreground">{t.batch.batchNumberHint}</p>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="importerName">Importeur-Name (Anzeige)</Label>
+                <Label htmlFor="importerName">{t.batch.importerNameLabel}</Label>
                 <Input
                   id="importerName"
-                  placeholder="z.B. Spielzeug 3 AG"
+                  placeholder={t.batch.importerPlaceholder}
                   value={importerName}
                   onChange={(e) => setImporterName(e.target.value)}
                 />
-                <p className="text-xs text-muted-foreground">Überschreibt den Standard-Importeur auf der öffentlichen Seite</p>
+                <p className="text-xs text-muted-foreground">{t.batch.importerNameHint}</p>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="productionDate">Produktionsdatum</Label>
+                <Label htmlFor="productionDate">{t.batch.productionDate}</Label>
                 <Input
                   id="productionDate"
                   type="date"
@@ -2156,7 +2158,7 @@ function BatchTab({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="expiryDate">Ablaufdatum / Mindesthaltbarkeit</Label>
+                <Label htmlFor="expiryDate">{t.batch.expiryBatchLabel}</Label>
                 <Input
                   id="expiryDate"
                   type="date"
@@ -2171,34 +2173,36 @@ function BatchTab({
                 disabled={updateMutation.isPending}
                 className="bg-[#C8102E] hover:bg-[#a00d25] text-white"
               >
-                {updateMutation.isPending ? "Speichern..." : "Speichern"}
+                {updateMutation.isPending ? t.batch.saving : t.action.save}
               </Button>
               <Button variant="outline" onClick={() => setEditing(false)}>
-                Abbrechen
+                {t.action.cancel}
               </Button>
             </div>
           </>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <InfoField
-              label="Chargennummer"
+              label={t.batch.batchNumber}
               value={batch?.batchNumber}
-              empty="Nicht angegeben"
+              empty={t.batch.notSpecified}
             />
             <InfoField
-              label="Importeur-Name (Anzeige)"
+              label={t.batch.importerNameLabel}
               value={batch?.importerName}
-              empty="Standard (aus Mandant)"
+              empty={t.batch.defaultFromTenant}
             />
             <InfoField
-              label="Produktionsdatum"
+              label={t.batch.productionDate}
               value={batch?.productionDate ? new Date(batch.productionDate).toLocaleDateString("de-CH") : null}
-              empty="Nicht angegeben"
+              empty={t.batch.notSpecified}
             />
             <InfoField
-              label="Ablaufdatum / Mindesthaltbarkeit"
+              label={t.batch.expiryBatchLabel}
               value={batch?.expiryDate ? new Date(batch.expiryDate).toLocaleDateString("de-CH") : null}
-              empty="Nicht angegeben"
+              empty={t.batch.notSpecified}
+              expiredLabel={t.batch.expired}
+              expiringSoonLabel={t.batch.expiringSoon}
               highlight={
                 batch?.expiryDate
                   ? new Date(batch.expiryDate) < new Date()
@@ -2215,10 +2219,10 @@ function BatchTab({
         {!editing && !batch?.batchNumber && !batch?.productionDate && !batch?.expiryDate && (
           <div className="text-center py-6 text-muted-foreground">
             <Package className="h-10 w-10 mx-auto mb-2 opacity-30" />
-            <p className="text-sm">Noch keine Chargen-Informationen hinterlegt.</p>
+            <p className="text-sm">{t.batch.noBatchData}</p>
             {canEdit && (
               <Button variant="outline" size="sm" className="mt-3" onClick={handleEdit}>
-                Jetzt hinzufügen
+                {t.batch.addNow}
               </Button>
             )}
           </div>
@@ -2233,11 +2237,15 @@ function InfoField({
   value,
   empty,
   highlight,
+  expiredLabel,
+  expiringSoonLabel,
 }: {
   label: string;
   value: string | null | undefined;
   empty: string;
   highlight?: "expired" | "warning";
+  expiredLabel?: string;
+  expiringSoonLabel?: string;
 }) {
   return (
     <div className="space-y-1">
@@ -2253,11 +2261,11 @@ function InfoField({
           }`}
         >
           {value}
-          {highlight === "expired" && (
-            <span className="ml-2 text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">Abgelaufen</span>
+          {highlight === "expired" && expiredLabel && (
+            <span className="ml-2 text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">{expiredLabel}</span>
           )}
-          {highlight === "warning" && (
-            <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">Läuft bald ab</span>
+          {highlight === "warning" && expiringSoonLabel && (
+            <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">{expiringSoonLabel}</span>
           )}
         </p>
       ) : (
