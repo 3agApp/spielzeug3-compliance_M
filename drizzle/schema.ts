@@ -171,6 +171,8 @@ export const documents = mysqlTable("documents", {
   isArchived: boolean("isArchived").default(false).notNull(),
   /** FK to the document that replaced this one (set when archiving) */
   replacedByDocumentId: int("replacedByDocumentId"),
+  /** When true this document is publicly downloadable on the product landing page */
+  publicDownload: boolean("publicDownload").default(false).notNull(),
   expiryDate: timestamp("expiryDate"),
   uploadedByUserId: int("uploadedByUserId"),
   uploadedByRole: varchar("uploadedByRole", { length: 64 }),

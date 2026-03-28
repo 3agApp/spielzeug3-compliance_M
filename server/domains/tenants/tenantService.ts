@@ -247,14 +247,27 @@ export const tenantService = {
 
     const docsResult = await db
       .select({
+        id: documents.id,
         documentType: documents.documentType,
+        fileName: documents.fileName,
+        fileUrl: documents.fileUrl,
+        mimeType: documents.mimeType,
+        fileSizeBytes: documents.fileSizeBytes,
+        version: documents.version,
         reviewStatus: documents.reviewStatus,
+        reviewNote: documents.reviewNote,
+        expiryDate: documents.expiryDate,
+        publicDownload: documents.publicDownload,
+        isArchived: documents.isArchived,
         uploadedAt: documents.uploadedAt,
       })
       .from(documents)
       .where(eq(documents.productId, product.id));
 
-    const docSummary = docsResult.reduce(
+    // Only non-archived docs for summary
+    const activeDocs = docsResult.filter((d) => !d.isArchived);
+
+    const docSummary = activeDocs.reduce(
       (acc, doc) => {
         const key = doc.documentType;
         if (!acc[key]) acc[key] = { type: key, total: 0, approved: 0, pending: 0, rejected: 0 };
@@ -266,6 +279,21 @@ export const tenantService = {
       },
       {} as Record<string, { type: string; total: number; approved: number; pending: number; rejected: number }>
     );
+
+    // Public downloadable documents: approved + publicDownload=true + not archived
+    const publicDocuments = activeDocs
+      .filter((d) => d.reviewStatus === "approved" && d.publicDownload)
+      .map((d) => ({
+        id: d.id,
+        documentType: d.documentType,
+        fileName: d.fileName,
+        fileUrl: d.fileUrl,
+        mimeType: d.mimeType ?? null,
+        fileSizeBytes: d.fileSizeBytes ?? null,
+        version: d.version,
+        expiryDate: d.expiryDate ?? null,
+        uploadedAt: d.uploadedAt,
+      }));
 
     const sealStatus = getSealStatus(product);
 
@@ -284,8 +312,9 @@ export const tenantService = {
       supplierConfirmedAt: product.supplierConfirmedAt,
       supplierConfirmedBy: product.supplierConfirmedBy,
       documentSummary: Object.values(docSummary),
-      totalDocuments: docsResult.length,
-      approvedDocuments: docsResult.filter((d) => d.reviewStatus === "approved").length,
+      totalDocuments: activeDocs.length,
+      approvedDocuments: activeDocs.filter((d) => d.reviewStatus === "approved").length,
+      publicDocuments,
       safety: safetyResult[0] ?? null,
       tenant: tenant
         ? {

@@ -95,4 +95,18 @@ export const documentsRouter = router({
         throw toTRPCError(err);
       }
     }),
+
+  /**
+   * Toggle the publicDownload flag for a document.
+   * Only operators (administrator / compliance_manager / internal_employee) may do this.
+   */
+  togglePublicDownload: protectedProcedure
+    .input(z.object({ documentId: z.number(), publicDownload: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        return await documentService.togglePublicDownload(ctx.user as any, input);
+      } catch (err) {
+        throw toTRPCError(err);
+      }
+    }),
 });

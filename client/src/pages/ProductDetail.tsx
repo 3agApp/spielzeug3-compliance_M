@@ -42,6 +42,8 @@ import {
   Trash2,
   Upload,
   XCircle,
+  Globe,
+  GlobeLock,
 } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
@@ -1343,12 +1345,36 @@ function SealLabelDownloadButton({
 // ─── Document Row with Version History ──────────────────────────────────────
 function DocumentRow({ doc, productId, role, isInternalRole, t, onDelete }: any) {
   const [expanded, setExpanded] = useState(false);
+  const utils = trpc.useUtils();
 
   const archivedQuery = trpc.documents.listArchivedVersions.useQuery(
     { productId, documentType: doc.documentType },
     { enabled: expanded }
   );
   const archivedVersions = archivedQuery.data ?? [];
+
+  const togglePublicDownload = trpc.documents.togglePublicDownload.useMutation({
+    onMutate: async ({ publicDownload }) => {
+      // Optimistic update
+      await utils.documents.listByProduct.cancel({ productId });
+      const prev = utils.documents.listByProduct.getData({ productId });
+      utils.documents.listByProduct.setData({ productId }, (old: any) =>
+        old?.map((d: any) => d.id === doc.id ? { ...d, publicDownload } : d)
+      );
+      return { prev };
+    },
+    onError: (_err, _vars, ctx: any) => {
+      utils.documents.listByProduct.setData({ productId }, ctx?.prev);
+      toast.error("Freigabe konnte nicht geändert werden");
+    },
+    onSuccess: (data) => {
+      toast.success(data.publicDownload
+        ? "Dokument für öffentlichen Download freigegeben"
+        : "Öffentliche Freigabe aufgehoben"
+      );
+    },
+    onSettled: () => utils.documents.listByProduct.invalidate({ productId }),
+  });
 
   return (
     <>
@@ -1395,6 +1421,28 @@ function DocumentRow({ doc, productId, role, isInternalRole, t, onDelete }: any)
               <FileText className="h-4 w-4" />
             </Button>
           </a>
+          {/* Public download toggle – only for internal roles, only on approved docs */}
+          {isInternalRole && doc.reviewStatus === "approved" && (
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={togglePublicDownload.isPending}
+              title={doc.publicDownload
+                ? "Öffentliche Freigabe aufheben"
+                : "Für öffentlichen Download freigeben"}
+              className={doc.publicDownload
+                ? "text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50"
+                : "text-gray-400 hover:text-emerald-600 hover:bg-emerald-50"}
+              onClick={() => togglePublicDownload.mutate({
+                documentId: doc.id,
+                publicDownload: !doc.publicDownload,
+              })}
+            >
+              {doc.publicDownload
+                ? <Globe className="h-4 w-4" />
+                : <GlobeLock className="h-4 w-4" />}
+            </Button>
+          )}
           {(role === "supplier" || isInternalRole) && (
             <Button
               variant="ghost"

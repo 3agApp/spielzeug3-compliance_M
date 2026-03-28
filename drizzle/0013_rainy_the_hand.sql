@@ -1,0 +1,1 @@
+ALTER TABLE `documents` ADD `publicDownload` boolean DEFAULT false NOT NULL;

@@ -458,3 +458,35 @@
 - [x] Frontend: Versions-Diff-Badge (rot) für delete-Einträge mit Download-Link zur gelöschten Version
 - [x] Frontend: getAuditActionLabel um uploaded/deleted/operator_*-Aktionen erweitert
 - [x] 4 neue Tests (18 in documentVersioning.test.ts), 190 Tests gesamt grün, 0 TypeScript-Fehler
+
+## Produkt-Landingpage für Endkunden (QR-Code-Scan)
+- [ ] DB-Schema: publicDownload (boolean, default false) in documents-Tabelle
+- [ ] Migration: ALTER TABLE documents ADD publicDownload
+- [ ] Backend: tenant.getPublicProduct gibt freigegebene Dokumente zurück (nur approved + publicDownload=true)
+- [ ] Backend: publicDownload-Feld in documents-Router (toggle für Betreiber)
+- [ ] Frontend: Neues Landingpage-Design (PublicProductPage.tsx) – Hero, Siegel-Badge, Dokument-Download-Sektion
+- [ ] Frontend: Dokument-Typen mit Icons und Beschreibungen (Prüfbericht, Konformitätserklärung, Anleitung, Zertifikat…)
+- [ ] Frontend: Sicherheitshinweise-Sektion (safetyText, warningText, ageGrading, materialInformation)
+- [ ] Frontend: Sprach-Umschalter DE/EN beibehalten
+- [ ] Admin-UI: publicDownload-Toggle pro Dokument in der Dokumententabelle (Betreiber-Rollen)
+- [ ] Tests: getPublicProduct gibt nur freigegebene Dokumente zurück
+
+## Produkt-Landingpage für Endkunden (QR-Code-Scan) – Redesign & Dokument-Freigabe
+- [x] DB-Schema: publicDownload (boolean, default false) in documents-Tabelle
+- [x] Migration: ALTER TABLE documents ADD publicDownload
+- [x] Backend: getPublicProduct liefert publicDocuments-Array (approved + publicDownload=true, nicht archiviert)
+- [x] Backend: documentService.togglePublicDownload (nur interne Rollen, Audit-Log)
+- [x] tRPC Router: documents.togglePublicDownload Endpoint
+- [x] Landingpage: Hero mit Produktbild, Marke, EAN, Artikelnummer, Primärfarbe des Tenants
+- [x] Landingpage: Siegel-Status-Badge (verified/in_progress/not_verified) mit Beschreibung und Datum
+- [x] Landingpage: Downloadbereich mit PublicDocCard pro freigegebenem Dokument (Icon, Typ, Dateiname, Version, Ablaufdatum, Download-Button)
+- [x] Landingpage: Sicherheitshinweise (Warnung, Altersempfehlung, Material, Einschränkungen)
+- [x] Landingpage: Trust-Indikatoren (Dokumente geprüft, Lieferant bestätigt, Compliance-Prüfung)
+- [x] Landingpage: Aufklappbare Dokumenten-Übersicht (approved/pending/rejected pro Typ)
+- [x] Landingpage: Lieferantenerklärung-Sektion wenn supplierConfirmedAt vorhanden
+- [x] Landingpage: Batch/Rückverfolgbarkeit-Sektion mit Ablaufdatum-Warnung
+- [x] Landingpage: Importeur-Sektion mit Logo, Website, Kontakt-E-Mail
+- [x] Landingpage: DE/EN Sprachumschalter (localStorage-persistent)
+- [x] Admin-UI: Globe/GlobeLock-Toggle in DocumentRow (nur für interne Rollen, nur bei approved-Dokumenten)
+- [x] Admin-UI: Optimistic Update mit Rollback bei Fehler, Toast-Meldung
+- [x] 4 neue Tests (22 in documentVersioning.test.ts), 194 Tests gesamt grün, 0 TypeScript-Fehler

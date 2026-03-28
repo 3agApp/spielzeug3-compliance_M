@@ -466,3 +466,103 @@ describe("documentService.delete – audit log payload with version info", () =>
     expect(payload.fileName).toBe("report_to_delete.pdf");
   });
 });
+
+// ─── publicDownload toggle tests ──────────────────────────────────────────────
+
+describe("documentService.togglePublicDownload", () => {
+  it("sets publicDownload=true and writes audit log", async () => {
+    mockDocuments.push({
+      id: 50,
+      productId: 5,
+      documentType: "manual",
+      isArchived: false,
+      publicDownload: false,
+      fileName: "manual.pdf",
+      fileUrl: "https://cdn.example.com/manual.pdf",
+      version: 1,
+      uploadedAt: new Date(),
+    });
+
+    const { updateDocument, createAuditLog } = await import("./db");
+    const updateSpy = vi.mocked(updateDocument);
+    const auditSpy = vi.mocked(createAuditLog);
+
+    const user = makeUser("compliance_manager");
+    const result = await documentService.togglePublicDownload(user, {
+      documentId: 50,
+      publicDownload: true,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.publicDownload).toBe(true);
+    expect(updateSpy).toHaveBeenCalledWith(50, { publicDownload: true });
+
+    const auditCall = auditSpy.mock.calls.find(
+      ([args]) => args.action === "document_public_enabled"
+    );
+    expect(auditCall).toBeDefined();
+    const payload = auditCall![0].payloadSnapshot as any;
+    expect(payload.documentId).toBe(50);
+    expect(payload.publicDownload).toBe(true);
+  });
+
+  it("sets publicDownload=false and writes audit log with disabled action", async () => {
+    mockDocuments.push({
+      id: 51,
+      productId: 5,
+      documentType: "manual",
+      isArchived: false,
+      publicDownload: true,
+      fileName: "manual_v2.pdf",
+      fileUrl: "https://cdn.example.com/manual_v2.pdf",
+      version: 2,
+      uploadedAt: new Date(),
+    });
+
+    const { createAuditLog } = await import("./db");
+    const auditSpy = vi.mocked(createAuditLog);
+
+    const user = makeUser("administrator");
+    const result = await documentService.togglePublicDownload(user, {
+      documentId: 51,
+      publicDownload: false,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.publicDownload).toBe(false);
+
+    const auditCall = auditSpy.mock.calls.find(
+      ([args]) => args.action === "document_public_disabled"
+    );
+    expect(auditCall).toBeDefined();
+  });
+
+  it("throws FORBIDDEN when a supplier tries to toggle publicDownload", async () => {
+    const user = makeUser("supplier");
+    await expect(
+      documentService.togglePublicDownload(user, { documentId: 50, publicDownload: true })
+    ).rejects.toThrow();
+  });
+
+  it("togglePublicDownload tRPC endpoint is accessible for compliance_manager", async () => {
+    mockDocuments.push({
+      id: 52,
+      productId: 5,
+      documentType: "certificate",
+      isArchived: false,
+      publicDownload: false,
+      fileName: "cert.pdf",
+      fileUrl: "https://cdn.example.com/cert.pdf",
+      version: 1,
+      uploadedAt: new Date(),
+    });
+
+    const caller = appRouter.createCaller(makeCtx("compliance_manager"));
+    const result = await caller.documents.togglePublicDownload({
+      documentId: 52,
+      publicDownload: true,
+    });
+    expect(result.success).toBe(true);
+    expect(result.publicDownload).toBe(true);
+  });
+});

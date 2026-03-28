@@ -247,6 +247,28 @@ export const documentService = {
   },
 
   /**
+   * Toggle the publicDownload flag for a document.
+   * Only operators (administrator / compliance_manager / internal_employee) may do this.
+   */
+  async togglePublicDownload(
+    user: UserContext & { id: number },
+    input: { documentId: number; publicDownload: boolean }
+  ) {
+    requireRole(user.complianceRole, ["administrator", "compliance_manager", "internal_employee"]);
+    await updateDocument(input.documentId, { publicDownload: input.publicDownload });
+    await createAuditLog({
+      entityType: "document",
+      entityId: input.documentId,
+      action: input.publicDownload ? "document_public_enabled" : "document_public_disabled",
+      performedByUserId: user.id,
+      actorRole: "operator",
+      actorName: resolveActorName(user),
+      payloadSnapshot: { documentId: input.documentId, publicDownload: input.publicDownload } as any,
+    });
+    return { success: true, publicDownload: input.publicDownload };
+  },
+
+  /**
    * Hard-delete a document.
    * Suppliers can only delete documents on their own products.
    * Operators (admin/compliance_manager/internal_employee) can delete any document.
