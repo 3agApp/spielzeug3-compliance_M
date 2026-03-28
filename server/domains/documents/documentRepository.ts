@@ -6,6 +6,9 @@
 
 export {
   getDocumentsByProduct,
+  getDocumentById,
+  getArchivedDocumentVersions,
+  archiveDocument,
   createDocument,
   updateDocument,
   deleteDocument,

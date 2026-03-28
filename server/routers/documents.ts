@@ -24,6 +24,16 @@ const DOCUMENT_TYPES = [
 const REVIEW_STATUSES = ["pending", "approved", "rejected"] as const;
 
 export const documentsRouter = router({
+  listArchivedVersions: protectedProcedure
+    .input(z.object({ productId: z.number(), documentType: z.enum(DOCUMENT_TYPES) }))
+    .query(async ({ ctx, input }) => {
+      try {
+        return await documentService.listArchivedVersions(ctx.user as any, input.productId, input.documentType);
+      } catch (err) {
+        throw toTRPCError(err);
+      }
+    }),
+
   listByProduct: protectedProcedure
     .input(z.object({ productId: z.number() }))
     .query(async ({ ctx, input }) => {

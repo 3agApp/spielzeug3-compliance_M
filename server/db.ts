@@ -254,14 +254,49 @@ export async function updateMissingRequirement(
 }
 
 // ─── Documents ───────────────────────────────────────────────────────────────
-export async function getDocumentsByProduct(productId: number) {
+export async function getDocumentsByProduct(productId: number, includeArchived = false) {
+  const db = await getDb();
+  if (!db) return [];
+  const condition = includeArchived
+    ? eq(documents.productId, productId)
+    : and(eq(documents.productId, productId), eq(documents.isArchived, false));
+  return db
+    .select()
+    .from(documents)
+    .where(condition)
+    .orderBy(desc(documents.uploadedAt));
+}
+
+export async function getDocumentById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(documents).where(eq(documents.id, id)).limit(1);
+  return result[0] ?? null;
+}
+
+export async function getArchivedDocumentVersions(productId: number, documentType: string) {
   const db = await getDb();
   if (!db) return [];
   return db
     .select()
     .from(documents)
-    .where(eq(documents.productId, productId))
+    .where(
+      and(
+        eq(documents.productId, productId),
+        eq(documents.documentType, documentType as any),
+        eq(documents.isArchived, true)
+      )
+    )
     .orderBy(desc(documents.uploadedAt));
+}
+
+export async function archiveDocument(id: number, replacedByDocumentId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .update(documents)
+    .set({ isArchived: true, replacedByDocumentId })
+    .where(eq(documents.id, id));
 }
 
 export async function createDocument(data: typeof documents.$inferInsert) {

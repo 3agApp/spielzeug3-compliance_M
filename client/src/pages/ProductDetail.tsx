@@ -22,6 +22,8 @@ import {
   ArrowLeft,
   Bot,
   CheckCircle2,
+  ChevronDown,
+  ChevronRight,
   Clock,
   Code2,
   Copy,
@@ -29,6 +31,7 @@ import {
   ExternalLink,
   FileSignature,
   FileText,
+  History,
   Loader2,
   MessageSquare,
   Package,
@@ -423,51 +426,19 @@ export default function ProductDetail() {
                   </thead>
                   <tbody>
                     {documents.map((doc: any) => (
-                      <tr key={doc.id}>
-                        <td>
-                          <Badge variant="outline" className="text-xs">
-                            {(t.docType as any)[doc.documentType] ?? doc.documentType}
-                          </Badge>
-                        </td>
-                        <td className="font-medium text-sm">{doc.fileName}</td>
-                        <td className="text-muted-foreground text-xs">v{doc.version}</td>
-                        <td>
-                          <StatusBadge
-                            status={
-                              doc.reviewStatus === "approved"
-                                ? "approved"
-                                : doc.reviewStatus === "rejected"
-                                ? "rejected"
-                                : "submitted"
-                            }
-                          />
-                        </td>
-                        <td className="text-muted-foreground text-xs">
-                          {new Date(doc.uploadedAt).toLocaleDateString()}
-                        </td>
-                        <td className="flex items-center gap-1">
-                          <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer">
-                            <Button variant="ghost" size="sm" title="Herunterladen">
-                              <FileText className="h-4 w-4" />
-                            </Button>
-                          </a>
-                          {(role === "supplier" || isInternalRole) && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              title="Dokument löschen"
-                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                              onClick={() => {
-                                setDeleteDocId(doc.id);
-                                setDeleteDocName(doc.fileName);
-                                setDeleteComment("");
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </td>
-                      </tr>
+                      <DocumentRow
+                        key={doc.id}
+                        doc={doc}
+                        productId={productId}
+                        role={role}
+                        isInternalRole={isInternalRole}
+                        t={t}
+                        onDelete={(id: number, name: string) => {
+                          setDeleteDocId(id);
+                          setDeleteDocName(name);
+                          setDeleteComment("");
+                        }}
+                      />
                     ))}
                   </tbody>
                 </table>
@@ -1366,6 +1337,126 @@ function SealLabelDownloadButton({
       )}
       {downloading ? "Generiere PDF…" : "Etikett drucken (PDF)"}
     </Button>
+  );
+}
+
+// ─── Document Row with Version History ──────────────────────────────────────
+function DocumentRow({ doc, productId, role, isInternalRole, t, onDelete }: any) {
+  const [expanded, setExpanded] = useState(false);
+
+  const archivedQuery = trpc.documents.listArchivedVersions.useQuery(
+    { productId, documentType: doc.documentType },
+    { enabled: expanded }
+  );
+  const archivedVersions = archivedQuery.data ?? [];
+
+  return (
+    <>
+      <tr>
+        <td>
+          <Badge variant="outline" className="text-xs">
+            {(t.docType as any)[doc.documentType] ?? doc.documentType}
+          </Badge>
+        </td>
+        <td className="font-medium text-sm">{doc.fileName}</td>
+        <td>
+          <div className="flex items-center gap-1">
+            <span className="text-muted-foreground text-xs">v{doc.version}</span>
+            {doc.version > 1 && (
+              <button
+                onClick={() => setExpanded(!expanded)}
+                className="inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 transition-colors"
+                title={expanded ? "Versionsverlauf ausblenden" : "Versionsverlauf anzeigen"}
+              >
+                <History className="h-3 w-3" />
+                {doc.version - 1}
+                {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+              </button>
+            )}
+          </div>
+        </td>
+        <td>
+          <StatusBadge
+            status={
+              doc.reviewStatus === "approved"
+                ? "approved"
+                : doc.reviewStatus === "rejected"
+                ? "rejected"
+                : "submitted"
+            }
+          />
+        </td>
+        <td className="text-muted-foreground text-xs">
+          {new Date(doc.uploadedAt).toLocaleDateString()}
+        </td>
+        <td className="flex items-center gap-1">
+          <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer">
+            <Button variant="ghost" size="sm" title="Herunterladen">
+              <FileText className="h-4 w-4" />
+            </Button>
+          </a>
+          {(role === "supplier" || isInternalRole) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              title="Dokument löschen"
+              className="text-red-500 hover:text-red-700 hover:bg-red-50"
+              onClick={() => onDelete(doc.id, doc.fileName)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </td>
+      </tr>
+      {expanded && (
+        <tr>
+          <td colSpan={6} className="p-0">
+            <div className="bg-amber-50/60 border-t border-amber-100 px-4 py-3">
+              <div className="flex items-center gap-1.5 mb-2">
+                <History className="h-3.5 w-3.5 text-amber-600" />
+                <span className="text-xs font-semibold text-amber-800">Versionsverlauf (archiviert)</span>
+              </div>
+              {archivedQuery.isLoading ? (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground py-1">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Lade…
+                </div>
+              ) : archivedVersions.length === 0 ? (
+                <p className="text-xs text-muted-foreground italic">Keine archivierten Versionen gefunden.</p>
+              ) : (
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="text-muted-foreground">
+                      <th className="text-left font-medium pb-1 pr-4">Dateiname</th>
+                      <th className="text-left font-medium pb-1 pr-4">Version</th>
+                      <th className="text-left font-medium pb-1 pr-4">Hochgeladen am</th>
+                      <th className="text-left font-medium pb-1"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {archivedVersions.map((av: any) => (
+                      <tr key={av.id} className="opacity-70">
+                        <td className="pr-4 py-0.5">{av.fileName}</td>
+                        <td className="pr-4 py-0.5 text-muted-foreground">v{av.version}</td>
+                        <td className="pr-4 py-0.5 text-muted-foreground">{new Date(av.uploadedAt).toLocaleDateString()}</td>
+                        <td className="py-0.5">
+                          <a href={av.fileUrl} target="_blank" rel="noopener noreferrer">
+                            <Button variant="ghost" size="sm" className="h-6 px-1.5 text-xs gap-1">
+                              <Download className="h-3 w-3" />
+                              Herunterladen
+                            </Button>
+                          </a>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </td>
+        </tr>
+      )}
+    </>
   );
 }
 

@@ -5,23 +5,30 @@
  *
  * Responsibilities:
  * - Upload a document (base64 → S3 → DB record) – for suppliers AND operators
- * - Delete a document (with supplier-confirmation reset)
+ *   When a document of the same type already exists for the product, the old
+ *   document is ARCHIVED (isArchived = true, replacedByDocumentId set) instead
+ *   of being deleted.  This preserves the full version history.
+ * - Delete a document (hard-delete; operator can optionally archive instead)
  * - Update review status (internal roles only)
- * - List documents for a product
+ * - List documents for a product (active only by default)
+ * - List archived versions for a specific document type
  *
- * Every audit-log entry now carries actorRole ('supplier' | 'operator') and
+ * Every audit-log entry carries actorRole ('supplier' | 'operator') and
  * actorName so the timeline can distinguish who did what.
  */
 
 import {
+  archiveDocument,
   createAuditLog,
   createDocument,
   deleteDocument,
+  getArchivedDocumentVersions,
+  getDocumentById,
   getDocumentsByProduct,
+  getMissingRequirementsByProduct,
   getProductById,
   updateDocument,
   updateMissingRequirement,
-  getMissingRequirementsByProduct,
   updateProduct,
 } from "../../db";
 import { storagePut } from "../../storage";
@@ -75,19 +82,36 @@ function resolveActorName(user: UserContext): string {
 
 export const documentService = {
   /**
-   * List all documents for a product.
+   * List active (non-archived) documents for a product.
    * Enforces supplier-isolation.
    */
   async listByProduct(user: UserContext, productId: number) {
     const product = await getProductById(productId);
     if (!product) throw Errors.notFound("Product", productId);
     assertSupplierOrInternal(user, product.supplierId);
-    return getDocumentsByProduct(productId);
+    return getDocumentsByProduct(productId, false);
+  },
+
+  /**
+   * List archived (superseded) versions of a specific document type.
+   * Accessible to all roles that can see the product.
+   */
+  async listArchivedVersions(user: UserContext, productId: number, documentType: DocumentType) {
+    const product = await getProductById(productId);
+    if (!product) throw Errors.notFound("Product", productId);
+    assertSupplierOrInternal(user, product.supplierId);
+    return getArchivedDocumentVersions(productId, documentType);
   },
 
   /**
    * Upload a document to S3 and create a DB record.
    * Available to suppliers AND operators (admin / compliance_manager / internal_employee).
+   *
+   * VERSION ARCHIVING:
+   * If a document of the same type already exists for this product, the existing
+   * document is archived (isArchived = true, replacedByDocumentId = new doc id)
+   * before the new record is inserted.  The version counter increments.
+   *
    * Resets supplier confirmation only when the uploader is a supplier.
    */
   async upload(user: UserContext & { id: number }, input: UploadDocumentInput) {
@@ -104,12 +128,18 @@ export const documentService = {
     const fileKey = `documents/${input.productId}/${Date.now()}-${input.fileName}`;
     const { url } = await storagePut(fileKey, buffer, input.mimeType);
 
-    // Determine version number
-    const existing = await getDocumentsByProduct(input.productId);
-    const sameType = existing.filter((d: any) => d.documentType === input.documentType);
+    // Determine version number: count ALL docs of this type (incl. archived)
+    const allDocs = await getDocumentsByProduct(input.productId, true);
+    const sameType = allDocs.filter((d: any) => d.documentType === input.documentType);
     const version = sameType.length + 1;
 
-    await createDocument({
+    // Find the currently active document of the same type (if any)
+    const activeDocs = allDocs.filter(
+      (d: any) => d.documentType === input.documentType && !d.isArchived
+    );
+
+    // Insert the new document first so we have its ID
+    const insertResult = await createDocument({
       productId: input.productId,
       documentType: input.documentType as any,
       fileName: input.fileName,
@@ -121,6 +151,15 @@ export const documentService = {
       expiryDate: input.expiryDate ? new Date(input.expiryDate) : undefined,
       uploadedByUserId: user.id,
     });
+
+    const newDocId = (insertResult as any).insertId as number;
+
+    // Archive all previously active documents of the same type
+    let archivedCount = 0;
+    for (const oldDoc of activeDocs) {
+      await archiveDocument(oldDoc.id, newDocId);
+      archivedCount++;
+    }
 
     // Mark requirement as provided
     const requirements = await getMissingRequirementsByProduct(input.productId);
@@ -150,7 +189,7 @@ export const documentService = {
       });
     }
 
-    // Distinguish operator vs. supplier upload in the audit log action
+    // Audit log: distinguish operator vs. supplier upload
     const auditAction = actorRole === "operator" ? "operator_document_uploaded" : "uploaded";
     await createAuditLog({
       entityType: "document",
@@ -162,11 +201,13 @@ export const documentService = {
       payloadSnapshot: {
         fileName: input.fileName,
         documentType: input.documentType,
+        version,
+        ...(archivedCount > 0 ? { archivedPreviousVersions: archivedCount } : {}),
         ...(input.operatorComment ? { operatorComment: input.operatorComment } : {}),
       } as any,
     });
 
-    return { success: true, url, confirmedAtReset };
+    return { success: true, url, confirmedAtReset, version, archivedPreviousVersions: archivedCount };
   },
 
   /**
@@ -192,7 +233,7 @@ export const documentService = {
   },
 
   /**
-   * Delete a document.
+   * Hard-delete a document.
    * Suppliers can only delete documents on their own products.
    * Operators (admin/compliance_manager/internal_employee) can delete any document.
    * Resets supplier confirmation only when a supplier deletes.
@@ -212,6 +253,9 @@ export const documentService = {
     } else {
       requireRole(role, ["administrator", "compliance_manager", "internal_employee"]);
     }
+
+    // Fetch doc before deletion for audit payload
+    const doc = await getDocumentById(input.documentId);
 
     await deleteDocument(input.documentId);
 
@@ -247,6 +291,7 @@ export const documentService = {
       actorName,
       payloadSnapshot: {
         documentId: input.documentId,
+        ...(doc ? { fileName: doc.fileName, documentType: doc.documentType } : {}),
         ...(input.operatorComment ? { operatorComment: input.operatorComment } : {}),
       } as any,
     });

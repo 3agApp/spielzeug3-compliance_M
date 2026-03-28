@@ -167,6 +167,10 @@ export const documents = mysqlTable("documents", {
   mimeType: varchar("mimeType", { length: 128 }),
   fileSizeBytes: int("fileSizeBytes"),
   version: int("version").default(1).notNull(),
+  /** When true this document is an archived predecessor; it is hidden in the active list */
+  isArchived: boolean("isArchived").default(false).notNull(),
+  /** FK to the document that replaced this one (set when archiving) */
+  replacedByDocumentId: int("replacedByDocumentId"),
   expiryDate: timestamp("expiryDate"),
   uploadedByUserId: int("uploadedByUserId"),
   uploadedByRole: varchar("uploadedByRole", { length: 64 }),

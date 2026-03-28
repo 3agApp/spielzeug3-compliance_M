@@ -436,3 +436,15 @@
 - [x] State-Reset beim Schließen des Dialogs
 - [x] Vollständigkeitserklärungs-Reset-Toast wenn Supplier-Bestätigung zurückgesetzt wurde
 - [x] 172 Tests grün, 0 TypeScript-Fehler
+
+## Dokumenten-Versionierung
+- [x] DB-Schema: isArchived (boolean, default false) und replacedByDocumentId (int) in documents-Tabelle
+- [x] Migration: ALTER TABLE documents ADD isArchived / replacedByDocumentId
+- [x] db.ts: getDocumentsByProduct filtert archivierte Dokumente (includeArchived-Flag)
+- [x] db.ts: getDocumentById, getArchivedDocumentVersions, archiveDocument neue Hilfsfunktionen
+- [x] documentService.upload: archiviert alle aktiven Vorgänger-Dokumente desselben Typs vor dem Insert
+- [x] documentService.listArchivedVersions: gibt archivierte Versionen für Typ zurück
+- [x] tRPC Router: documents.listArchivedVersions Endpoint
+- [x] Frontend: DocumentRow-Komponente mit aufklappbarem Versionsverlauf (Amber-Badge mit History-Icon)
+- [x] Frontend: Archivierte Versionen in separater Tabelle mit Download-Button
+- [x] 14 neue Vitest-Tests, 186 Tests gesamt grün, 0 TypeScript-Fehler
