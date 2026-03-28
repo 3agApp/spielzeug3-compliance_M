@@ -2,6 +2,10 @@
  * server/domains/compliance/safetyService.ts
  * ─────────────────────────────────────────────────────────────────────────────
  * Business logic for Product Safety data.
+ *
+ * Both suppliers (for their own products) and operators
+ * (admin / compliance_manager / internal_employee) can read and update safety data.
+ * Every audit-log entry carries actorRole ('supplier' | 'operator') and actorName.
  */
 
 import { createAuditLog, getProductById, getProductSafety, upsertProductSafety } from "../../db";
@@ -18,6 +22,18 @@ export interface UpsertSafetyInput {
   safetyNotes?: string;
 }
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function resolveActorRole(complianceRole: string | null | undefined): "supplier" | "operator" {
+  return complianceRole === "supplier" ? "supplier" : "operator";
+}
+
+function resolveActorName(user: UserContext): string {
+  return (user as any).name ?? (user as any).email ?? `User #${(user as any).id ?? "?"}`;
+}
+
+// ─── Service ──────────────────────────────────────────────────────────────────
+
 export const safetyService = {
   async getByProduct(user: UserContext, productId: number) {
     const product = await getProductById(productId);
@@ -29,13 +45,24 @@ export const safetyService = {
   async upsert(user: UserContext & { id: number }, input: UpsertSafetyInput) {
     const product = await getProductById(input.productId);
     if (!product) throw Errors.notFound("Product", input.productId);
+    // Both suppliers (own product) and operators can update safety data
     assertSupplierOrInternal(user, product.supplierId);
+
+    const actorRole = resolveActorRole(user.complianceRole);
+    const actorName = resolveActorName(user);
+
     await upsertProductSafety({ ...input, submittedByUserId: user.id });
+
+    const auditAction =
+      actorRole === "operator" ? "operator_safety_updated" : "safety_updated";
+
     await createAuditLog({
       entityType: "product_safety",
       entityId: input.productId,
-      action: "updated",
+      action: auditAction,
       performedByUserId: user.id,
+      actorRole,
+      actorName,
     });
     return { success: true };
   },

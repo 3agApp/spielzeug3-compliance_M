@@ -397,3 +397,16 @@
 - [x] PDF-Generator: tenantPrimaryColor-Prop, überschreibt Rahmen- und URL-Farbe für verified-Status
 - [x] pdfRoutes.ts: primaryColor aus Tenant-Daten an generateSealLabelPdf übergeben
 - [x] 172 Tests grün, 0 TypeScript-Fehler
+
+## Betreiber-Dokument/Safety-Upload mit Audit-Log
+- [x] DB-Schema: actorRole + actorName zur audit_logs-Tabelle hinzugefügt (Migration ausgeführt)
+- [x] documentService: actorRole/actorName in allen Audit-Log-Einträgen, Betreiber-Rollen freigeschaltet
+- [x] safetyService: actorRole/actorName in Audit-Log, Betreiber-Rollen freigeschaltet
+- [x] getAuditLogsByProduct-Funktion in db.ts hinzugefügt
+- [x] getTimeline-Prozedur liefert jetzt auch auditEntries (Approval-History + Audit-Logs gemergt)
+- [x] ProductDetail: UploadDocumentCard für Betreiber-Rollen freigeschaltet + Betreiber-Badge im Dialog
+- [x] ProductDetail: SafetyDataCard canEdit auf alle internen Rollen erweitert + Betreiber-Badge
+- [x] TimelineCard: Supplier (violett), Betreiber (blau), System (grau) farbkodiert mit Legende
+- [x] Akteur-Name und Payload-Details (Dateiname/Dokumenttyp) in jedem Timeline-Eintrag
+- [x] Aktions-Labels deutschübersetzt (document_uploaded, safety_upserted, etc.)
+- [x] 172 Tests grün, 0 TypeScript-Fehler

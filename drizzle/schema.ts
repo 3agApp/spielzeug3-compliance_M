@@ -248,6 +248,10 @@ export const auditLogs = mysqlTable("audit_logs", {
   entityId: int("entityId"),
   action: varchar("action", { length: 128 }).notNull(),
   performedByUserId: int("performedByUserId"),
+  /** 'supplier' | 'operator' – distinguishes who performed the action */
+  actorRole: varchar("actorRole", { length: 32 }),
+  /** Display name of the actor (user name or email) */
+  actorName: varchar("actorName", { length: 255 }),
   payloadSnapshot: json("payloadSnapshot"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });

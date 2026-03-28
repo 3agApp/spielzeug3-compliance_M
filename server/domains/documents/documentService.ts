@@ -4,13 +4,13 @@
  * Business logic for the Documents domain.
  *
  * Responsibilities:
- * - Upload a document (base64 → S3 → DB record)
+ * - Upload a document (base64 → S3 → DB record) – for suppliers AND operators
  * - Delete a document (with supplier-confirmation reset)
  * - Update review status (internal roles only)
  * - List documents for a product
  *
- * The service is decoupled from tRPC: it receives plain data objects and
- * returns plain results. Routers call toTRPCError() on any thrown AppError.
+ * Every audit-log entry now carries actorRole ('supplier' | 'operator') and
+ * actorName so the timeline can distinguish who did what.
  */
 
 import {
@@ -57,6 +57,18 @@ export interface DeleteDocumentInput {
   productId?: number;
 }
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Maps a complianceRole to 'supplier' or 'operator' for the audit log. */
+function resolveActorRole(complianceRole: string | null | undefined): "supplier" | "operator" {
+  return complianceRole === "supplier" ? "supplier" : "operator";
+}
+
+/** Returns a human-readable display name from the user context. */
+function resolveActorName(user: UserContext): string {
+  return (user as any).name ?? (user as any).email ?? `User #${(user as any).id ?? "?"}`;
+}
+
 // ─── Service ──────────────────────────────────────────────────────────────────
 
 export const documentService = {
@@ -73,10 +85,14 @@ export const documentService = {
 
   /**
    * Upload a document to S3 and create a DB record.
-   * Resets supplier confirmation if the supplier had already confirmed.
+   * Available to suppliers AND operators (admin / compliance_manager / internal_employee).
+   * Resets supplier confirmation only when the uploader is a supplier.
    */
   async upload(user: UserContext & { id: number }, input: UploadDocumentInput) {
     const role = user.complianceRole ?? "internal_employee";
+    const actorRole = resolveActorRole(role);
+    const actorName = resolveActorName(user);
+
     const product = await getProductById(input.productId);
     if (!product) throw Errors.notFound("Product", input.productId);
     assertSupplierOrInternal(user, product.supplierId);
@@ -113,7 +129,7 @@ export const documentService = {
       await updateMissingRequirement(matching.id, { isMissing: false });
     }
 
-    // Reset supplier confirmation if already confirmed
+    // Reset supplier confirmation only when the uploader is a supplier
     let confirmedAtReset = false;
     if (role === "supplier" && (product as any).supplierConfirmedAt) {
       await updateProduct(input.productId, {
@@ -126,15 +142,21 @@ export const documentService = {
         entityId: input.productId,
         action: "supplier_confirmation_reset",
         performedByUserId: user.id,
+        actorRole,
+        actorName,
         payloadSnapshot: { reason: "document_uploaded", fileName: input.fileName } as any,
       });
     }
 
+    // Distinguish operator vs. supplier upload in the audit log action
+    const auditAction = actorRole === "operator" ? "operator_document_uploaded" : "uploaded";
     await createAuditLog({
       entityType: "document",
       entityId: input.productId,
-      action: "uploaded",
+      action: auditAction,
       performedByUserId: user.id,
+      actorRole,
+      actorName,
       payloadSnapshot: { fileName: input.fileName, documentType: input.documentType } as any,
     });
 
@@ -157,6 +179,8 @@ export const documentService = {
       entityId: input.documentId,
       action: `review_${input.reviewStatus}`,
       performedByUserId: user.id,
+      actorRole: "operator",
+      actorName: resolveActorName(user),
     });
     return { success: true };
   },
@@ -164,10 +188,13 @@ export const documentService = {
   /**
    * Delete a document.
    * Suppliers can only delete documents on their own products.
-   * Resets supplier confirmation if already confirmed.
+   * Operators (admin/compliance_manager/internal_employee) can delete any document.
+   * Resets supplier confirmation only when a supplier deletes.
    */
   async delete(user: UserContext & { id: number }, input: DeleteDocumentInput) {
     const role = user.complianceRole ?? "internal_employee";
+    const actorRole = resolveActorRole(role);
+    const actorName = resolveActorName(user);
 
     if (role === "supplier") {
       if (!input.productId) {
@@ -197,16 +224,21 @@ export const documentService = {
           entityId: input.productId,
           action: "supplier_confirmation_reset",
           performedByUserId: user.id,
+          actorRole,
+          actorName,
           payloadSnapshot: { reason: "document_deleted", documentId: input.documentId } as any,
         });
       }
     }
 
+    const auditAction = actorRole === "operator" ? "operator_document_deleted" : "deleted";
     await createAuditLog({
       entityType: "document",
       entityId: input.documentId,
-      action: "deleted",
+      action: auditAction,
       performedByUserId: user.id,
+      actorRole,
+      actorName,
     });
     return { success: true, confirmedAtReset };
   },

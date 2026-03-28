@@ -361,10 +361,11 @@ export default function ProductDetail() {
 
         {/* Documents Tab */}
         <TabsContent value="documents" className="mt-4 space-y-4">
-          {(role === "supplier" || role === "internal_employee") && (
+          {(role === "supplier" || isInternalRole) && (
             <UploadDocumentCard
               productId={productId}
               role={role}
+              isOperator={isInternalRole}
               t={t}
               onSuccess={(confirmedAtReset?: boolean) => {
                 documentsQuery.refetch();
@@ -1271,7 +1272,7 @@ function SealLabelDownloadButton({
 }
 
 // ─── Upload Document Card ────────────────────────────────────────────
-function UploadDocumentCard({ productId, role, t, onSuccess }: any) {
+function UploadDocumentCard({ productId, role, isOperator, t, onSuccess }: any) {
   const [open, setOpen] = useState(false);
   const [docType, setDocType] = useState<string>("test_report");
   const [file, setFile] = useState<File | null>(null);
@@ -1308,16 +1309,30 @@ function UploadDocumentCard({ productId, role, t, onSuccess }: any) {
 
   return (
     <>
-      <Button onClick={() => setOpen(true)} variant="outline" size="sm">
-        <Upload className="mr-2 h-4 w-4" />
-        {t.action.upload}
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button onClick={() => setOpen(true)} variant="outline" size="sm">
+          <Upload className="mr-2 h-4 w-4" />
+          {t.action.upload}
+        </Button>
+        {isOperator && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 border border-blue-200 px-2 py-0.5 text-xs font-medium text-blue-700">
+            <Shield className="h-3 w-3" />
+            Betreiber-Upload
+          </span>
+        )}
+      </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t.action.upload}</DialogTitle>
+            <DialogTitle>{isOperator ? "Dokument hochladen (Betreiber)" : t.action.upload}</DialogTitle>
           </DialogHeader>
+          {isOperator && (
+            <div className="flex items-start gap-2 rounded-md bg-blue-50 border border-blue-200 p-3 text-xs text-blue-800">
+              <Shield className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+              <span>Dieses Dokument wird als <strong>Betreiber-Upload</strong> im Aktivitätsprotokoll gekennzeichnet und ist von Supplier-Uploads unterscheidbar.</span>
+            </div>
+          )}
           <div className="space-y-4">
             <div>
               <Label>{t.common.version === "Version" ? "Dokumenttyp" : "Document Type"}</Label>
@@ -1391,12 +1406,20 @@ function SafetyDataCard({ productId, safety, role, t, onSuccess }: any) {
     onError: (e) => toast.error(e.message),
   });
 
-  const canEdit = ["supplier", "internal_employee"].includes(role);
-
+   const isOperator = ["administrator", "compliance_manager", "internal_employee", "super_admin"].includes(role);
+  const canEdit = role === "supplier" || isOperator;
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-3">
-        <CardTitle className="text-base">{t.product.safetyData}</CardTitle>
+        <div className="flex items-center gap-2">
+          <CardTitle className="text-base">{t.product.safetyData}</CardTitle>
+          {isOperator && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 border border-blue-200 px-2 py-0.5 text-xs font-medium text-blue-700">
+              <Shield className="h-3 w-3" />
+              Betreiber-Zugang
+            </span>
+          )}
+        </div>
         {canEdit && !editing && (
           <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
             {t.action.edit}
@@ -1455,46 +1478,155 @@ function SafetyDataCard({ productId, safety, role, t, onSuccess }: any) {
 function TimelineCard({ productId, t }: any) {
   const timelineQuery = trpc.products.getTimeline.useQuery({ productId });
   const timelineData = timelineQuery.data as any;
-  const events = timelineData?.history ?? [];
+  const approvalHistory: any[] = timelineData?.history ?? [];
+  const auditEntries: any[] = timelineData?.auditEntries ?? [];
 
-  const getIcon = (action: string) => {
-    if (action.includes("approved")) return <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
+  // Merge and sort all events by createdAt descending
+  const allEvents = [
+    ...approvalHistory.map((e: any) => ({ ...e, _type: "approval" as const })),
+    ...auditEntries.map((e: any) => ({ ...e, _type: "audit" as const })),
+  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  const getApprovalIcon = (action: string) => {
+    if (action.includes("approved") || action.includes("completed")) return <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
     if (action.includes("rejected")) return <XCircle className="h-4 w-4 text-red-500" />;
     if (action.includes("submitted")) return <Send className="h-4 w-4 text-blue-500" />;
     if (action.includes("clarification")) return <AlertCircle className="h-4 w-4 text-amber-500" />;
     return <Clock className="h-4 w-4 text-muted-foreground" />;
   };
 
+  const getAuditIcon = (action: string, actorRole: string) => {
+    const isOperator = actorRole === "operator";
+    if (action.includes("upload") || action.includes("document")) return <FileText className={`h-4 w-4 ${isOperator ? "text-blue-500" : "text-violet-500"}`} />;
+    if (action.includes("safety")) return <Shield className={`h-4 w-4 ${isOperator ? "text-blue-500" : "text-violet-500"}`} />;
+    return <Package className={`h-4 w-4 ${isOperator ? "text-blue-500" : "text-violet-500"}`} />;
+  };
+
+  const getAuditActionLabel = (action: string) => {
+    const map: Record<string, string> = {
+      document_uploaded: "Dokument hochgeladen",
+      document_deleted: "Dokument gelöscht",
+      document_reviewed: "Dokument geprüft",
+      safety_upserted: "Safety-Daten aktualisiert",
+      safety_updated: "Safety-Daten geändert",
+    };
+    return map[action] ?? action;
+  };
+
+  const getApprovalActionLabel = (action: string) => {
+    const map: Record<string, string> = {
+      submitted: "Eingereicht",
+      approved: "Genehmigt",
+      rejected: "Abgelehnt",
+      clarification_requested: "Klärung angefordert",
+      completed: "Abgeschlossen",
+      reopened: "Wieder geöffnet",
+      updated: "Aktualisiert",
+    };
+    return map[action] ?? action;
+  };
+
   return (
     <Card>
-      <CardContent className="p-5">
-        {events.length === 0 ? (
+      <CardHeader className="pb-3">
+        <div className="flex items-center gap-4">
+          <CardTitle className="text-base">Aktivitätsprotokoll</CardTitle>
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <span className="w-2.5 h-2.5 rounded-full bg-violet-400 inline-block" />
+              Supplier
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-400 inline-block" />
+              Betreiber
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-2.5 h-2.5 rounded-full bg-slate-400 inline-block" />
+              System
+            </span>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="p-5 pt-0">
+        {allEvents.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-6">Noch keine Aktivitäten</p>
         ) : (
-          <div className="space-y-4">
-            {events.map((e: any, i: number) => (
-              <div key={e.id} className="flex gap-3">
-                <div className="flex flex-col items-center">
-                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-                    {getIcon(e.action)}
+          <div className="space-y-1">
+            {allEvents.map((e: any, i: number) => {
+              const isAudit = e._type === "audit";
+              const isOperator = isAudit && e.actorRole === "operator";
+              const isSupplier = isAudit && e.actorRole === "supplier";
+              const isSystem = !isAudit;
+
+              // Color scheme per actor
+              const dotColor = isOperator
+                ? "bg-blue-100 border-blue-300"
+                : isSupplier
+                ? "bg-violet-100 border-violet-300"
+                : "bg-slate-100 border-slate-300";
+              const rowBg = isOperator
+                ? "bg-blue-50/40 border-l-2 border-l-blue-300"
+                : isSupplier
+                ? "bg-violet-50/40 border-l-2 border-l-violet-300"
+                : "";
+
+              return (
+                <div key={`${e._type}-${e.id}`} className={`flex gap-3 rounded-md px-2 py-2 ${rowBg}`}>
+                  <div className="flex flex-col items-center">
+                    <div className={`w-7 h-7 rounded-full border flex items-center justify-center shrink-0 ${dotColor}`}>
+                      {isAudit
+                        ? getAuditIcon(e.action, e.actorRole ?? "")
+                        : getApprovalIcon(e.action)}
+                    </div>
+                    {i < allEvents.length - 1 && (
+                      <div className="w-px flex-1 bg-border mt-1 min-h-[12px]" />
+                    )}
                   </div>
-                  {i < events.length - 1 && (
-                    <div className="w-px flex-1 bg-border mt-1" />
-                  )}
-                </div>
-                <div className="pb-4 flex-1">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium">{e.action}</p>
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(e.createdAt).toLocaleString()}
-                    </span>
+                  <div className="pb-3 flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-medium">
+                          {isAudit ? getAuditActionLabel(e.action) : getApprovalActionLabel(e.action)}
+                        </p>
+                        {isOperator && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 border border-blue-200 px-1.5 py-0.5 text-xs font-medium text-blue-700">
+                            <Shield className="h-2.5 w-2.5" />
+                            Betreiber
+                          </span>
+                        )}
+                        {isSupplier && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 border border-violet-200 px-1.5 py-0.5 text-xs font-medium text-violet-700">
+                            <Package className="h-2.5 w-2.5" />
+                            Supplier
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        {new Date(e.createdAt).toLocaleString("de-CH", { dateStyle: "short", timeStyle: "short" })}
+                      </span>
+                    </div>
+                    {/* Actor name */}
+                    {(e.actorName || e.performedByName) && (
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {e.actorName ?? e.performedByName}
+                      </p>
+                    )}
+                    {/* Payload details */}
+                    {isAudit && e.payloadSnapshot && (
+                      <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                        {typeof e.payloadSnapshot === "object" && e.payloadSnapshot !== null
+                          ? ((e.payloadSnapshot as any).fileName ?? (e.payloadSnapshot as any).documentType ?? "")
+                          : ""}
+                      </p>
+                    )}
+                    {/* Note for approval history */}
+                    {!isAudit && e.note && (
+                      <p className="text-xs text-muted-foreground mt-0.5 italic">{e.note}</p>
+                    )}
                   </div>
-                  {e.performedByName && (
-                    <p className="text-xs text-muted-foreground mt-0.5">{e.performedByName}</p>
-                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </CardContent>

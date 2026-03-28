@@ -363,6 +363,18 @@ export async function getAuditLogs(limit = 100) {
   return db.select().from(auditLogs).orderBy(desc(auditLogs.createdAt)).limit(limit);
 }
 
+/** Returns audit-log entries for a specific product (entityId), newest first. */
+export async function getAuditLogsByProduct(productId: number, limit = 100) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(auditLogs)
+    .where(eq(auditLogs.entityId, productId))
+    .orderBy(desc(auditLogs.createdAt))
+    .limit(limit);
+}
+
 // ─── Notifications ───────────────────────────────────────────────────────────
 export async function createNotification(data: typeof notifications.$inferInsert) {
   const db = await getDb();

@@ -21,6 +21,7 @@ import {
   updateMissingRequirement,
   createAuditLog,
   getApprovalHistory,
+  getAuditLogsByProduct,
   getCommentsByProduct,
   updateProduct,
   getInternalDashboardStats,
@@ -81,11 +82,12 @@ export const productsRouter = router({
     .query(async ({ ctx, input }) => {
       const role = ctx.user.complianceRole ?? "internal_employee";
       const isInternal = role !== "supplier";
-      const [history, comments] = await Promise.all([
+      const [history, comments, auditEntries] = await Promise.all([
         getApprovalHistory(input.productId),
         getCommentsByProduct(input.productId, isInternal),
+        getAuditLogsByProduct(input.productId, 200),
       ]);
-      return { history, comments };
+      return { history, comments, auditEntries };
     }),
 
   getBatchInfo: protectedProcedure
