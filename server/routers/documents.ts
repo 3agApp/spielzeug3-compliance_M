@@ -73,7 +73,11 @@ export const documentsRouter = router({
     }),
 
   delete: protectedProcedure
-    .input(z.object({ documentId: z.number(), productId: z.number().optional() }))
+    .input(z.object({
+      documentId: z.number(),
+      productId: z.number().optional(),
+      operatorComment: z.string().max(500).optional(),
+    }))
     .mutation(async ({ ctx, input }) => {
       try {
         return await documentService.delete(ctx.user as any, input);

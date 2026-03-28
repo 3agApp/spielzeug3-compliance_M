@@ -426,3 +426,13 @@
 - [x] Frontend: Kommentar-State wird beim Schließen des Dialogs zurückgesetzt
 - [x] Frontend: Kommentar in der Timeline als blaue Info-Box mit MessageSquare-Icon angezeigt
 - [x] 172 Tests grün, 0 TypeScript-Fehler
+
+## Betreiber-Kommentar beim Dokument-Löschen
+- [x] Backend: operatorComment (optional, max. 500 Zeichen) im documents.delete-Input-Schema
+- [x] Backend: documentService speichert operatorComment im Audit-Log-Payload beim Löschen
+- [x] Frontend: Trash2-Icon-Button in Dokumententabelle (für Supplier und Betreiber)
+- [x] Frontend: Bestätigungs-Dialog mit Dateiname, Kommentarfeld (nur Betreiber) und Zeichenzähler
+- [x] Frontend: Kommentar in der Timeline als blaue Info-Box (gleiche Darstellung wie beim Upload)
+- [x] State-Reset beim Schließen des Dialogs
+- [x] Vollständigkeitserklärungs-Reset-Toast wenn Supplier-Bestätigung zurückgesetzt wurde
+- [x] 172 Tests grün, 0 TypeScript-Fehler

@@ -56,6 +56,7 @@ export interface UpdateReviewStatusInput {
 export interface DeleteDocumentInput {
   documentId: number;
   productId?: number;
+  operatorComment?: string; // optional reason added by operator when deleting
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -244,6 +245,10 @@ export const documentService = {
       performedByUserId: user.id,
       actorRole,
       actorName,
+      payloadSnapshot: {
+        documentId: input.documentId,
+        ...(input.operatorComment ? { operatorComment: input.operatorComment } : {}),
+      } as any,
     });
     return { success: true, confirmedAtReset };
   },

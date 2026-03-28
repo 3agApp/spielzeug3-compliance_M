@@ -36,6 +36,7 @@ import {
   Send,
   Shield,
   ShieldCheck,
+  Trash2,
   Upload,
   XCircle,
 } from "lucide-react";
@@ -99,6 +100,28 @@ export default function ProductDetail() {
       utils.products.getById.invalidate({ id: productId });
     },
     onError: (e) => toast.error(e.message),
+  });
+
+  // Delete document state
+  const [deleteDocId, setDeleteDocId] = useState<number | null>(null);
+  const [deleteDocName, setDeleteDocName] = useState<string>("");
+  const [deleteComment, setDeleteComment] = useState("");
+  const deleteMutation = trpc.documents.delete.useMutation({
+    onSuccess: (res: any) => {
+      setDeleteDocId(null);
+      setDeleteDocName("");
+      setDeleteComment("");
+      documentsQuery.refetch();
+      utils.products.getById.invalidate({ id: productId });
+      toast.success("Dokument gelöscht");
+      if (res?.confirmedAtReset) {
+        toast.warning("Vollständigkeitserklärung zurückgesetzt", {
+          description: "Da ein Dokument entfernt wurde, muss die Vollständigkeit im Siegel-Tab erneut bestätigt werden.",
+          duration: 6000,
+        });
+      }
+    },
+    onError: (e: any) => toast.error(e.message),
   });
 
   // Comment mutation
@@ -422,12 +445,27 @@ export default function ProductDetail() {
                         <td className="text-muted-foreground text-xs">
                           {new Date(doc.uploadedAt).toLocaleDateString()}
                         </td>
-                        <td>
+                        <td className="flex items-center gap-1">
                           <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer">
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" title="Herunterladen">
                               <FileText className="h-4 w-4" />
                             </Button>
                           </a>
+                          {(role === "supplier" || isInternalRole) && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              title="Dokument löschen"
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                              onClick={() => {
+                                setDeleteDocId(doc.id);
+                                setDeleteDocName(doc.fileName);
+                                setDeleteComment("");
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -437,6 +475,66 @@ export default function ProductDetail() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Delete Document Confirmation Dialog */}
+        <Dialog open={deleteDocId !== null} onOpenChange={(open) => { if (!open) { setDeleteDocId(null); setDeleteComment(""); } }}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-red-600">
+                <Trash2 className="h-5 w-5" />
+                Dokument löschen
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <p className="text-sm text-muted-foreground">
+                Soll das Dokument <span className="font-semibold text-foreground">{deleteDocName}</span> unwiderruflich gelöscht werden?
+              </p>
+              {isInternalRole && (
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="deleteComment" className="text-sm">
+                      Begründung
+                      <span className="ml-1 text-xs text-muted-foreground">(optional)</span>
+                    </Label>
+                    <Badge variant="outline" className="text-xs text-blue-700 border-blue-300 bg-blue-50">
+                      Betreiber
+                    </Badge>
+                  </div>
+                  <Textarea
+                    id="deleteComment"
+                    placeholder="z. B. Ersetzt durch aktualisiertes Prüfprotokoll…"
+                    value={deleteComment}
+                    onChange={(e) => setDeleteComment(e.target.value)}
+                    rows={3}
+                    maxLength={500}
+                    className="resize-none text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground text-right">{deleteComment.length}/500</p>
+                </div>
+              )}
+            </div>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => { setDeleteDocId(null); setDeleteComment(""); }}>
+                Abbrechen
+              </Button>
+              <Button
+                variant="destructive"
+                disabled={deleteMutation.isPending}
+                onClick={() => {
+                  if (deleteDocId === null) return;
+                  deleteMutation.mutate({
+                    documentId: deleteDocId,
+                    productId,
+                    operatorComment: isInternalRole && deleteComment.trim() ? deleteComment.trim() : undefined,
+                  });
+                }}
+              >
+                {deleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
+                Löschen
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Safety Tab */}
         <TabsContent value="safety" className="mt-4">
