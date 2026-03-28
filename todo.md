@@ -577,3 +577,7 @@
 - [x] Frontend: Risiko-Ampel (1-3 grün, 4-6 gelb, 7-10 rot)
 - [x] i18n-Keys DE/EN inline in Komponente
 - [x] Tests für riskAssessment-Router (13 Tests)
+
+## Risikoscore-Badge in Produktliste
+- [x] Backend: getAllProducts und getProductsBySupplier liefern latestRiskScore und riskLevel mit
+- [x] Frontend: Risikoscore-Badge in Produktliste (Products.tsx) – farbig nach Ampel

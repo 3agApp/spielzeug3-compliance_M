@@ -190,6 +190,19 @@ export async function getAllProducts(filters?: {
   for (const row of imageRows) {
     imageMap[row.productId] = row.url;
   }
+  // Get latest risk assessment score per product
+  const riskRows = productIds.length > 0
+    ? await db.execute(
+        sql`SELECT productId, overallRiskScore, riskLevel FROM product_risk_assessments WHERE id IN (SELECT MAX(id) FROM product_risk_assessments WHERE productId IN (${sql.join(productIds.map((id) => sql`${id}`), sql`, `)}) AND status = 'completed' GROUP BY productId)`
+      )
+    : { rows: [] };
+  const riskMap: Record<number, { score: number; level: string } | null> = {};
+  for (const row of (riskRows as any).rows ?? riskRows) {
+    riskMap[Number((row as any).productId)] = {
+      score: Number((row as any).overallRiskScore),
+      level: String((row as any).riskLevel),
+    };
+  }
   return rows.map(({ products: p, suppliers: s }) => {
     let sealStatus: 'verified' | 'in_progress' | 'not_verified' = 'not_verified';
     if (p.sealStatusOverride) {
@@ -206,10 +219,11 @@ export async function getAllProducts(filters?: {
       latestAiScore: aiMap[p.id] ?? null,
       sealStatus,
       firstImageUrl: imageMap[p.id] ?? null,
+      latestRiskScore: riskMap[p.id]?.score ?? null,
+      latestRiskLevel: riskMap[p.id]?.level ?? null,
     };
   });
 }
-
 export async function getProductById(id: number) {
   const db = await getDb();
   if (!db) return null;

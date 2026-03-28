@@ -36,12 +36,29 @@ import {
   Package,
   Plus,
   Search,
+  ShieldAlert,
   Sparkles,
   XCircle,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
+
+// ─── Risk Score mini-badge ───────────────────────────────────────────────────
+function RiskScoreBadge({ score, level }: { score: number | null | undefined; level: string | null | undefined }) {
+  if (score === null || score === undefined) return <span className="text-muted-foreground text-xs">–</span>;
+  const color =
+    level === "critical" ? "text-red-700 bg-red-50 border-red-300"
+    : level === "high" ? "text-orange-700 bg-orange-50 border-orange-300"
+    : level === "medium" ? "text-amber-700 bg-amber-50 border-amber-300"
+    : "text-emerald-700 bg-emerald-50 border-emerald-300";
+  return (
+    <Badge variant="outline" className={`gap-1 text-xs font-semibold ${color}`}>
+      <ShieldAlert className="h-3 w-3" />
+      {score}/10
+    </Badge>
+  );
+}
 
 // ─── AI Score mini-badge ──────────────────────────────────────────────────────
 function AiScoreBadge({ score }: { score: number | null | undefined }) {
@@ -454,6 +471,12 @@ export default function Products() {
                       </span>
                     </th>
                     <th>{t.product.missingRequirements}</th>
+                    <th className="whitespace-nowrap">
+                      <span className="flex items-center gap-1">
+                        <ShieldAlert className="h-3.5 w-3.5" />
+                        {lang === "de" ? "Risiko" : "Risk"}
+                      </span>
+                    </th>
                     <th className="whitespace-nowrap">{lang === "de" ? "Siegel" : "Seal"}</th>
                     <th></th>
                   </tr>
@@ -535,6 +558,9 @@ export default function Products() {
                               OK
                             </Badge>
                           )}
+                        </td>
+                        <td>
+                          <RiskScoreBadge score={p.latestRiskScore} level={p.latestRiskLevel} />
                         </td>
                         <td onClick={(e) => e.stopPropagation()}>
                           {p.publicUuid ? (
