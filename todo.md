@@ -490,3 +490,7 @@
 - [x] Admin-UI: Globe/GlobeLock-Toggle in DocumentRow (nur für interne Rollen, nur bei approved-Dokumenten)
 - [x] Admin-UI: Optimistic Update mit Rollback bei Fehler, Toast-Meldung
 - [x] 4 neue Tests (22 in documentVersioning.test.ts), 194 Tests gesamt grün, 0 TypeScript-Fehler
+
+## Landingpage-Vorschau-Button in Produktdetailseite
+- [x] Vorschau-Button im Siegel-Tab (nur interne Rollen / canManage, nur wenn publicUuid vorhanden)
+- [x] Button öffnet /p/:uuid in neuem Tab (gestrichelte Umrandung, hover solid)

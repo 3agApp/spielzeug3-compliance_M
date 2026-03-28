@@ -992,6 +992,24 @@ function SealTab({
                     </Button>
                   </a>
                 </div>
+
+                {/* Landingpage-Vorschau-Button */}
+                {canManage && (
+                  <a
+                    href={seal.publicUrl ?? ""}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full gap-2 mt-1 border-dashed hover:border-solid hover:bg-accent"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      Landingpage-Vorschau (Endkunden-Ansicht)
+                    </Button>
+                  </a>
+                )}
               </div>
 
               {/* Admin: Status Override */}
