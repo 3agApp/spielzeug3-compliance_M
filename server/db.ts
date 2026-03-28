@@ -13,6 +13,7 @@ import {
   missingRequirements,
   notifications,
   productComponents,
+  productImages,
   productSafetyEntries,
   products,
   requirementTypes,
@@ -178,6 +179,17 @@ export async function getAllProducts(filters?: {
     aiMap[Number((row as any).productId)] = (row as any).overallScore != null ? Number((row as any).overallScore) : null;
   }
 
+  // Get first image per product
+  const imageRows = productIds.length > 0
+    ? await db
+        .select({ productId: productImages.productId, url: productImages.url })
+        .from(productImages)
+        .where(sql`${productImages.productId} IN (${sql.join(productIds.map((id) => sql`${id}`), sql`, `)}) AND ${productImages.sortOrder} = 0`)
+    : [];
+  const imageMap: Record<number, string | null> = {};
+  for (const row of imageRows) {
+    imageMap[row.productId] = row.url;
+  }
   return rows.map(({ products: p, suppliers: s }) => {
     let sealStatus: 'verified' | 'in_progress' | 'not_verified' = 'not_verified';
     if (p.sealStatusOverride) {
@@ -193,6 +205,7 @@ export async function getAllProducts(filters?: {
       missingCount: missingMap[p.id] ?? 0,
       latestAiScore: aiMap[p.id] ?? null,
       sealStatus,
+      firstImageUrl: imageMap[p.id] ?? null,
     };
   });
 }
@@ -220,11 +233,22 @@ export async function updateProduct(id: number, data: Partial<typeof products.$i
 export async function getProductsBySupplier(supplierId: number) {
   const db = await getDb();
   if (!db) return [];
-  return db
+  const rows = await db
     .select()
     .from(products)
     .where(eq(products.supplierId, supplierId))
     .orderBy(desc(products.lastUpdatedAt));
+  if (rows.length === 0) return [];
+  const productIds = rows.map((r) => r.id);
+  const imageRows = await db
+    .select({ productId: productImages.productId, url: productImages.url })
+    .from(productImages)
+    .where(sql`${productImages.productId} IN (${sql.join(productIds.map((id) => sql`${id}`), sql`, `)}) AND ${productImages.sortOrder} = 0`);
+  const imageMap: Record<number, string | null> = {};
+  for (const row of imageRows) {
+    imageMap[row.productId] = row.url;
+  }
+  return rows.map((p) => ({ ...p, firstImageUrl: imageMap[p.id] ?? null }));
 }
 
 // ─── Missing Requirements ────────────────────────────────────────────────────

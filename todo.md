@@ -546,3 +546,7 @@
 - [x] Frontend: i18n-Keys für Produktbilder (DE + EN)
 - [x] Öffentliche Landingpage: Bildergalerie anzeigen
 - [x] Tests für Upload/List/Delete-Endpoints
+
+## Produktbild-Thumbnail in Produktliste
+- [x] Backend: getAllProducts und getProductsBySupplier liefern firstImageUrl mit
+- [x] Frontend: Thumbnail-Spalte in Produktliste (Products.tsx)

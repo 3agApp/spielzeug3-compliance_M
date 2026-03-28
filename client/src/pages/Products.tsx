@@ -31,6 +31,7 @@ import {
   CheckCircle2,
   Download,
   FileArchive,
+  ImageIcon,
   Loader2,
   Package,
   Plus,
@@ -438,6 +439,7 @@ export default function Products() {
                         />
                       </th>
                     )}
+                    <th className="w-14"></th>
                     <th>{t.product.productName}</th>
                     <th>{t.product.internalArticleNumber}</th>
                     <th>{t.product.supplierArticleNumber}</th>
@@ -477,6 +479,22 @@ export default function Products() {
                             />
                           </td>
                         )}
+                        <td className="pl-3 pr-1 py-2">
+                          {p.firstImageUrl ? (
+                            <div className="w-10 h-10 rounded-md overflow-hidden border border-border bg-muted flex-shrink-0">
+                              <img
+                                src={p.firstImageUrl}
+                                alt={p.productName}
+                                className="w-full h-full object-cover"
+                                loading="lazy"
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-10 h-10 rounded-md border border-dashed border-muted-foreground/30 bg-muted/40 flex items-center justify-center flex-shrink-0">
+                              <ImageIcon className="h-4 w-4 text-muted-foreground/30" />
+                            </div>
+                          )}
+                        </td>
                         <td>
                           <div className="font-medium">{p.productName}</div>
                           {p.ean && (
