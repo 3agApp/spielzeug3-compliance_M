@@ -410,3 +410,11 @@
 - [x] Akteur-Name und Payload-Details (Dateiname/Dokumenttyp) in jedem Timeline-Eintrag
 - [x] Aktions-Labels deutschübersetzt (document_uploaded, safety_upserted, etc.)
 - [x] 172 Tests grün, 0 TypeScript-Fehler
+
+## Timeline-Filter
+- [x] Filter-Schaltflächen „Alle / Supplier / Betreiber / System–Workflow“ in TimelineCard
+- [x] Aktive Filterauswahl per useState<TimelineFilter>, gefilterte visibleEvents-Liste
+- [x] Anzahl-Badge pro Filter-Button (zeigt Anzahl passender Einträge)
+- [x] Leer-State „Keine Einträge für diesen Filter“ wenn Filter 0 Treffer liefert
+- [x] Verbindungs-Linie korrekt auf visibleEvents.length bezogen
+- [x] 172 Tests grün, 0 TypeScript-Fehler

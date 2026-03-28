@@ -1475,7 +1475,10 @@ function SafetyDataCard({ productId, safety, role, t, onSuccess }: any) {
 }
 
 // ─── Timeline Card ────────────────────────────────────────────────────────────
+type TimelineFilter = "all" | "supplier" | "operator" | "system";
+
 function TimelineCard({ productId, t }: any) {
+  const [activeFilter, setActiveFilter] = useState<TimelineFilter>("all");
   const timelineQuery = trpc.products.getTimeline.useQuery({ productId });
   const timelineData = timelineQuery.data as any;
   const approvalHistory: any[] = timelineData?.history ?? [];
@@ -1486,6 +1489,23 @@ function TimelineCard({ productId, t }: any) {
     ...approvalHistory.map((e: any) => ({ ...e, _type: "approval" as const })),
     ...auditEntries.map((e: any) => ({ ...e, _type: "audit" as const })),
   ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  // Count per category for badges
+  const counts = {
+    all: allEvents.length,
+    supplier: allEvents.filter(e => e._type === "audit" && e.actorRole === "supplier").length,
+    operator: allEvents.filter(e => e._type === "audit" && e.actorRole === "operator").length,
+    system: allEvents.filter(e => e._type === "approval").length,
+  };
+
+  // Apply filter
+  const visibleEvents = allEvents.filter(e => {
+    if (activeFilter === "all") return true;
+    if (activeFilter === "supplier") return e._type === "audit" && e.actorRole === "supplier";
+    if (activeFilter === "operator") return e._type === "audit" && e.actorRole === "operator";
+    if (activeFilter === "system") return e._type === "approval";
+    return true;
+  });
 
   const getApprovalIcon = (action: string) => {
     if (action.includes("approved") || action.includes("completed")) return <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
@@ -1529,30 +1549,45 @@ function TimelineCard({ productId, t }: any) {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <div className="flex items-center gap-4">
-          <CardTitle className="text-base">Aktivitätsprotokoll</CardTitle>
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded-full bg-violet-400 inline-block" />
-              Supplier
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded-full bg-blue-400 inline-block" />
-              Betreiber
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded-full bg-slate-400 inline-block" />
-              System
-            </span>
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="text-base">Aktivitätsprotokoll</CardTitle>
+            <span className="text-xs text-muted-foreground">{allEvents.length} Einträge</span>
+          </div>
+          {/* Filter buttons */}
+          <div className="flex flex-wrap gap-1.5">
+            {([
+              { key: "all",      label: "Alle",           color: "bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200",    active: "bg-slate-700 text-white border-slate-700" },
+              { key: "supplier", label: "Supplier",       color: "bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100", active: "bg-violet-600 text-white border-violet-600" },
+              { key: "operator", label: "Betreiber",      color: "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100",         active: "bg-blue-600 text-white border-blue-600" },
+              { key: "system",   label: "System/Workflow",color: "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100", active: "bg-emerald-600 text-white border-emerald-600" },
+            ] as const).map(({ key, label, color, active }) => (
+              <button
+                key={key}
+                onClick={() => setActiveFilter(key as TimelineFilter)}
+                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors ${
+                  activeFilter === key ? active : color
+                }`}
+              >
+                {label}
+                <span className={`rounded-full px-1 py-px text-[10px] font-semibold ${
+                  activeFilter === key ? "bg-white/25 text-inherit" : "bg-white/60 text-inherit"
+                }`}>
+                  {counts[key]}
+                </span>
+              </button>
+            ))}
           </div>
         </div>
       </CardHeader>
       <CardContent className="p-5 pt-0">
         {allEvents.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-6">Noch keine Aktivitäten</p>
+        ) : visibleEvents.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-6">Keine Einträge für diesen Filter</p>
         ) : (
           <div className="space-y-1">
-            {allEvents.map((e: any, i: number) => {
+            {visibleEvents.map((e: any, i: number) => {
               const isAudit = e._type === "audit";
               const isOperator = isAudit && e.actorRole === "operator";
               const isSupplier = isAudit && e.actorRole === "supplier";
@@ -1578,7 +1613,7 @@ function TimelineCard({ productId, t }: any) {
                         ? getAuditIcon(e.action, e.actorRole ?? "")
                         : getApprovalIcon(e.action)}
                     </div>
-                    {i < allEvents.length - 1 && (
+                    {i < visibleEvents.length - 1 && (
                       <div className="w-px flex-1 bg-border mt-1 min-h-[12px]" />
                     )}
                   </div>
