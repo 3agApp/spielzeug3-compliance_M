@@ -587,3 +587,8 @@
 - [x] Backend: Setting RISK_AUTO_REASSESS (boolean, default true) in system_settings
 - [x] Frontend: Risiko-Tab zeigt Hinweis-Banner wenn status=running (Polling alle 5 s)
 - [x] Test: 219 Tests grün, 0 TypeScript-Fehler
+
+## Toggle: Automatische Risikobewertung in Admin-Einstellungen
+- [x] Frontend: State + Query für RISK_AUTO_REASSESS in AdminSettings.tsx
+- [x] Frontend: Switch-Block im AI-Tab (nach dem bestehenden KI-Analyse-Inhalt)
+- [x] Frontend: Speichern-Button nutzt saveSealSettingMutation

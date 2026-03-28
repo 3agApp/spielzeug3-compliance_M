@@ -67,6 +67,16 @@ export default function AdminSettings() {
     setAutoRevokeExpired(autoRevokeValue !== "false" && autoRevokeValue !== "0");
     setAutoRevokeLoaded(true);
   }
+  // Auto risk re-assessment on document upload setting
+  const [riskAutoReassess, setRiskAutoReassess] = useState(true);
+  const [riskAutoReassessLoaded, setRiskAutoReassessLoaded] = useState(false);
+  const riskAutoReassessQuery = trpc.admin.getSystemSetting.useQuery({ key: "RISK_AUTO_REASSESS" });
+  const riskAutoReassessValue = riskAutoReassessQuery.data?.settingValue;
+  if (!riskAutoReassessLoaded && riskAutoReassessValue !== null && riskAutoReassessValue !== undefined) {
+    setRiskAutoReassess(riskAutoReassessValue !== "false" && riskAutoReassessValue !== "0");
+    setRiskAutoReassessLoaded(true);
+  }
+
   const revokeNowMutation = trpc.documents.revokeExpiredPublic.useMutation({
     onSuccess: (data) => {
       if (data.skipped) {
@@ -792,11 +802,71 @@ export default function AdminSettings() {
                   <li>• {lang === "de" ? "Das Ergebnis erscheint als Score (0–100%) mit Begründung direkt beim Produkt" : "The result appears as a score (0–100%) with reasoning directly on the product"}</li>
                   <li>• {lang === "de" ? "Alle Analysen werden gespeichert und können jederzeit abgerufen werden" : "All analyses are saved and can be retrieved at any time"}</li>
                 </ul>
+               </div>
+            </CardContent>
+          </Card>
+
+          {/* ─── Automatische Risikobewertung ─── */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Shield className="h-4 w-4" />
+                {lang === "de" ? "Automatische Risikobewertung" : "Automatic Risk Assessment"}
+              </CardTitle>
+              <CardDescription>
+                {lang === "de"
+                  ? "Steuert, ob nach jedem Dokument-Upload automatisch eine neue KI-Risikobewertung für das betroffene Produkt gestartet wird."
+                  : "Controls whether a new AI risk assessment is automatically triggered for the affected product after every document upload."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between py-2">
+                <div>
+                  <p className="text-sm font-medium">
+                    {lang === "de" ? "Risikobewertung bei Dokument-Upload automatisch neu berechnen" : "Recalculate risk assessment automatically on document upload"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {lang === "de"
+                      ? "Die Bewertung läuft im Hintergrund (fire-and-forget) und blockiert den Upload nicht. Der aktuelle Score wird im Risiko-Tab des Produkts angezeigt."
+                      : "The assessment runs in the background (fire-and-forget) and does not block the upload. The current score is displayed in the product's Risk tab."}
+                  </p>
+                </div>
+                <Switch
+                  checked={riskAutoReassess}
+                  onCheckedChange={setRiskAutoReassess}
+                  disabled={riskAutoReassessQuery.isLoading}
+                />
+              </div>
+              <Button
+                onClick={() =>
+                  saveSealSettingMutation.mutate({
+                    key: "RISK_AUTO_REASSESS",
+                    value: riskAutoReassess ? "true" : "false",
+                  })
+                }
+                disabled={saveSealSettingMutation.isPending}
+                variant="outline"
+              >
+                {saveSealSettingMutation.isPending ? (
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
+                {lang === "de" ? "Speichern" : "Save"}
+              </Button>
+              <div className="rounded-lg border p-3 bg-muted/20 text-sm text-muted-foreground">
+                <p className="font-medium text-foreground mb-1">
+                  {lang === "de" ? "Wann wird die Bewertung ausgelöst?" : "When is the assessment triggered?"}
+                </p>
+                <p>
+                  {lang === "de"
+                    ? "Jedes Mal, wenn ein interner Nutzer oder ein Lieferant ein neues Dokument für ein Produkt hochlädt, wird im Hintergrund automatisch eine neue Risikobewertung gestartet. Die Bewertung berücksichtigt alle vorliegenden Dokumente, Komponenten, offene Anforderungen und die letzte KI-Analyse."
+                    : "Every time an internal user or supplier uploads a new document for a product, a new risk assessment is automatically started in the background. The assessment takes into account all available documents, components, open requirements and the latest AI analysis."}
+                </p>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
-
         {/* ── Security ── */}
         <TabsContent value="security" className="space-y-4 mt-4">
           <Card>
