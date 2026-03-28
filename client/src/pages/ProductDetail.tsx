@@ -13,6 +13,7 @@ import { useLang} from "@/lib/i18n";
 import { translateError } from "@/lib/translateError";
 import { trpc } from "@/lib/trpc";
 import { AiAnalysisCard } from "@/components/AiAnalysisCard";
+import RiskAssessmentTab from "@/components/RiskAssessmentTab";
 import ComponentsTab from "@/components/ComponentsTab";
 import ProductImagesGallery from "@/components/ProductImagesGallery";
 import SignatureRequestDialog from "@/components/SignatureRequestDialog";
@@ -40,6 +41,7 @@ import {
   QrCode,
   Send,
   Shield,
+  ShieldAlert,
   ShieldCheck,
   Trash2,
   Upload,
@@ -67,7 +69,7 @@ export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
   const productId = parseInt(id ?? "0");
   const { user } = useAuth();
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [activeTab, setActiveTab] = useState("documents");
   const [, setLocation] = useLocation();
   const role = (user as any)?.complianceRole ?? "internal_employee";
@@ -377,6 +379,12 @@ export default function ProductDetail() {
             <Package className="h-4 w-4" />
             {t.batch.tabLabel}
           </TabsTrigger>
+          {isInternalRole && (
+            <TabsTrigger value="risk" className="gap-2">
+              <ShieldAlert className="h-4 w-4" />
+              {lang === "de" ? "Risiken" : "Risks"} {/* risk tab label */}
+            </TabsTrigger>
+          )}
           <TabsTrigger value="images" className="gap-2">
             <ImageIcon className="h-4 w-4" />
             {(t as any).productImages?.tabLabel ?? "Bilder"}
@@ -636,6 +644,12 @@ export default function ProductDetail() {
         <TabsContent value="batch" className="mt-4">
           <BatchTab productId={productId} canEdit={isInternalRole} />
         </TabsContent>
+        {/* Risk Assessment Tab */}
+        {isInternalRole && (
+          <TabsContent value="risk" className="mt-4">
+            <RiskAssessmentTab productId={productId} isInternalRole={isInternalRole} />
+          </TabsContent>
+        )}
         {/* Seal Tab */}
         {(isInternalRole || role === "supplier") && (
           <TabsContent value="seal" className="mt-4">

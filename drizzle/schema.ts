@@ -586,3 +586,27 @@ export const productImages = mysqlTable("product_images", {
 });
 export type ProductImage = typeof productImages.$inferSelect;
 export type InsertProductImage = typeof productImages.$inferInsert;
+
+// ─── Product Risk Assessments (AI-powered) ───────────────────────────────────
+export const productRiskAssessments = mysqlTable("product_risk_assessments", {
+  id: int("id").autoincrement().primaryKey(),
+  productId: int("productId").notNull(),
+  tenantId: int("tenantId").default(1).notNull(),
+  // Overall risk score 1 (low) – 10 (high)
+  overallRiskScore: decimal("overallRiskScore", { precision: 4, scale: 1 }).notNull(),
+  riskLevel: mysqlEnum("riskLevel", ["low", "medium", "high", "critical"]).notNull(),
+  // AI output (structured JSON)
+  risks: json("risks"),           // Array of { category, score, title, description, mitigations[] }
+  summary: text("summary"),       // 2-3 sentence executive summary
+  missingInfo: json("missingInfo"), // Array of strings: what info would reduce risk
+  modelUsed: varchar("modelUsed", { length: 64 }),
+  tokensUsed: int("tokensUsed"),
+  status: mysqlEnum("status", ["pending", "running", "completed", "failed"]).default("pending").notNull(),
+  errorMessage: text("errorMessage"),
+  triggeredByUserId: int("triggeredByUserId"),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ProductRiskAssessment = typeof productRiskAssessments.$inferSelect;
+export type InsertProductRiskAssessment = typeof productRiskAssessments.$inferInsert;

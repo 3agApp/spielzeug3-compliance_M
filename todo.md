@@ -565,3 +565,15 @@
 ## Beispiel-Siegel PNG-Download
 - [x] Backend: /api/reports/seal-label-example?format=png liefert PNG statt PDF
 - [x] Frontend: PNG-Download-Button neben PDF-Button in der Beispiel-Siegel-Karte
+
+## KI-Risikobewertung pro Produkt
+- [x] DB: Tabelle product_risk_assessments (id, productId, risks JSON, overallRiskScore, status, createdAt, triggeredByUserId)
+- [x] Migration ausführen
+- [x] Backend: riskAssessmentService mit LLM-Prompt (Risiken 1-10, Kategorie, Begründung, Maßnahmen)
+- [x] Backend: tRPC-Router riskAssessment (run, getLatest, getHistory)
+- [x] Backend: invokeLLM statt direktem OpenAI-Call (nutzt Manus Built-in LLM)
+- [x] Frontend: Risiko-Tab in ProductDetail (Übersicht, Risiko-Karten, Verlauf)
+- [x] Frontend: Trigger-Button für neue Bewertung (interne Rollen)
+- [x] Frontend: Risiko-Ampel (1-3 grün, 4-6 gelb, 7-10 rot)
+- [x] i18n-Keys DE/EN inline in Komponente
+- [x] Tests für riskAssessment-Router (13 Tests)

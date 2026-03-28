@@ -11,6 +11,7 @@ import { adminRouter } from "./routers/admin";
 import { notificationsRouter } from "./routers/notifications";
 import { syncRouter } from "./routers/sync";
 import { aiAnalysisRouter } from "./routers/aiAnalysis";
+import { riskAssessmentRouter } from "./routers/riskAssessment";
 import { expiryRouter } from "./routers/expiry";
 import { invitationsRouter } from "./routers/invitations";
 import { templatesRouter } from "./routers/templates";
@@ -39,6 +40,7 @@ export const appRouter = router({
   notifications: notificationsRouter,
   sync: syncRouter,
   aiAnalysis: aiAnalysisRouter,
+  riskAssessment: riskAssessmentRouter,
   expiry: expiryRouter,
   invitations: invitationsRouter,
   templates: templatesRouter,
