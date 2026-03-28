@@ -1,6 +1,43 @@
 import type { Express } from "express";
 import { sdk } from "./_core/sdk";
 import QRCode from "qrcode";
+import * as fs from "fs";
+import * as os from "os";
+import * as path from "path";
+import { spawnSync } from "child_process";
+import sharp from "sharp";
+
+/**
+ * Convert a PDF buffer to a high-resolution PNG using pdftoppm (poppler).
+ * Returns a PNG Buffer of the first page at 150 dpi.
+ */
+async function pdfToPng(pdfBuffer: Buffer, dpi = 150): Promise<Buffer> {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "seal-png-"));
+  const pdfPath = path.join(tmpDir, "seal.pdf");
+  const outBase = path.join(tmpDir, "page");
+  try {
+    fs.writeFileSync(pdfPath, pdfBuffer);
+    const result = spawnSync(
+      "pdftoppm",
+      ["-r", String(dpi), "-png", "-singlefile", pdfPath, outBase],
+      { timeout: 15_000 }
+    );
+    if (result.status !== 0) {
+      throw new Error(`pdftoppm failed: ${result.stderr?.toString()}`);
+    }
+    const pngPath = `${outBase}.png`;
+    if (!fs.existsSync(pngPath)) {
+      throw new Error("pdftoppm produced no output file");
+    }
+    // Use sharp to ensure clean RGBA PNG with transparent background
+    const pngBuffer = await sharp(pngPath)
+      .png({ compressionLevel: 6 })
+      .toBuffer();
+    return pngBuffer;
+  } finally {
+    try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch {}
+  }
+}
 import {
   getAiAnalysisHistory,
   getLatestAiAnalysisByProduct,
@@ -235,6 +272,19 @@ export function registerPdfRoutes(app: Express) {
       });
 
       const date = new Date().toISOString().slice(0, 10);
+
+      if (format === "png") {
+        // Render first page of PDF to PNG at 150 dpi
+        const pngBuffer = await pdfToPng(pdfBuffer, 150);
+        const pngFilename = `Swiss-Product-Seal_BEISPIEL_verified_${date}.png`;
+        res.setHeader("Content-Type", "image/png");
+        res.setHeader("Content-Disposition", `attachment; filename="${pngFilename}"`);
+        res.setHeader("Content-Length", pngBuffer.length);
+        res.setHeader("Cache-Control", "public, max-age=3600");
+        res.send(pngBuffer);
+        return;
+      }
+
       const filename = `Swiss-Product-Seal_BEISPIEL_verified_${date}.pdf`;
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);

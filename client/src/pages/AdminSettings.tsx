@@ -1070,11 +1070,11 @@ export default function AdminSettings() {
                 </div>
               </div>
 
-              {/* Download-Button */}
+              {/* Download-Buttons */}
               <div className="flex items-center gap-3 flex-wrap">
                 <Button
                   onClick={() => {
-                    const url = `/api/reports/seal-label-example?tenantId=${tenantId}`;
+                    const url = `/api/reports/seal-label-example?tenantId=${tenantId}&format=pdf`;
                     const a = document.createElement("a");
                     a.href = url;
                     a.download = `Swiss-Product-Seal_BEISPIEL_verified_${new Date().toISOString().slice(0, 10)}.pdf`;
@@ -1085,7 +1085,23 @@ export default function AdminSettings() {
                   className="gap-2"
                 >
                   <Download className="h-4 w-4" />
-                  {lang === "de" ? "Beispiel-Siegel als PDF herunterladen" : "Download sample seal as PDF"}
+                  {lang === "de" ? "Als PDF herunterladen" : "Download as PDF"}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const url = `/api/reports/seal-label-example?tenantId=${tenantId}&format=png`;
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `Swiss-Product-Seal_BEISPIEL_verified_${new Date().toISOString().slice(0, 10)}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                  }}
+                  className="gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  {lang === "de" ? "Als PNG herunterladen" : "Download as PNG"}
                 </Button>
                 <span className="text-xs text-muted-foreground">
                   {lang === "de" ? "Status: VERIFIED · A6-Format · mit QR-Code" : "Status: VERIFIED · A6 format · with QR code"}

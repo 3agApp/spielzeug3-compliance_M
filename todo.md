@@ -561,3 +561,7 @@
 - [x] Backend: /api/reports/seal-label-example (kein Auth, QR zeigt auf /seal-info, status=verified)
 - [x] Frontend: Beispiel-Siegel-Karte in AdminSettings Seal-Tab (Vorschau + PDF Download)
 - [x] i18n direkt inline (DE/EN)
+
+## Beispiel-Siegel PNG-Download
+- [x] Backend: /api/reports/seal-label-example?format=png liefert PNG statt PDF
+- [x] Frontend: PNG-Download-Button neben PDF-Button in der Beispiel-Siegel-Karte
