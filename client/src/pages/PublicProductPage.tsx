@@ -551,17 +551,25 @@ export default function PublicProductPage() {
           <CardContent>
             <div className="flex items-center gap-3">
               {product.tenant?.logoUrl ? (
-                <img src={product.tenant.logoUrl} alt={importerName} className="h-10 w-auto object-contain" />
+                <img
+                  src={product.tenant.logoUrl}
+                  alt={importerName}
+                  className="h-12 w-auto max-w-[140px] object-contain rounded"
+                />
               ) : (
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-bold"
+                <div className="w-12 h-12 rounded-lg flex items-center justify-center text-white text-sm font-bold shrink-0"
                   style={{ backgroundColor: primaryColor }}>
                   {importerName.charAt(0).toUpperCase()}
                 </div>
               )}
               <div>
                 <p className="font-semibold text-gray-900">{importerName}</p>
-                {product.tenant?.slug && (
-                  <p className="text-xs text-gray-500">swiss-product-seal.ch/{product.tenant.slug}</p>
+                {((product.tenant as any)?.websiteUrl ?? product.tenant?.slug) && (
+                  <p className="text-xs text-gray-500">
+                    {(product.tenant as any)?.websiteUrl
+                      ? (product.tenant as any).websiteUrl.replace(/^https?:\/\//, "")
+                      : `swiss-product-seal.ch/${product.tenant?.slug}`}
+                  </p>
                 )}
               </div>
             </div>

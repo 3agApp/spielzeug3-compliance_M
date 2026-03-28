@@ -380,3 +380,10 @@
 - [x] PDF-Generator: Logo vor new Promise() laden (async-safe), im Importer-Block einbetten (80×26 pt)
 - [x] pdfRoutes.ts: tenantLogoUrl aus Tenant-Daten an PDF-Generator übergeben
 - [x] 172 Tests grün, 0 TypeScript-Fehler
+
+## Logo auf öffentlicher Produkt-Landingpage
+- [x] Backend: logoUrl und websiteUrl des Mandanten in getPublicProduct-Antwort einbezogen
+- [x] Frontend: Logo im Importeur-Block der PublicProductPage (48px H, max 140px B, object-contain)
+- [x] Fallback: farbiger Avatar-Block mit Anfangsbuchstaben wenn kein Logo vorhanden
+- [x] websiteUrl statt Slug als Unterzeile angezeigt (https:// wird abgeschnitten)
+- [x] 172 Tests grün, 0 TypeScript-Fehler

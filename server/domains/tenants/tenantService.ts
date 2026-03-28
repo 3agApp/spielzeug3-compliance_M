@@ -293,6 +293,7 @@ export const tenantService = {
             logoUrl: tenant.logoUrl,
             primaryColor: tenant.primaryColor,
             contactEmail: (tenant as any).contactEmail ?? null,
+            websiteUrl: (tenant as any).websiteUrl ?? null,
           }
         : null,
     };
