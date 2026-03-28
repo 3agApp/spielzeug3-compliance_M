@@ -18,8 +18,8 @@ import {
   ensureProductPublicUuid,
 } from "../../tenantDb";
 import { getDb } from "../../db";
-import { products, productSafetyEntries, documents } from "../../../drizzle/schema";
-import { eq } from "drizzle-orm";
+import { products, productSafetyEntries, documents, productImages } from "../../../drizzle/schema";
+import { eq, asc } from "drizzle-orm";
 import { getSealStatus, getPublicProductUrl } from "../../sealUtils";
 import { TRPCError } from "@trpc/server";
 import { Errors, requireRole } from "../../shared";
@@ -295,6 +295,19 @@ export const tenantService = {
         uploadedAt: d.uploadedAt,
       }));
 
+    // Fetch product images ordered by sortOrder
+    const imagesResult = await db
+      .select({
+        id: productImages.id,
+        url: productImages.url,
+        originalName: productImages.originalName,
+        mimeType: productImages.mimeType,
+        sortOrder: productImages.sortOrder,
+      })
+      .from(productImages)
+      .where(eq(productImages.productId, product.id))
+      .orderBy(asc(productImages.sortOrder));
+
     const sealStatus = getSealStatus(product);
 
     return {
@@ -303,6 +316,7 @@ export const tenantService = {
       ean: product.ean,
       internalArticleNumber: product.internalArticleNumber,
       imageUrl: product.imageUrl,
+      productImages: imagesResult,
       sealStatus,
       approvedAt: product.approvedAt,
       sealEnabledAt: product.sealEnabledAt,

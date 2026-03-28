@@ -18,6 +18,7 @@ import { componentsRouter } from "./routers/components";
 import { bunnydocRouter } from "./routers/bunnydoc";
 import { tenantRouter } from "./routers/tenant";
 import { sealAssetsRouter } from "./routers/sealAssets";
+import { productImagesRouter } from "./routers/productImages";
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -45,6 +46,7 @@ export const appRouter = router({
   bunnydoc: bunnydocRouter,
   tenant: tenantRouter,
   sealAssets: sealAssetsRouter,
+  productImages: productImagesRouter,
 });
 
 export type AppRouter = typeof appRouter;

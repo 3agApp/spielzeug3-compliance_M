@@ -14,6 +14,7 @@ import { translateError } from "@/lib/translateError";
 import { trpc } from "@/lib/trpc";
 import { AiAnalysisCard } from "@/components/AiAnalysisCard";
 import ComponentsTab from "@/components/ComponentsTab";
+import ProductImagesGallery from "@/components/ProductImagesGallery";
 import SignatureRequestDialog from "@/components/SignatureRequestDialog";
 import SignatureRequestList from "@/components/SignatureRequestList";
 import { SealStatusPill } from "@/components/SealBadge";
@@ -45,6 +46,7 @@ import {
   XCircle,
   Globe,
   GlobeLock,
+  ImageIcon,
 } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
@@ -375,6 +377,10 @@ export default function ProductDetail() {
             <Package className="h-4 w-4" />
             {t.batch.tabLabel}
           </TabsTrigger>
+          <TabsTrigger value="images" className="gap-2">
+            <ImageIcon className="h-4 w-4" />
+            {(t as any).productImages?.tabLabel ?? "Bilder"}
+          </TabsTrigger>
           {(isInternalRole || role === "supplier") && (
             <TabsTrigger value="seal" className="gap-2">
               <ShieldCheck className="h-5 w-5" />
@@ -383,6 +389,13 @@ export default function ProductDetail() {
           )}
         </TabsList>
 
+        {/* Images Tab */}
+        <TabsContent value="images" className="mt-4">
+          <ProductImagesGallery
+            productId={productId}
+            readOnly={role !== "supplier" && role !== "internal_employee" && role !== "compliance_manager" && role !== "administrator"}
+          />
+        </TabsContent>
         {/* Components Tab */}
         <TabsContent value="components" className="mt-4">
           <ComponentsTab productId={productId} readOnly={role !== "supplier" && role !== "internal_employee" && role !== "compliance_manager" && role !== "administrator"} />

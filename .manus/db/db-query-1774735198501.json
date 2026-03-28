@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `product_images` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`productId` int NOT NULL,\n\t`url` text NOT NULL,\n\t`fileKey` varchar(512) NOT NULL,\n\t`originalName` varchar(255),\n\t`mimeType` varchar(64),\n\t`fileSizeBytes` int,\n\t`sortOrder` int NOT NULL DEFAULT 0,\n\t`uploadedByUserId` int NOT NULL,\n\t`uploadedAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `product_images_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user J1L9FvUd1r4oKv8.75a96d268c41 --database kgkV5LdecSJ3HqPv7WFR7a --execute CREATE TABLE `product_images` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`productId` int NOT NULL,\n\t`url` text NOT NULL,\n\t`fileKey` varchar(512) NOT NULL,\n\t`originalName` varchar(255),\n\t`mimeType` varchar(64),\n\t`fileSizeBytes` int,\n\t`sortOrder` int NOT NULL DEFAULT 0,\n\t`uploadedByUserId` int NOT NULL,\n\t`uploadedAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `product_images_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 201
+}

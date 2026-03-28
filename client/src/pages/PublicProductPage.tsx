@@ -9,7 +9,7 @@ import {
   ChevronRight, Layers, Tag, Hash, Barcode, FileText,
   BadgeCheck, ClipboardCheck, XCircle, AlertCircle, FileCheck2,
   Download, ExternalLink, BookOpen, FileWarning, Award, Wrench,
-  Image, File, ChevronDown, ChevronUp,
+  Image, File, ChevronDown, ChevronUp, ChevronLeft,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -232,6 +232,71 @@ function PublicDocCard({ doc, t, lang }: { doc: any; t: Record<string, string>; 
   );
 }
 
+// ─── Public Image Gallery ───────────────────────────────────────────────────
+function PublicImageGallery({ images, productName }: { images: Array<{ id: number; url: string; originalName?: string | null }>; productName: string }) {
+  const [active, setActive] = useState(0);
+  if (images.length === 0) return null;
+  return (
+    <div className="bg-gray-50 border-b border-gray-100">
+      {/* Main image */}
+      <div className="relative h-56 flex items-center justify-center overflow-hidden">
+        <img
+          src={images[active].url}
+          alt={images[active].originalName ?? productName}
+          className="h-full w-full object-contain p-4"
+        />
+        {images.length > 1 && (
+          <>
+            <button
+              onClick={() => setActive((p) => (p - 1 + images.length) % images.length)}
+              className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-1.5 shadow-sm transition-colors"
+              aria-label="Vorheriges Bild"
+            >
+              <ChevronLeft size={16} className="text-gray-700" />
+            </button>
+            <button
+              onClick={() => setActive((p) => (p + 1) % images.length)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-1.5 shadow-sm transition-colors"
+              aria-label="Nächstes Bild"
+            >
+              <ChevronRight size={16} className="text-gray-700" />
+            </button>
+            {/* Dot indicators */}
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+              {images.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActive(i)}
+                  className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                    i === active ? "bg-gray-700" : "bg-gray-300 hover:bg-gray-500"
+                  }`}
+                  aria-label={`Bild ${i + 1}`}
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+      {/* Thumbnail strip (if > 1 image) */}
+      {images.length > 1 && (
+        <div className="flex gap-2 px-3 pb-3 overflow-x-auto">
+          {images.map((img, i) => (
+            <button
+              key={img.id}
+              onClick={() => setActive(i)}
+              className={`shrink-0 w-12 h-12 rounded-lg overflow-hidden border-2 transition-colors ${
+                i === active ? "border-gray-700" : "border-transparent hover:border-gray-300"
+              }`}
+            >
+              <img src={img.url} alt={img.originalName ?? `Bild ${i + 1}`} className="w-full h-full object-cover" />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function PublicProductPage() {
   const params = useParams<{ uuid: string }>();
@@ -370,16 +435,16 @@ export default function PublicProductPage() {
           {/* Colored accent bar */}
           <div className="h-1 w-full" style={{ backgroundColor: primaryColor }} />
 
-          {/* Product image (if available) */}
-          {product.imageUrl && (
-            <div className="h-52 bg-gray-50 flex items-center justify-center overflow-hidden border-b border-gray-100">
-              <img
-                src={product.imageUrl}
-                alt={product.productName}
-                className="h-full w-full object-contain p-4"
-              />
-            </div>
-          )}
+          {/* Product images gallery (if available) */}
+          {(() => {
+            const imgs: Array<{ id: number; url: string; originalName?: string | null }> =
+              (product as any).productImages?.length > 0
+                ? (product as any).productImages
+                : product.imageUrl
+                ? [{ id: 0, url: product.imageUrl, originalName: product.productName }]
+                : [];
+            return imgs.length > 0 ? <PublicImageGallery images={imgs} productName={product.productName} /> : null;
+          })()}
 
           <div className="p-5 space-y-4">
             {/* Product name + brand */}

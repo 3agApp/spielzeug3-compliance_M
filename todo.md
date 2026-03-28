@@ -532,3 +532,17 @@
 - [ ] tRPC-Client: onError-Handler nutzt translateError
 - [ ] Alle onError-Callbacks in Mutations nutzen translateError
 - [ ] 0 TypeScript-Fehler, Tests grün
+
+## Produktbilder-Feature
+- [x] DB: Neue Tabelle product_images (id, productId, url, fileKey, sortOrder, uploadedAt, uploadedByUserId)
+- [x] Migration ausführen
+- [x] Backend: uploadProductImage-Endpoint (base64, S3, max. 5 MB, JPEG/PNG/WebP)
+- [x] Backend: listProductImages-Endpoint
+- [x] Backend: deleteProductImage-Endpoint
+- [x] Backend: getPublicProduct liefert productImages mit
+- [x] Frontend: Produktbild-Galerie-Karte im Produkt-Tab (ProductDetail)
+- [x] Frontend: Upload-Zone (Drag & Drop oder Klick, max. 5 Bilder)
+- [x] Frontend: Bildvorschau mit Löschen-Button
+- [x] Frontend: i18n-Keys für Produktbilder (DE + EN)
+- [x] Öffentliche Landingpage: Bildergalerie anzeigen
+- [x] Tests für Upload/List/Delete-Endpoints

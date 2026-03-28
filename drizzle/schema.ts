@@ -570,3 +570,19 @@ export const sealAssets = mysqlTable("seal_assets", {
 });
 export type SealAsset = typeof sealAssets.$inferSelect;
 export type InsertSealAsset = typeof sealAssets.$inferInsert;
+
+// ─── Product Images ───────────────────────────────────────────────────────────
+export const productImages = mysqlTable("product_images", {
+  id: int("id").autoincrement().primaryKey(),
+  productId: int("productId").notNull(),
+  url: text("url").notNull(),                          // S3/CDN public URL
+  fileKey: varchar("fileKey", { length: 512 }).notNull(), // S3 key for deletion
+  originalName: varchar("originalName", { length: 255 }),
+  mimeType: varchar("mimeType", { length: 64 }),
+  fileSizeBytes: int("fileSizeBytes"),
+  sortOrder: int("sortOrder").default(0).notNull(),    // 0 = primary/first image
+  uploadedByUserId: int("uploadedByUserId").notNull(),
+  uploadedAt: timestamp("uploadedAt").defaultNow().notNull(),
+});
+export type ProductImage = typeof productImages.$inferSelect;
+export type InsertProductImage = typeof productImages.$inferInsert;
