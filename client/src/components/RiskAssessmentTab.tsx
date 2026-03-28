@@ -170,7 +170,24 @@ export default function RiskAssessmentTab({ productId, isInternalRole }: Props) 
   const { lang } = useLang();
   const [showHistory, setShowHistory] = useState(false);
 
-  const latestQuery = trpc.riskAssessment.getLatest.useQuery({ productId });
+  // Poll history every 5 s to detect auto-triggered running assessments
+  const historyPollQuery = trpc.riskAssessment.getHistory.useQuery(
+    { productId },
+    {
+      refetchInterval: (query) => {
+        const data = query.state.data;
+        const hasRunning = Array.isArray(data) && data.some((h: any) => h.status === "running");
+        return hasRunning ? 5000 : false;
+      },
+    }
+  );
+  const isAutoRunning = Array.isArray(historyPollQuery.data) &&
+    historyPollQuery.data.some((h: any) => h.status === "running");
+
+  const latestQuery = trpc.riskAssessment.getLatest.useQuery(
+    { productId },
+    { refetchInterval: isAutoRunning ? 5000 : false }
+  );
   const historyQuery = trpc.riskAssessment.getHistory.useQuery(
     { productId },
     { enabled: showHistory }
@@ -244,6 +261,18 @@ export default function RiskAssessmentTab({ productId, isInternalRole }: Props) 
           )}
         </CardHeader>
       </Card>
+
+      {/* Auto-running banner (triggered by document upload) */}
+      {isAutoRunning && !runMutation.isPending && (
+        <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
+          <span>
+            {lang === "de"
+              ? "Risikobewertung wird automatisch neu berechnet (ausgelöst durch Dokument-Upload)…"
+              : "Risk assessment is being recalculated automatically (triggered by document upload)…"}
+          </span>
+        </div>
+      )}
 
       {/* Loading state */}
       {latestQuery.isLoading && (

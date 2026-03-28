@@ -8,6 +8,8 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { documentService } from "../domains/documents/documentService";
+import { riskAssessmentService } from "../domains/risk/riskAssessmentService";
+import { getSystemSetting } from "../db";
 import { toTRPCError } from "../shared";
 
 const DOCUMENT_TYPES = [
@@ -60,7 +62,27 @@ export const documentsRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        return await documentService.upload(ctx.user as any, input);
+        const result = await documentService.upload(ctx.user as any, input);
+        // Fire-and-forget: auto risk re-assessment after every document upload
+        void (async () => {
+          try {
+            const setting = await getSystemSetting("RISK_AUTO_REASSESS");
+            const enabled =
+              setting === null ||
+              setting?.settingValue === null ||
+              setting?.settingValue === "true" ||
+              setting?.settingValue === "1";
+            if (enabled) {
+              await riskAssessmentService.runAutomatic(
+                input.productId,
+                (ctx.user as any).id
+              );
+            }
+          } catch {
+            // never block the upload response
+          }
+        })();
+        return result;
       } catch (err) {
         throw toTRPCError(err);
       }

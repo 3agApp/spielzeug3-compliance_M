@@ -581,3 +581,9 @@
 ## Risikoscore-Badge in Produktliste
 - [x] Backend: getAllProducts und getProductsBySupplier liefern latestRiskScore und riskLevel mit
 - [x] Frontend: Risikoscore-Badge in Produktliste (Products.tsx) – farbig nach Ampel
+
+## Auto-Risikobewertung bei Dokument-Upload
+- [x] Backend: Nach documents.upload fire-and-forget riskAssessmentService.runAutomatic aufrufen
+- [x] Backend: Setting RISK_AUTO_REASSESS (boolean, default true) in system_settings
+- [x] Frontend: Risiko-Tab zeigt Hinweis-Banner wenn status=running (Polling alle 5 s)
+- [x] Test: 219 Tests grün, 0 TypeScript-Fehler

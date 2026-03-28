@@ -184,6 +184,85 @@ async function updateRiskAssessment(db: any, id: number, data: Partial<{
 // ─── Service ──────────────────────────────────────────────────────────────────
 
 export const riskAssessmentService = {
+  /**
+   * Run a risk assessment triggered automatically by the system (no role check).
+   * Used for fire-and-forget triggers after document uploads.
+   * Silently fails so it never blocks the caller.
+   */
+  async runAutomatic(productId: number, triggeredByUserId: number): Promise<void> {
+    try {
+      const db = await getDb();
+      if (!db) return;
+      const [product] = await db.select().from(products).where(eq(products.id, productId)).limit(1);
+      if (!product) return;
+      const productDocs = await db.select().from(documents).where(eq(documents.productId, productId));
+      const productComponentsList = await db.select().from(productComponents).where(eq(productComponents.productId, productId));
+      const compDocsList = productComponentsList.length > 0
+        ? await db.select().from(componentDocuments).where(eq(componentDocuments.componentId, productComponentsList[0].id))
+        : [];
+      const missingReqs = await db.select().from(missingRequirements).where(eq(missingRequirements.productId, productId));
+      const [latestAi] = await db.select().from(aiAnalysisResults)
+        .where(and(eq(aiAnalysisResults.productId, productId), eq(aiAnalysisResults.status, "completed")))
+        .orderBy(desc(aiAnalysisResults.createdAt))
+        .limit(1);
+      const assessmentId = await createRiskAssessment(db, {
+        productId,
+        tenantId: product.tenantId ?? 1,
+        overallRiskScore: "5.0",
+        riskLevel: "medium",
+        status: "running",
+        triggeredByUserId,
+      });
+      try {
+        const prompt = buildRiskPrompt(product, productDocs, productComponentsList, compDocsList, missingReqs, latestAi ?? null);
+        const response = await invokeLLM({
+          messages: [
+            { role: "system", content: "Du bist ein Risikomanagement-Experte. Antworte ausschließlich mit validem JSON." },
+            { role: "user", content: prompt },
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "risk_assessment",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  overallRiskScore: { type: "number" },
+                  riskLevel: { type: "string", enum: ["low", "medium", "high", "critical"] },
+                  summary: { type: "string" },
+                  risks: { type: "array", items: { type: "object", properties: { category: { type: "string" }, score: { type: "number" }, title: { type: "string" }, description: { type: "string" }, mitigations: { type: "array", items: { type: "string" } } }, required: ["category", "score", "title", "description", "mitigations"], additionalProperties: false } },
+                  missingInfo: { type: "array", items: { type: "string" } },
+                },
+                required: ["overallRiskScore", "riskLevel", "summary", "risks", "missingInfo"],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+        const content = response.choices?.[0]?.message?.content ?? "{}";
+        const parsed: RiskAssessmentResult = typeof content === "string" ? JSON.parse(content) : content;
+        const score = Math.max(1, Math.min(10, Number(parsed.overallRiskScore) || 5));
+        const level = scoreToLevel(score);
+        await updateRiskAssessment(db, assessmentId, {
+          status: "completed",
+          overallRiskScore: score.toFixed(1),
+          riskLevel: level,
+          risks: parsed.risks ?? [],
+          summary: parsed.summary ?? "",
+          missingInfo: parsed.missingInfo ?? [],
+          modelUsed: response.model ?? "unknown",
+          tokensUsed: response.usage?.total_tokens ?? 0,
+          completedAt: new Date(),
+        });
+      } catch (innerErr: any) {
+        await updateRiskAssessment(db, assessmentId, { status: "failed", errorMessage: innerErr?.message ?? "Unknown" });
+      }
+    } catch {
+      // silent fail – never block the upload
+    }
+  },
+
   /** Run a new AI risk assessment for a product. */
   async run(user: UserContext & { id: number }, productId: number) {
     requireRole(user.complianceRole, ADMIN_ROLES);
