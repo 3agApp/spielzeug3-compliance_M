@@ -13,7 +13,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { trpc } from "@/lib/trpc";
-import { useLang } from "@/lib/i18n";
+import { useLang} from "@/lib/i18n";
+import { translateError } from "@/lib/translateError";
 import {
   CheckCircle2,
   Clock,
@@ -99,7 +100,7 @@ export default function SignatureRequestList({ productId, canCancel = false }: S
       toast.success(lang === "de" ? "Signaturanfrage storniert" : "Signature request cancelled");
       utils.bunnydoc.listByProduct.invalidate({ productId });
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(translateError(e.message, lang)),
   });
 
   if (listQuery.isLoading) {

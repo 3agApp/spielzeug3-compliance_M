@@ -1,7 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useLang } from "@/lib/i18n";
+import { useLang} from "@/lib/i18n";
+import { translateError } from "@/lib/translateError";
 import { trpc } from "@/lib/trpc";
 import { Bell, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
@@ -17,12 +18,12 @@ export default function Notifications() {
   const utils = trpc.useUtils();
   const markReadMutation = trpc.notifications.markRead.useMutation({
     onSuccess: () => utils.notifications.list.invalidate(),
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(translateError(e.message, t)),
   });
 
   const markAllReadMutation = trpc.notifications.markAllRead.useMutation({
     onSuccess: () => utils.notifications.list.invalidate(),
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(translateError(e.message, t)),
   });
 
   const unreadCount = notifications.filter((n: any) => !n.isRead).length;

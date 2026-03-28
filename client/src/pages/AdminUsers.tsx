@@ -4,7 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useLang } from "@/lib/i18n";
+import { useLang} from "@/lib/i18n";
+import { translateError } from "@/lib/translateError";
 import { trpc } from "@/lib/trpc";
 import { Users } from "lucide-react";
 import { useState } from "react";
@@ -31,7 +32,7 @@ export default function AdminUsers() {
       setEditUser(null);
       utils.admin.listUsers.invalidate();
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(translateError(e.message, t)),
   });
 
   const openEdit = (user: any) => {

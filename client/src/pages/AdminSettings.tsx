@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useLang } from "@/lib/i18n";
+import { useLang} from "@/lib/i18n";
+import { translateError } from "@/lib/translateError";
 import { trpc } from "@/lib/trpc";
 import {
   Bell,
@@ -75,7 +76,7 @@ export default function AdminSettings() {
         );
       }
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(translateError(e.message, t)),
   });
   const tenantQuery = trpc.tenant.getCurrent.useQuery();
   const tenantName = (tenantQuery.data as any)?.name ?? "Spielzeug 3 AG";
@@ -105,7 +106,7 @@ export default function AdminSettings() {
       toast.success("Portal-Einstellungen gespeichert");
       utils.tenant.getCurrent.invalidate();
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(translateError(e.message, t)),
   });
 
   // Logo upload state
@@ -121,7 +122,7 @@ export default function AdminSettings() {
       utils.tenant.getCurrent.invalidate();
     },
     onError: (e: any) => {
-      toast.error("Upload fehlgeschlagen", { description: e.message });
+      toast.error("Upload fehlgeschlagen", { description: translateError(e.message, t) });
       setLogoUploading(false);
     },
   });
@@ -132,7 +133,7 @@ export default function AdminSettings() {
       setLogoPreview(null);
       utils.tenant.getCurrent.invalidate();
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(translateError(e.message, t)),
   });
 
   async function handleLogoFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -172,7 +173,7 @@ export default function AdminSettings() {
   }
   const saveSealSettingMutation = trpc.admin.setSystemSetting.useMutation({
     onSuccess: () => toast.success("Siegel-Einstellungen gespeichert"),
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(translateError(e.message, t)),
   });
   // Sync state when query resolves (only once on first load)
   const sealSettingValue = sealSettingQuery.data?.settingValue;
@@ -193,7 +194,7 @@ export default function AdminSettings() {
       setOpenAiKey("");
       apiKeyStatusQuery.refetch();
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(translateError(e.message, t)),
   });
   const testKeyMutation = trpc.aiAnalysis.testApiKey.useMutation({
     onSuccess: (data) => {
@@ -1022,7 +1023,7 @@ function BunnyDocSettingsTab() {
       setBunnyApiKey("");
       setBunnyTemplateId("");
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(translateError(e.message, lang)),
   });
 
   const [bunnyApiKey, setBunnyApiKey] = useState("");

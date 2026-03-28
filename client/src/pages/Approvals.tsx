@@ -16,7 +16,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { useLang } from "@/lib/i18n";
+import { useLang} from "@/lib/i18n";
+import { translateError } from "@/lib/translateError";
 import { trpc } from "@/lib/trpc";
 import {
   AlertCircle,
@@ -82,6 +83,7 @@ interface ActionDialogProps {
 
 function ActionDialog({ action, product, onClose, onSuccess }: ActionDialogProps) {
   const [note, setNote] = useState("");
+  const { lang } = useLang();
   const utils = trpc.useUtils();
 
   const approveMutation   = trpc.products.approve.useMutation({ onSuccess: handleSuccess, onError: handleError });
@@ -101,7 +103,7 @@ function ActionDialog({ action, product, onClose, onSuccess }: ActionDialogProps
     onSuccess();
     onClose();
   }
-  function handleError(e: any) { toast.error(e.message); }
+  function handleError(e: any) { toast.error(translateError(e.message, lang)); }
 
   const isPending =
     approveMutation.isPending ||

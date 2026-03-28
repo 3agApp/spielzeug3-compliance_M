@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
-import { useLang } from "@/lib/i18n";
+import { useLang} from "@/lib/i18n";
+import { translateError } from "@/lib/translateError";
 import {
   AlertTriangle,
   Building2,
@@ -38,7 +39,7 @@ export default function AcceptInvite() {
       toast.success(t.invitations.invitationAccepted);
       setTimeout(() => navigate("/"), 2500);
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(translateError(e.message, t)),
   });
 
   if (!token) {

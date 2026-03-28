@@ -22,7 +22,8 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { useLang } from "@/lib/i18n";
+import { useLang} from "@/lib/i18n";
+import { translateError } from "@/lib/translateError";
 import {
   CheckCircle2,
   ChevronRight,
@@ -96,7 +97,7 @@ export default function TemplatesManager() {
       resetForm();
       toast.success(t.templates.templateCreated);
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(translateError(e.message, t)),
   });
 
   const updateMutation = trpc.templates.updateTemplate.useMutation({
@@ -106,7 +107,7 @@ export default function TemplatesManager() {
       resetForm();
       toast.success(t.templates.templateUpdated);
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(translateError(e.message, t)),
   });
 
   const deleteMutation = trpc.templates.deleteTemplate.useMutation({
@@ -114,7 +115,7 @@ export default function TemplatesManager() {
       utils.templates.listTemplates.invalidate();
       toast.success(t.templates.templateDeleted);
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(translateError(e.message, t)),
   });
 
   function resetForm() {

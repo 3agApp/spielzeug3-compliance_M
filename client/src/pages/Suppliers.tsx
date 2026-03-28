@@ -5,7 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useLang } from "@/lib/i18n";
+import { useLang} from "@/lib/i18n";
+import { translateError } from "@/lib/translateError";
 import { trpc } from "@/lib/trpc";
 import { Building2, Plus, Search } from "lucide-react";
 import { useState } from "react";
@@ -42,7 +43,7 @@ export default function Suppliers() {
       setForm({ supplierName: "", contactEmail: "", contactPerson: "", country: "", kontorId: "" });
       utils.suppliers.list.invalidate();
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(translateError(e.message, t)),
   });
 
   return (

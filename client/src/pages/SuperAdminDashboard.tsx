@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { useLang } from "@/lib/i18n";
+import { useLang} from "@/lib/i18n";
+import { translateError } from "@/lib/translateError";
 import ComplianceLayout from "@/components/ComplianceLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -135,7 +136,7 @@ function CreateTenantDialog({
       onCreated();
     },
     onError: (err) => {
-      toast.error(err.message);
+      toast.error(translateError(err.message, lang));
     },
   });
 
@@ -348,7 +349,7 @@ function EditTenantDialog({
       onClose();
     },
     onError: (err) => {
-      toast.error(err.message);
+      toast.error(translateError(err.message, lang));
     },
   });
 

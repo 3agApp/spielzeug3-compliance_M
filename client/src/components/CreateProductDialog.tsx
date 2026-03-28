@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
-import { useLang } from "@/lib/i18n";
+import { useLang} from "@/lib/i18n";
+import { translateError } from "@/lib/translateError";
 import { useAuth } from "@/_core/hooks/useAuth";
 import {
   Dialog,
@@ -97,7 +98,7 @@ export default function CreateProductDialog({ open, onOpenChange, onSuccess }: P
       onSuccess?.();
     },
     onError: (err) => {
-      toast.error(err.message);
+      toast.error(translateError(err.message, lang));
     },
   });
 

@@ -21,7 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useLang } from "@/lib/i18n";
+import { useLang} from "@/lib/i18n";
+import { translateError } from "@/lib/translateError";
 import { trpc } from "@/lib/trpc";
 import {
   AlertCircle,
@@ -303,7 +304,7 @@ export default function Products() {
       });
       setSelected(new Set());
     } catch (err: any) {
-      toast.error(lang === "de" ? "Export fehlgeschlagen" : "Export failed", { description: err.message ?? (lang === "de" ? "Unbekannter Fehler" : "Unknown error") });
+      toast.error(lang === "de" ? "Export fehlgeschlagen" : "Export failed", { description: translateError(err.message, t) ?? (lang === "de" ? "Unbekannter Fehler" : "Unknown error") });
     } finally {
       setBatchExporting(false);
     }

@@ -20,7 +20,8 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useLang } from "@/lib/i18n";
+import { useLang} from "@/lib/i18n";
+import { translateError } from "@/lib/translateError";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function scoreColor(score: number) {
@@ -164,7 +165,7 @@ export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCard
       utils.aiAnalysis.getLatest.invalidate({ productId });
       utils.aiAnalysis.getHistory.invalidate({ productId });
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(translateError(e.message, lang)),
   });
 
   const analysis = latestQuery.data;

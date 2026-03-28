@@ -1,7 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useLang } from "@/lib/i18n";
+import { useLang} from "@/lib/i18n";
+import { translateError } from "@/lib/translateError";
 import { trpc } from "@/lib/trpc";
 import { AlertCircle, CheckCircle2, RefreshCw, XCircle } from "lucide-react";
 import { useState } from "react";
@@ -20,7 +21,7 @@ export default function SyncPage() {
       toast.success(`Import abgeschlossen: ${data.created ?? 0} erstellt, ${data.updated ?? 0} aktualisiert`);
       logsQuery.refetch();
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(translateError(e.message, t)),
     onSettled: () => setSyncing(null),
   });
 
@@ -30,7 +31,7 @@ export default function SyncPage() {
       toast.success(`Export abgeschlossen: ${data.data?.length ?? 0} Datensätze exportiert`);
       logsQuery.refetch();
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(translateError(e.message, t)),
     onSettled: () => setSyncing(null),
   });
 

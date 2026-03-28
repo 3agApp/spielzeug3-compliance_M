@@ -15,7 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { useLang } from "@/lib/i18n";
+import { useLang} from "@/lib/i18n";
+import { translateError } from "@/lib/translateError";
 import { ExternalLink, FileSignature, Loader2, Send } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -60,7 +61,7 @@ export default function SignatureRequestDialog({
       setSigningLink(data.signingLink ?? null);
       onSuccess?.();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(translateError(e.message, lang)),
   });
 
   const handleSend = () => {

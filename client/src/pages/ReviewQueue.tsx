@@ -5,7 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useLang } from "@/lib/i18n";
+import { useLang} from "@/lib/i18n";
+import { translateError } from "@/lib/translateError";
 import { trpc } from "@/lib/trpc";
 import {
   AlertCircle,
@@ -58,7 +59,7 @@ export default function ReviewQueue() {
       closeDialog();
       utils.products.list.invalidate();
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(translateError(e.message, t)),
   });
 
   const rejectMutation = trpc.products.reject.useMutation({
@@ -67,7 +68,7 @@ export default function ReviewQueue() {
       closeDialog();
       utils.products.list.invalidate();
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(translateError(e.message, t)),
   });
 
   const clarificationMutation = trpc.products.requestClarification.useMutation({
@@ -76,7 +77,7 @@ export default function ReviewQueue() {
       closeDialog();
       utils.products.list.invalidate();
     },
-     onError: (e: any) => toast.error(e.message),
+     onError: (e: any) => toast.error(translateError(e.message, t)),
   });
 
   const startReviewMutation = trpc.products.requestClarification.useMutation({
@@ -84,7 +85,7 @@ export default function ReviewQueue() {
       toast.success(lang === "de" ? "Status aktualisiert" : "Status updated");
       utils.products.list.invalidate();
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(translateError(e.message, t)),
   });
 
   const closeDialog = () => {

@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { useLang } from "@/lib/i18n";
+import { useLang} from "@/lib/i18n";
+import { translateError } from "@/lib/translateError";
 import { trpc } from "@/lib/trpc";
 import { AiAnalysisCard } from "@/components/AiAnalysisCard";
 import ComponentsTab from "@/components/ComponentsTab";
@@ -104,7 +105,7 @@ export default function ProductDetail() {
       toast.success(t.msg.submitSuccess);
       utils.products.getById.invalidate({ id: productId });
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(translateError(e.message, t)),
   });
 
   // Delete document state
@@ -126,7 +127,7 @@ export default function ProductDetail() {
         });
       }
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(translateError(e.message, t)),
   });
 
   // Comment mutation
@@ -137,7 +138,7 @@ export default function ProductDetail() {
       setCommentText("");
       utils.comments.listByProduct.invalidate({ productId });
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(translateError(e.message, t)),
   });
 
   if (productQuery.isLoading) {
@@ -726,7 +727,7 @@ function SealTab({
       });
       productQuery.refetch();
     },
-    onError: (e) => toast.error(t.seal.confirmFailed, { description: e.message }),
+    onError: (e) => toast.error(t.seal.confirmFailed, { description: translateError(e.message, t) }),
   });
 
   const activateMutation = trpc.tenant.activateSeal.useMutation({
@@ -735,7 +736,7 @@ function SealTab({
       sealQuery.refetch();
       onSealActivated?.();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(translateError(e.message, t)),
   });
 
   const setVisibleMutation = trpc.tenant.setPublicVisible.useMutation({
@@ -743,7 +744,7 @@ function SealTab({
       toast.success(vars.visible ? t.seal.visibleOn : t.seal.visibleOff);
       sealQuery.refetch();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(translateError(e.message, t)),
   });
 
   const setOverrideMutation = trpc.tenant.setSealStatusOverride.useMutation({
@@ -751,7 +752,7 @@ function SealTab({
       toast.success(t.seal.overrideSaved);
       sealQuery.refetch();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(translateError(e.message, t)),
   });
 
   const sealStatus = (seal?.sealStatus ?? "not_verified") as SealStatus;
@@ -1315,6 +1316,7 @@ function SealLabelDownloadButton({
   sealStatus: SealStatus;
 }) {
   const [downloading, setDownloading] = useState(false);
+  const { t, lang } = useLang();
 
   async function handleDownload() {
     setDownloading(true);
@@ -1335,9 +1337,9 @@ function SealLabelDownloadButton({
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(objectUrl);
-      toast.success("Etikett heruntergeladen", { description: "Das Siegel-Etikett wurde als druckfertiges A6-PDF exportiert." });
+      toast.success(t.seal.printLabelSuccess, { description: t.seal.printLabelSuccessDesc });
     } catch (err: any) {
-      toast.error("Download fehlgeschlagen", { description: err.message ?? "Unbekannter Fehler" });
+      toast.error(t.seal.printLabelError, { description: translateError(err.message, lang) ?? t.errors.unknownError });
     } finally {
       setDownloading(false);
     }
@@ -1356,7 +1358,7 @@ function SealLabelDownloadButton({
       ) : (
         <FileText className="mr-2 h-4 w-4" />
       )}
-      {downloading ? "Generiere PDF…" : "Etikett drucken (PDF)"}
+      {downloading ? t.seal.printLabelGenerating : t.seal.printLabel}
     </Button>
   );
 }
@@ -1569,7 +1571,7 @@ function UploadDocumentCard({ productId, role, isOperator, t, onSuccess }: any) 
       setOperatorComment("");
       onSuccess?.(data?.confirmedAtReset ?? false);
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(translateError(e.message, t)),
   });
 
   const handleUpload = async () => {
@@ -1705,7 +1707,7 @@ function SafetyDataCard({ productId, safety, role, t, onSuccess }: any) {
       setEditing(false);
       onSuccess?.();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(translateError(e.message, t)),
   });
 
    const isOperator = ["administrator", "compliance_manager", "internal_employee", "super_admin"].includes(role);
@@ -2051,7 +2053,7 @@ function BatchTab({
       batchQuery.refetch();
       setEditing(false);
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(translateError(e.message, t)),
   });
 
   const [editing, setEditing] = useState(false);

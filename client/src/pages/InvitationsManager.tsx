@@ -27,7 +27,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { trpc } from "@/lib/trpc";
-import { useLang } from "@/lib/i18n";
+import { useLang} from "@/lib/i18n";
+import { translateError } from "@/lib/translateError";
 import {
   CheckCircle2,
   Clock,
@@ -69,7 +70,7 @@ export default function InvitationsManager() {
       utils.invitations.list.invalidate();
       toast.success(t.invitations.invitationSent);
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(translateError(e.message, t)),
   });
 
   const revokeMutation = trpc.invitations.revoke.useMutation({
@@ -77,7 +78,7 @@ export default function InvitationsManager() {
       utils.invitations.list.invalidate();
       toast.success(t.msg.deactivateSuccess);
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(translateError(e.message, t)),
   });
 
   function handleCreate() {

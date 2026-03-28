@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { trpc } from "@/lib/trpc";
-import { useLang } from "@/lib/i18n";
+import { useLang} from "@/lib/i18n";
+import { translateError } from "@/lib/translateError";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -85,27 +86,27 @@ export default function ComponentsTab({ productId, readOnly = false }: Component
   // ── Mutations ────────────────────────────────────────────────────────────────
   const createMutation = trpc.components.create.useMutation({
     onSuccess: () => { utils.components.listByProduct.invalidate({ productId }); toast.success("Komponente erstellt"); setShowCreateDialog(false); resetForm(); },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(translateError(e.message, language)),
   });
   const updateMutation = trpc.components.update.useMutation({
     onSuccess: () => { utils.components.listByProduct.invalidate({ productId }); toast.success("Komponente aktualisiert"); setEditingComponent(null); },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(translateError(e.message, language)),
   });
   const deleteMutation = trpc.components.delete.useMutation({
     onSuccess: () => { utils.components.listByProduct.invalidate({ productId }); toast.success("Komponente entfernt"); },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(translateError(e.message, language)),
   });
   const uploadDocMutation = trpc.components.uploadDocument.useMutation({
     onSuccess: () => { utils.components.listByProduct.invalidate({ productId }); toast.success("Dokument hochgeladen"); setUploadingForComponent(null); resetDocForm(); },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(translateError(e.message, language)),
   });
   const deleteDocMutation = trpc.components.deleteDocument.useMutation({
     onSuccess: () => { utils.components.listByProduct.invalidate({ productId }); toast.success("Dokument gelöscht"); },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(translateError(e.message, language)),
   });
   const reviewDocMutation = trpc.components.reviewDocument.useMutation({
     onSuccess: () => { utils.components.listByProduct.invalidate({ productId }); toast.success("Bewertung gespeichert"); },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(translateError(e.message, language)),
   });
 
   // ── Local state ──────────────────────────────────────────────────────────────

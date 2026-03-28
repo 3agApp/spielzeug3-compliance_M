@@ -523,3 +523,12 @@
 - [ ] PublicProductPage: vollständig zweisprachig
 - [ ] AdminSettings, ProductDetail, Dashboard: vollständig zweisprachig
 - [ ] Toast-Meldungen, Fehlertexte, Platzhalter zweisprachig
+
+## Backend-Fehlermeldungen übersetzen
+- [ ] Alle tRPC-Fehlermeldungen (throw new TRPCError) kartieren
+- [ ] Alle Zod-Validierungsfehler kartieren
+- [ ] i18n-Dictionary: errors-Block mit DE/EN-Übersetzungen
+- [ ] translateError(msg, t)-Funktion in i18n.tsx
+- [ ] tRPC-Client: onError-Handler nutzt translateError
+- [ ] Alle onError-Callbacks in Mutations nutzen translateError
+- [ ] 0 TypeScript-Fehler, Tests grün

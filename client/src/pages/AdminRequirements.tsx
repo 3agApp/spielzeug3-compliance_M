@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { useLang } from "@/lib/i18n";
+import { useLang} from "@/lib/i18n";
+import { translateError } from "@/lib/translateError";
 import { trpc } from "@/lib/trpc";
 import { FileText, Plus } from "lucide-react";
 import { useState } from "react";
@@ -35,12 +36,12 @@ export default function AdminRequirements() {
       setForm({ key: "", labelDe: "", labelEn: "", category: "document", required: true, sortOrder: 0 });
       utils.admin.listRequirementTypes.invalidate();
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(translateError(e.message, t)),
   });
 
   const toggleMutation = trpc.admin.updateRequirementType.useMutation({
     onSuccess: () => utils.admin.listRequirementTypes.invalidate(),
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(translateError(e.message, t)),
   });
 
   return (

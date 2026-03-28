@@ -15,7 +15,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2, Clock, XCircle, Loader2, Upload, RotateCcw, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
-import { useLang } from "@/lib/i18n";
+import { useLang} from "@/lib/i18n";
+import { translateError } from "@/lib/translateError";
 
 type SealStatus = "verified" | "in_progress" | "not_verified";
 
@@ -155,7 +156,7 @@ function SealStatusCard({ status, currentUrl }: { status: SealStatus; currentUrl
       utils.sealAssets.getActive.invalidate();
     },
     onError: (err) => {
-      toast.error(lang === "de" ? "Upload fehlgeschlagen" : "Upload failed", { description: err.message });
+      toast.error(lang === "de" ? "Upload fehlgeschlagen" : "Upload failed", { description: translateError(err.message, lang) });
     },
   });
 
@@ -170,7 +171,7 @@ function SealStatusCard({ status, currentUrl }: { status: SealStatus; currentUrl
       utils.sealAssets.getActive.invalidate();
     },
     onError: (err) => {
-      toast.error(lang === "de" ? "Zurücksetzen fehlgeschlagen" : "Reset failed", { description: err.message });
+      toast.error(lang === "de" ? "Zurücksetzen fehlgeschlagen" : "Reset failed", { description: translateError(err.message, lang) });
     },
   });
 

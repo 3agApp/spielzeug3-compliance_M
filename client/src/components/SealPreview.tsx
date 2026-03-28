@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Download, Loader2, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
-import { useLang } from "@/lib/i18n";
+import { useLang} from "@/lib/i18n";
+import { translateError } from "@/lib/translateError";
 
 type SealStatus = "verified" | "in_progress" | "not_verified";
 
@@ -81,7 +82,7 @@ export function SealPreview({
       URL.revokeObjectURL(objectUrl);
       toast.success(lang === "de" ? "PDF heruntergeladen" : "PDF downloaded", { description: lang === "de" ? "Das Etikett wurde als PDF exportiert." : "The label was exported as PDF." });
     } catch (err: any) {
-      toast.error(lang === "de" ? "Download fehlgeschlagen" : "Download failed", { description: err.message ?? (lang === "de" ? "Unbekannter Fehler" : "Unknown error") });
+      toast.error(lang === "de" ? "Download fehlgeschlagen" : "Download failed", { description: translateError(err.message, lang) ?? (lang === "de" ? "Unbekannter Fehler" : "Unknown error") });
     } finally {
       setDownloading(false);
     }
