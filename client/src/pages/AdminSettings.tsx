@@ -1104,7 +1104,7 @@ export default function AdminSettings() {
                   {lang === "de" ? "Als PNG herunterladen" : "Download as PNG"}
                 </Button>
                 <span className="text-xs text-muted-foreground">
-                  {lang === "de" ? "Status: VERIFIED · A6-Format · mit QR-Code" : "Status: VERIFIED · A6 format · with QR code"}
+                  {lang === "de" ? "Status: VERIFIED · A6-Format · PDF + PNG (300 dpi)" : "Status: VERIFIED · A6 format · PDF + PNG (300 dpi)"}
                 </span>
               </div>
             </CardContent>

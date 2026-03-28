@@ -274,8 +274,8 @@ export function registerPdfRoutes(app: Express) {
       const date = new Date().toISOString().slice(0, 10);
 
       if (format === "png") {
-        // Render first page of PDF to PNG at 150 dpi
-        const pngBuffer = await pdfToPng(pdfBuffer, 150);
+        // Render first page of PDF to PNG at 300 dpi (print-ready)
+        const pngBuffer = await pdfToPng(pdfBuffer, 300);
         const pngFilename = `Swiss-Product-Seal_BEISPIEL_verified_${date}.png`;
         res.setHeader("Content-Type", "image/png");
         res.setHeader("Content-Disposition", `attachment; filename="${pngFilename}"`);
