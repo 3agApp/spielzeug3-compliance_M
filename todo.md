@@ -418,3 +418,11 @@
 - [x] Leer-State „Keine Einträge für diesen Filter“ wenn Filter 0 Treffer liefert
 - [x] Verbindungs-Linie korrekt auf visibleEvents.length bezogen
 - [x] 172 Tests grün, 0 TypeScript-Fehler
+
+## Betreiber-Kommentar beim Dokument-Upload
+- [x] Backend: operatorComment (optional, max. 500 Zeichen) im documents.upload-Input-Schema (z.string().max(500).optional())
+- [x] Backend: documentService speichert operatorComment im Audit-Log-Payload (JSON) wenn vorhanden
+- [x] Frontend: Textarea mit Zeichenzähler im Upload-Dialog (nur für Betreiber-Rollen sichtbar)
+- [x] Frontend: Kommentar-State wird beim Schließen des Dialogs zurückgesetzt
+- [x] Frontend: Kommentar in der Timeline als blaue Info-Box mit MessageSquare-Icon angezeigt
+- [x] 172 Tests grün, 0 TypeScript-Fehler

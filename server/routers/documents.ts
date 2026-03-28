@@ -45,6 +45,7 @@ export const documentsRouter = router({
         fileSizeBytes: z.number().optional(),
         expiryDate: z.string().optional(),
         requirementId: z.number().optional(),
+        operatorComment: z.string().max(500).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {

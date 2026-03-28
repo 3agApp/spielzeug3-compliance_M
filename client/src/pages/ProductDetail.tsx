@@ -1277,6 +1277,7 @@ function UploadDocumentCard({ productId, role, isOperator, t, onSuccess }: any) 
   const [docType, setDocType] = useState<string>("test_report");
   const [file, setFile] = useState<File | null>(null);
   const [expiryDate, setExpiryDate] = useState("");
+  const [operatorComment, setOperatorComment] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const uploadMutation = trpc.documents.upload.useMutation({
@@ -1284,6 +1285,7 @@ function UploadDocumentCard({ productId, role, isOperator, t, onSuccess }: any) 
       toast.success(t.msg.uploadSuccess);
       setOpen(false);
       setFile(null);
+      setOperatorComment("");
       onSuccess?.(data?.confirmedAtReset ?? false);
     },
     onError: (e) => toast.error(e.message),
@@ -1302,6 +1304,7 @@ function UploadDocumentCard({ productId, role, isOperator, t, onSuccess }: any) 
         mimeType: file.type,
         fileSizeBytes: file.size,
         expiryDate: expiryDate || undefined,
+        operatorComment: isOperator && operatorComment.trim() ? operatorComment.trim() : undefined,
       });
     };
     reader.readAsDataURL(file);
@@ -1367,6 +1370,24 @@ function UploadDocumentCard({ productId, role, isOperator, t, onSuccess }: any) 
                 className="mt-1"
               />
             </div>
+            {isOperator && (
+              <div>
+                <Label className="flex items-center gap-1.5">
+                  <MessageSquare className="h-3.5 w-3.5 text-blue-500" />
+                  Begründung / Kommentar
+                  <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+                </Label>
+                <Textarea
+                  value={operatorComment}
+                  onChange={(e) => setOperatorComment(e.target.value)}
+                  placeholder="z. B. Ersetzt fehlerhaftes Prüfprotokoll vom 01.03.2026"
+                  maxLength={500}
+                  rows={3}
+                  className="mt-1 resize-none text-sm"
+                />
+                <p className="mt-1 text-xs text-muted-foreground text-right">{operatorComment.length}/500</p>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>
@@ -1646,13 +1667,20 @@ function TimelineCard({ productId, t }: any) {
                         {e.actorName ?? e.performedByName}
                       </p>
                     )}
-                    {/* Payload details */}
+                    {/* Payload details: filename / documentType */}
                     {isAudit && e.payloadSnapshot && (
                       <p className="text-xs text-muted-foreground mt-0.5 truncate">
                         {typeof e.payloadSnapshot === "object" && e.payloadSnapshot !== null
                           ? ((e.payloadSnapshot as any).fileName ?? (e.payloadSnapshot as any).documentType ?? "")
                           : ""}
                       </p>
+                    )}
+                    {/* Operator comment */}
+                    {isAudit && isOperator && e.payloadSnapshot?.operatorComment && (
+                      <div className="mt-1.5 flex items-start gap-1.5 rounded-md bg-blue-50 border border-blue-100 px-2 py-1.5">
+                        <MessageSquare className="h-3 w-3 text-blue-400 mt-0.5 shrink-0" />
+                        <p className="text-xs text-blue-800 italic break-words">{e.payloadSnapshot.operatorComment}</p>
+                      </div>
                     )}
                     {/* Note for approval history */}
                     {!isAudit && e.note && (

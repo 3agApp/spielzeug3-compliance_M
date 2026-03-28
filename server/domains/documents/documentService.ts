@@ -44,6 +44,7 @@ export interface UploadDocumentInput {
   mimeType: string;
   fileSizeBytes?: number;
   expiryDate?: string;
+  operatorComment?: string; // optional note added by operator (admin/compliance_manager)
 }
 
 export interface UpdateReviewStatusInput {
@@ -157,7 +158,11 @@ export const documentService = {
       performedByUserId: user.id,
       actorRole,
       actorName,
-      payloadSnapshot: { fileName: input.fileName, documentType: input.documentType } as any,
+      payloadSnapshot: {
+        fileName: input.fileName,
+        documentType: input.documentType,
+        ...(input.operatorComment ? { operatorComment: input.operatorComment } : {}),
+      } as any,
     });
 
     return { success: true, url, confirmedAtReset };
