@@ -57,6 +57,8 @@ vi.mock("./db", async (importOriginal) => {
       const idx = mockDocuments.findIndex((d) => d.id === id);
       if (idx !== -1) mockDocuments.splice(idx, 1);
     }),
+    getSystemSetting: vi.fn(async (_key: string) => null),
+    revokeExpiredPublicDocuments: vi.fn(async () => [] as number[]),
   };
 });
 
@@ -564,5 +566,90 @@ describe("documentService.togglePublicDownload", () => {
     });
     expect(result.success).toBe(true);
     expect(result.publicDownload).toBe(true);
+  });
+});
+
+// ─── revokeExpiredPublicDocuments tests ───────────────────────────────────────
+
+describe("documentService.revokeExpiredPublicDocuments", () => {
+  it("revokes publicDownload on expired documents and writes audit log", async () => {
+    const pastDate = new Date(Date.now() - 24 * 60 * 60 * 1000); // yesterday
+    mockDocuments.push({
+      id: 60,
+      productId: 6,
+      documentType: "certificate",
+      isArchived: false,
+      publicDownload: true,
+      fileName: "cert_expired.pdf",
+      fileUrl: "https://cdn.example.com/cert_expired.pdf",
+      version: 1,
+      expiryDate: pastDate,
+      uploadedAt: new Date(),
+    });
+
+    const { revokeExpiredPublicDocuments: dbRevoke, createAuditLog, getSystemSetting } = await import("./db");
+    vi.mocked(getSystemSetting).mockResolvedValueOnce({ settingKey: "AUTO_REVOKE_EXPIRED_PUBLIC_DOCS", settingValue: "true" } as any);
+    vi.mocked(dbRevoke).mockResolvedValueOnce([60]);
+    const auditSpy = vi.mocked(createAuditLog);
+
+    const user = makeUser("compliance_manager");
+    const result = await documentService.revokeExpiredPublicDocuments(user);
+
+    expect(result.revokedCount).toBe(1);
+    expect(result.skipped).toBe(false);
+    expect(dbRevoke).toHaveBeenCalled();
+
+    const auditCall = auditSpy.mock.calls.find(
+      ([args]) => args.action === "document_public_auto_revoked"
+    );
+    expect(auditCall).toBeDefined();
+    const payload = auditCall![0].payloadSnapshot as any;
+    expect(payload.documentId).toBe(60);
+    expect(payload.reason).toBe("expiry_date_passed");
+  });
+
+  it("skips revocation when AUTO_REVOKE_EXPIRED_PUBLIC_DOCS is disabled", async () => {
+    const { revokeExpiredPublicDocuments: dbRevoke, getSystemSetting } = await import("./db");
+    vi.mocked(getSystemSetting).mockResolvedValueOnce({ settingKey: "AUTO_REVOKE_EXPIRED_PUBLIC_DOCS", settingValue: "false" } as any);
+
+    const user = makeUser("administrator");
+    const result = await documentService.revokeExpiredPublicDocuments(user);
+
+    expect(result.skipped).toBe(true);
+    expect(result.revokedCount).toBe(0);
+    expect(dbRevoke).not.toHaveBeenCalled();
+  });
+
+  it("bypasses setting check when force=true", async () => {
+    const { revokeExpiredPublicDocuments: dbRevoke, getSystemSetting } = await import("./db");
+    vi.mocked(getSystemSetting).mockResolvedValueOnce({ settingKey: "AUTO_REVOKE_EXPIRED_PUBLIC_DOCS", settingValue: "false" } as any);
+    vi.mocked(dbRevoke).mockResolvedValueOnce([]);
+
+    const user = makeUser("administrator");
+    const result = await documentService.revokeExpiredPublicDocuments(user, { force: true });
+
+    expect(result.skipped).toBe(false);
+    // getSystemSetting should NOT have been called (force bypasses it)
+    expect(getSystemSetting).not.toHaveBeenCalled();
+    expect(dbRevoke).toHaveBeenCalled();
+  });
+
+  it("throws FORBIDDEN when supplier tries to revoke", async () => {
+    const user = makeUser("supplier");
+    await expect(
+      documentService.revokeExpiredPublicDocuments(user)
+    ).rejects.toThrow();
+  });
+
+  it("revokeExpiredPublic tRPC endpoint is accessible for compliance_manager (force=true)", async () => {
+    const { revokeExpiredPublicDocuments: dbRevoke } = await import("./db");
+    // force=true bypasses the system setting check entirely
+    vi.mocked(dbRevoke).mockResolvedValueOnce([]);
+
+    const caller = appRouter.createCaller(makeCtx("compliance_manager"));
+    const result = await caller.documents.revokeExpiredPublic({ force: true });
+    expect(result.skipped).toBe(false);
+    expect(result.revokedCount).toBe(0);
+    expect(dbRevoke).toHaveBeenCalled();
   });
 });

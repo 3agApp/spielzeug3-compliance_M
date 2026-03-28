@@ -109,4 +109,22 @@ export const documentsRouter = router({
         throw toTRPCError(err);
       }
     }),
+
+  /**
+   * Manually trigger revocation of expired public documents.
+   * Only administrator / compliance_manager may call this.
+   * Pass force=true to bypass the AUTO_REVOKE_EXPIRED_PUBLIC_DOCS setting.
+   */
+  revokeExpiredPublic: protectedProcedure
+    .input(z.object({ force: z.boolean().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        return await documentService.revokeExpiredPublicDocuments(
+          ctx.user as any,
+          { force: input.force }
+        );
+      } catch (err) {
+        throw toTRPCError(err);
+      }
+    }),
 });

@@ -27,6 +27,8 @@ import {
   getDocumentsByProduct,
   getMissingRequirementsByProduct,
   getProductById,
+  getSystemSetting,
+  revokeExpiredPublicDocuments as dbRevokeExpiredPublicDocuments,
   updateDocument,
   updateMissingRequirement,
   updateProduct,
@@ -337,5 +339,53 @@ export const documentService = {
       } as any,
     });
     return { success: true, confirmedAtReset };
+  },
+
+  /**
+   * Revoke publicDownload on all expired documents.
+   * Respects the AUTO_REVOKE_EXPIRED_PUBLIC_DOCS system setting (default: true).
+   * Can be called by the cron job or manually by admin/compliance_manager.
+   * Returns the number of revoked documents.
+   */
+  async revokeExpiredPublicDocuments(
+    user: UserContext,
+    opts: { force?: boolean } = {}
+  ): Promise<{ revokedCount: number; skipped: boolean }> {
+    requireRole((user as any).complianceRole, [
+      "administrator",
+      "compliance_manager",
+    ]);
+
+    // Check system setting unless force=true
+    if (!opts.force) {
+      const setting = await getSystemSetting("AUTO_REVOKE_EXPIRED_PUBLIC_DOCS");
+      const enabled =
+        setting === null ||
+        setting === undefined ||
+        (setting.settingValue !== "false" && setting.settingValue !== "0");
+      if (!enabled) {
+        return { revokedCount: 0, skipped: true };
+      }
+    }
+
+    const revokedIds = await dbRevokeExpiredPublicDocuments();
+
+    // Write audit log entries for each revoked document
+    for (const docId of revokedIds) {
+      await createAuditLog({
+        entityType: "document",
+        entityId: docId,
+        action: "document_public_auto_revoked",
+        performedByUserId: (user as any).id,
+        actorRole: "operator",
+        actorName: resolveActorName(user),
+        payloadSnapshot: {
+          documentId: docId,
+          reason: "expiry_date_passed",
+        } as any,
+      });
+    }
+
+    return { revokedCount: revokedIds.length, skipped: false };
   },
 };

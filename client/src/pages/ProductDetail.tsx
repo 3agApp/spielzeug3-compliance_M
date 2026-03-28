@@ -1431,7 +1431,32 @@ function DocumentRow({ doc, productId, role, isInternalRole, t, onDelete }: any)
           />
         </td>
         <td className="text-muted-foreground text-xs">
-          {new Date(doc.uploadedAt).toLocaleDateString()}
+          <div className="flex flex-col gap-0.5">
+            <span>{new Date(doc.uploadedAt).toLocaleDateString()}</span>
+            {doc.expiryDate && (() => {
+              const expired = new Date(doc.expiryDate) < new Date();
+              return (
+                <span
+                  className={`inline-flex items-center gap-0.5 text-xs font-medium ${
+                    expired
+                      ? "text-red-600"
+                      : "text-muted-foreground"
+                  }`}
+                  title={expired ? "Dokument ist abgelaufen" : "Gültig bis"}
+                >
+                  {expired && <AlertCircle className="h-3 w-3 flex-shrink-0" />}
+                  Gültig bis: {new Date(doc.expiryDate).toLocaleDateString()}
+                </span>
+              );
+            })()}
+            {/* Warn if expired AND still publicly visible */}
+            {doc.expiryDate && doc.publicDownload && new Date(doc.expiryDate) < new Date() && (
+              <span className="inline-flex items-center gap-0.5 text-xs font-semibold text-red-700 bg-red-50 border border-red-200 rounded px-1 py-0.5">
+                <AlertCircle className="h-3 w-3 flex-shrink-0" />
+                Öffentlich freigegeben – abgelaufen!
+              </span>
+            )}
+          </div>
         </td>
         <td className="flex items-center gap-1">
           <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer">

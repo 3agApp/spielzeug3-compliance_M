@@ -494,3 +494,25 @@
 ## Landingpage-Vorschau-Button in Produktdetailseite
 - [x] Vorschau-Button im Siegel-Tab (nur interne Rollen / canManage, nur wenn publicUuid vorhanden)
 - [x] Button öffnet /p/:uuid in neuem Tab (gestrichelte Umrandung, hover solid)
+
+## Auto-Revoke abgelaufener öffentlicher Dokumente
+- [ ] System-Setting AUTO_REVOKE_EXPIRED_PUBLIC_DOCS (boolean, default true)
+- [ ] documentService.revokeExpiredPublicDocuments: setzt publicDownload=false für alle abgelaufenen Dokumente
+- [ ] Cron-Job: täglich um 02:00 Uhr revokeExpiredPublicDocuments ausführen
+- [ ] tRPC-Endpoint documents.revokeExpiredPublic (manuell auslösbar, nur admin/compliance_manager)
+- [ ] Admin-UI: Toggle in Einstellungen (Siegel-Tab)
+- [ ] Admin-UI: Warnhinweis in DocumentRow wenn Dokument abgelaufen und publicDownload=true
+- [ ] Landingpage: Abgelaufene Dokumente werden nicht angezeigt (bereits gefiltert im Backend)
+- [ ] Tests: revokeExpiredPublicDocuments, Cron-Logik, tRPC-Endpoint
+
+## Auto-Revoke abgelaufener öffentlicher Dokumente
+- [x] db.ts: revokeExpiredPublicDocuments() – bulk-setzt publicDownload=false für alle Dokumente mit expiryDate < NOW()
+- [x] documentService.revokeExpiredPublicDocuments() – prüft AUTO_REVOKE_EXPIRED_PUBLIC_DOCS Setting, schreibt Audit-Log pro Dokument
+- [x] force=true-Option um Setting-Check zu umgehen (für manuellen Aufruf)
+- [x] tRPC-Endpoint documents.revokeExpiredPublic (nur administrator/compliance_manager)
+- [x] Cron-Job server/cron/revokeExpiredPublicDocsCron.ts – läuft täglich (setInterval 24h), startet beim Server-Start
+- [x] Cron-Job in _core/index.ts registriert (startRevokeExpiredPublicDocsCron nach server.listen)
+- [x] AdminSettings: Toggle AUTO_REVOKE_EXPIRED_PUBLIC_DOCS + Speichern-Button + „Jetzt ausführen"-Button
+- [x] AdminSettings: Erklärungsbox was passiert
+- [x] ProductDetail DocumentRow: Ablaufdatum-Anzeige (rot wenn abgelaufen), Warnung wenn abgelaufen UND publicDownload=true
+- [x] 5 neue Tests (27 in documentVersioning.test.ts), 199 Tests gesamt grün, 0 TypeScript-Fehler

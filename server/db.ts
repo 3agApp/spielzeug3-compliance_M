@@ -318,6 +318,40 @@ export async function deleteDocument(id: number) {
   await db.delete(documents).where(eq(documents.id, id));
 }
 
+/**
+ * Revoke publicDownload=true on all non-archived documents whose expiryDate
+ * is in the past.  Returns the list of affected document IDs.
+ */
+export async function revokeExpiredPublicDocuments(): Promise<number[]> {
+  const db = await getDb();
+  if (!db) return [];
+  // Find expired public documents
+  const expired = await db
+    .select({ id: documents.id })
+    .from(documents)
+    .where(
+      and(
+        eq(documents.publicDownload, true),
+        eq(documents.isArchived, false),
+        sql`${documents.expiryDate} IS NOT NULL AND ${documents.expiryDate} < NOW()`
+      )
+    );
+  if (expired.length === 0) return [];
+  const ids = expired.map((r) => r.id);
+  // Bulk-update: set publicDownload = false
+  await db
+    .update(documents)
+    .set({ publicDownload: false })
+    .where(
+      and(
+        eq(documents.publicDownload, true),
+        eq(documents.isArchived, false),
+        sql`${documents.expiryDate} IS NOT NULL AND ${documents.expiryDate} < NOW()`
+      )
+    );
+  return ids;
+}
+
 // ─── Product Safety ──────────────────────────────────────────────────────────
 export async function getProductSafety(productId: number) {
   const db = await getDb();

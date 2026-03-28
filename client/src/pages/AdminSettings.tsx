@@ -53,6 +53,30 @@ export default function AdminSettings() {
   const [sealAutoActivate, setSealAutoActivate] = useState(true);
   const [sealAutoActivateLoaded, setSealAutoActivateLoaded] = useState(false);
   const sealSettingQuery = trpc.admin.getSystemSetting.useQuery({ key: "SEAL_AUTO_ACTIVATE" });
+
+  // Auto-revoke expired public docs setting
+  const [autoRevokeExpired, setAutoRevokeExpired] = useState(true);
+  const [autoRevokeLoaded, setAutoRevokeLoaded] = useState(false);
+  const autoRevokeQuery = trpc.admin.getSystemSetting.useQuery({ key: "AUTO_REVOKE_EXPIRED_PUBLIC_DOCS" });
+  const autoRevokeValue = autoRevokeQuery.data?.settingValue;
+  if (!autoRevokeLoaded && autoRevokeValue !== null && autoRevokeValue !== undefined) {
+    setAutoRevokeExpired(autoRevokeValue !== "false" && autoRevokeValue !== "0");
+    setAutoRevokeLoaded(true);
+  }
+  const revokeNowMutation = trpc.documents.revokeExpiredPublic.useMutation({
+    onSuccess: (data) => {
+      if (data.skipped) {
+        toast.info("Auto-Revoke ist deaktiviert – keine Aktion ausgeführt.");
+      } else {
+        toast.success(
+          data.revokedCount > 0
+            ? `${data.revokedCount} abgelaufene${data.revokedCount === 1 ? "s" : ""} Dokument${data.revokedCount === 1 ? "" : "e"} aus der öffentlichen Freigabe entfernt.`
+            : "Keine abgelaufenen Dokumente gefunden."
+        );
+      }
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
   const tenantQuery = trpc.tenant.getCurrent.useQuery();
   const tenantName = (tenantQuery.data as any)?.name ?? "Spielzeug 3 AG";
   const tenantSlug = (tenantQuery.data as any)?.slug ?? "swiss-product-seal.ch";
@@ -920,6 +944,73 @@ export default function AdminSettings() {
                 )}
                 Speichern
               </Button>
+
+              {/* ─── Auto-Revoke abgelaufener öffentlicher Dokumente ─── */}
+              <div className="border-t pt-5 mt-2">
+                <div className="flex items-center justify-between py-2">
+                  <div>
+                    <p className="text-sm font-medium">
+                      Abgelaufene Dokumente automatisch aus der öffentlichen Freigabe entfernen
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Dokumente mit abgelaufenem Gültigkeitsdatum werden täglich automatisch
+                      aus der Endkunden-Landingpage entfernt (publicDownload = false).
+                      Der Cron-Job läuft täglich um 02:00 Uhr.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={autoRevokeExpired}
+                    onCheckedChange={setAutoRevokeExpired}
+                    disabled={autoRevokeQuery.isLoading}
+                  />
+                </div>
+
+                <div className="flex items-center gap-3 mt-3">
+                  <Button
+                    onClick={() =>
+                      saveSealSettingMutation.mutate({
+                        key: "AUTO_REVOKE_EXPIRED_PUBLIC_DOCS",
+                        value: autoRevokeExpired ? "true" : "false",
+                      })
+                    }
+                    disabled={saveSealSettingMutation.isPending}
+                    variant="outline"
+                  >
+                    {saveSealSettingMutation.isPending ? (
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Save className="mr-2 h-4 w-4" />
+                    )}
+                    Speichern
+                  </Button>
+
+                  <Button
+                    variant="secondary"
+                    onClick={() => revokeNowMutation.mutate({ force: true })}
+                    disabled={revokeNowMutation.isPending}
+                    title="Jetzt alle abgelaufenen Dokumente aus der öffentlichen Freigabe entfernen"
+                  >
+                    {revokeNowMutation.isPending ? (
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Shield className="mr-2 h-4 w-4" />
+                    )}
+                    Jetzt ausführen
+                  </Button>
+                </div>
+
+                <div className="rounded-lg border p-3 bg-muted/20 text-sm text-muted-foreground mt-3">
+                  <p className="font-medium text-foreground mb-1">Was passiert dabei?</p>
+                  <p>
+                    Alle Dokumente, bei denen das Ablaufdatum überschritten ist und
+                    <code className="font-mono text-xs bg-background border rounded px-1 mx-1">publicDownload = true</code>
+                    gesetzt ist, werden automatisch auf
+                    <code className="font-mono text-xs bg-background border rounded px-1 mx-1">publicDownload = false</code>
+                    zurückgesetzt. Jede Änderung wird im Audit-Log protokolliert.
+                    Das Dokument bleibt im System erhalten und kann jederzeit manuell wieder freigegeben werden.
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
