@@ -11,7 +11,7 @@ import type { TrpcContext } from "./_core/context";
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 
-function makeCtx(role = "compliance_manager"): TrpcContext {
+function makeCtx(role = "compliance_manager", supplierId?: number): TrpcContext {
   const user: AuthenticatedUser = {
     id: 42,
     openId: "test-user",
@@ -24,6 +24,7 @@ function makeCtx(role = "compliance_manager"): TrpcContext {
     lastSignedIn: new Date(),
   };
   (user as any).complianceRole = role;
+  if (supplierId !== undefined) (user as any).supplierId = supplierId;
   return {
     user,
     req: { headers: {}, cookies: {} } as any,
@@ -31,8 +32,8 @@ function makeCtx(role = "compliance_manager"): TrpcContext {
   };
 }
 
-const caller = (role?: string) =>
-  appRouter.createCaller(makeCtx(role));
+const caller = (role?: string, supplierId?: number) =>
+  appRouter.createCaller(makeCtx(role, supplierId));
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -125,6 +126,42 @@ describe("productImages router", () => {
       expect(result).toHaveLength(2);
       expect(result[0].sortOrder).toBe(0);
       expect(result[1].sortOrder).toBe(1);
+    });
+  });
+
+  describe("supplier access control", () => {
+    it("allows supplier to list images for own product", async () => {
+      const { getDb } = await import("./db");
+      const mockDb = {
+        select: vi.fn().mockReturnThis(),
+        from: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis(),
+        orderBy: vi.fn().mockResolvedValue([]),
+      };
+      (getDb as any).mockResolvedValue(mockDb);
+      // Supplier with supplierId=5 lists images for product 10
+      const result = await caller("supplier", 5).productImages.list({ productId: 10 });
+      expect(result).toEqual([]);
+    });
+
+    it("rejects supplier trying to upload to a product they do not own", async () => {
+      const { getDb } = await import("./db");
+      const mockDb = {
+        select: vi.fn().mockReturnThis(),
+        from: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis(),
+        // assertProductAccess returns a product owned by supplierId=99, not 5
+        limit: vi.fn().mockResolvedValue([{ id: 10, supplierId: 99 }]),
+        orderBy: vi.fn().mockResolvedValue([]),
+      };
+      (getDb as any).mockResolvedValue(mockDb);
+      await expect(
+        caller("supplier", 5).productImages.upload({
+          productId: 10,
+          fileBase64: Buffer.from("fake").toString("base64"),
+          mimeType: "image/jpeg",
+        })
+      ).rejects.toThrow(/FORBIDDEN|Berechtigungen/i);
     });
   });
 

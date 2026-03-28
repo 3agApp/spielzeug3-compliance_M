@@ -22,16 +22,27 @@ function randomSuffix() {
   return Math.random().toString(36).slice(2, 10);
 }
 
-async function assertProductAccess(db: Awaited<ReturnType<typeof getDb>>, productId: number, userId: number, role: string) {
+/**
+ * Assert that the current user may manage images for the given product.
+ * - Internal roles (compliance_manager, internal_employee, administrator, super_admin): always allowed.
+ * - Supplier role: only allowed when user.supplierId matches product.supplierId.
+ */
+async function assertProductAccess(
+  db: Awaited<ReturnType<typeof getDb>>,
+  productId: number,
+  role: string,
+  userSupplierId?: number | null,
+) {
   if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
   const [product] = await db.select({ id: products.id, supplierId: products.supplierId })
     .from(products)
     .where(eq(products.id, productId))
     .limit(1);
   if (!product) throw Errors.notFound("Product", String(productId));
-  // Suppliers can only manage images for their own products
-  if (role === "supplier" && product.supplierId !== userId) {
-    throw new TRPCError({ code: "FORBIDDEN", message: "Insufficient permissions" });
+  if (role === "supplier") {
+    if (!userSupplierId || product.supplierId !== userSupplierId) {
+      throw new TRPCError({ code: "FORBIDDEN", message: "Unzureichende Berechtigungen." });
+    }
   }
 }
 
@@ -55,8 +66,7 @@ export const productImagesRouter = {
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-
-      await assertProductAccess(db, input.productId, ctx.user.id, ctx.user.complianceRole ?? "supplier");
+      await assertProductAccess(db, input.productId, ctx.user.complianceRole ?? "supplier", (ctx.user as any).supplierId);
 
       // Validate file size
       const fileBuffer = Buffer.from(input.fileBase64, "base64");
@@ -138,7 +148,7 @@ export const productImagesRouter = {
         .limit(1);
       if (!image) throw Errors.notFound("ProductImage", String(input.imageId));
 
-      await assertProductAccess(db, image.productId, ctx.user.id, ctx.user.complianceRole ?? "supplier");
+      await assertProductAccess(db, image.productId, ctx.user.complianceRole ?? "supplier", (ctx.user as any).supplierId);
 
       await db.delete(productImages).where(eq(productImages.id, input.imageId));
 
@@ -168,7 +178,7 @@ export const productImagesRouter = {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 
-      await assertProductAccess(db, input.productId, ctx.user.id, ctx.user.complianceRole ?? "supplier");
+      await assertProductAccess(db, input.productId, ctx.user.complianceRole ?? "supplier", (ctx.user as any).supplierId);
 
       for (let i = 0; i < input.orderedIds.length; i++) {
         await db.update(productImages)

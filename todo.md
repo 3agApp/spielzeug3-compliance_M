@@ -550,3 +550,8 @@
 ## Produktbild-Thumbnail in Produktliste
 - [x] Backend: getAllProducts und getProductsBySupplier liefern firstImageUrl mit
 - [x] Frontend: Thumbnail-Spalte in Produktliste (Products.tsx)
+
+## Lieferanten: Produktbilder selbst hochladen
+- [x] Backend: assertProductAccess nutzt user.supplierId statt user.id für Supplier-Vergleich
+- [x] Frontend: Bilder-Tab readOnly=false für Lieferanten (eigene Produkte)
+- [x] Test: Lieferant kann Bild für eigenes Produkt hochladen, nicht für fremdes

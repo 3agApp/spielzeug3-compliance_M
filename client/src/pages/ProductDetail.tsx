@@ -393,7 +393,7 @@ export default function ProductDetail() {
         <TabsContent value="images" className="mt-4">
           <ProductImagesGallery
             productId={productId}
-            readOnly={role !== "supplier" && role !== "internal_employee" && role !== "compliance_manager" && role !== "administrator"}
+            readOnly={!isInternalRole && role !== "supplier"}
           />
         </TabsContent>
         {/* Components Tab */}
