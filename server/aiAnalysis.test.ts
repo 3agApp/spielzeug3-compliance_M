@@ -247,6 +247,35 @@ describe("buildRiskAssessmentPrompt – regulatory quotes and email template", (
   });
 });
 
+describe("buildDocumentAnalysisPrompt – scoring rules", () => {
+  it("prompt contains scoring rules section", async () => {
+    const { buildDocumentAnalysisPrompt } = await import("./domains/ai/aiAnalysisService");
+    const product = { productName: "Test Toy", brand: "TestBrand", ageGroup: "3+", targetMarket: "EU", status: "pending" };
+    const doc = { id: 1, documentType: "test_report", fileName: "test.pdf", standard: "EN 71-1", expiresAt: null, reviewStatus: "approved", includeInAiAnalysis: true };
+    const prompt = buildDocumentAnalysisPrompt(product as any, [doc]);
+    expect(prompt).toContain("SCORING RULES");
+    expect(prompt).toContain("score MUST be 100");
+  });
+
+  it("prompt enforces status-to-score mapping", async () => {
+    const { buildDocumentAnalysisPrompt } = await import("./domains/ai/aiAnalysisService");
+    const product = { productName: "Test Toy", brand: "TestBrand", ageGroup: "3+", targetMarket: "EU", status: "pending" };
+    const doc = { id: 1, documentType: "test_report", fileName: "test.pdf", standard: "EN 71-1", expiresAt: null, reviewStatus: "approved", includeInAiAnalysis: true };
+    const prompt = buildDocumentAnalysisPrompt(product as any, [doc]);
+    expect(prompt).toContain('status = "ok" AND issues = [] AND missingElements = []');
+    expect(prompt).toContain('status = "warning"');
+    expect(prompt).toContain('status = "critical"');
+  });
+
+  it("prompt forbids deducting points for theoretical improvements", async () => {
+    const { buildDocumentAnalysisPrompt } = await import("./domains/ai/aiAnalysisService");
+    const product = { productName: "Test Toy", brand: "TestBrand", ageGroup: "3+", targetMarket: "EU", status: "pending" };
+    const doc = { id: 1, documentType: "test_report", fileName: "test.pdf", standard: "EN 71-1", expiresAt: null, reviewStatus: "approved", includeInAiAnalysis: true };
+    const prompt = buildDocumentAnalysisPrompt(product as any, [doc]);
+    expect(prompt).toContain("Do NOT deduct points for theoretical improvements");
+  });
+});
+
 describe("aiAnalysis.getLatest", () => {
   it("returns null when no analysis exists", async () => {
     const { getLatestAiAnalysisByProduct } = await import("./db");

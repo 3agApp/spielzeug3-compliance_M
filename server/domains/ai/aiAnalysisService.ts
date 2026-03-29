@@ -208,6 +208,13 @@ TASK: For each document, evaluate:
 
 For each document, also generate a professional email template (in English) that can be sent to the manufacturer/supplier to request corrections or missing information.
 
+SCORING RULES (MANDATORY – follow exactly):
+- If status = "ok" AND issues = [] AND missingElements = [] → score MUST be 100
+- If status = "ok" AND issues or missingElements are non-empty → score must be between 80 and 99
+- If status = "warning" → score must be between 50 and 79
+- If status = "critical" → score must be between 0 and 49
+- A document that is fully compliant with no issues and no missing elements MUST receive score = 100. Do NOT deduct points for theoretical improvements or best-practice suggestions when all mandatory elements are present.
+
 Return ONLY valid JSON matching this exact schema – no extra text:
 {
   "documentAnalysis": [
@@ -502,7 +509,19 @@ export const aiAnalysisService = {
 
         const docContent = docResponse.content;
         const docParsed = JSON.parse(docContent);
-        documentAnalysis = docParsed.documentAnalysis ?? [];
+        documentAnalysis = (docParsed.documentAnalysis ?? []).map((d: any) => {
+          // Post-processing: enforce score consistency with status
+          // If status is "ok" and there are no issues or missing elements, score must be 100
+          if (
+            d.status === "ok" &&
+            (!d.issues || d.issues.length === 0) &&
+            (!d.missingElements || d.missingElements.length === 0) &&
+            d.score < 100
+          ) {
+            return { ...d, score: 100 };
+          }
+          return d;
+        });
 
         // Build combined email template for all documents with issues
         const docsWithIssues = documentAnalysis.filter(
