@@ -186,6 +186,42 @@ describe("buildRiskAssessmentPrompt – extended finding fields", () => {
     expect(prompt).toContain("short 1-sentence headline");
     expect(prompt).toContain("concrete actionable step");
   });
+
+  it("prompt contains score reason fields", async () => {
+    const { buildRiskAssessmentPrompt } = await import("./domains/ai/aiAnalysisService");
+    const product = { productName: "Test Toy", brand: "TestBrand", ageGroup: "3+", targetMarket: "EU", status: "pending" };
+    const prompt = buildRiskAssessmentPrompt(product as any, [], null);
+    expect(prompt).toContain('"documentCompletenessReason"');
+    expect(prompt).toContain('"contentPlausibilityReason"');
+    expect(prompt).toContain('"formalCorrectnessReason"');
+    expect(prompt).toContain('"consistencyReason"');
+  });
+
+  it("prompt includes document analysis results as context when provided", async () => {
+    const { buildRiskAssessmentPrompt } = await import("./domains/ai/aiAnalysisService");
+    const product = { productName: "Test Toy", brand: "TestBrand", ageGroup: "3+", targetMarket: "EU", status: "pending" };
+    const docAnalysis = [{
+      fileName: "EN71.pdf",
+      documentType: "test_report",
+      score: 90,
+      status: "ok",
+      positives: ["Issued by accredited lab"],
+      issues: [],
+      missingElements: ["Expiry date"],
+    }];
+    const prompt = buildRiskAssessmentPrompt(product as any, [], null, undefined, undefined, docAnalysis);
+    expect(prompt).toContain("DOCUMENT ANALYSIS RESULTS");
+    expect(prompt).toContain("EN71.pdf");
+    expect(prompt).toContain("score: 90/100");
+    expect(prompt).toContain("ground truth");
+  });
+
+  it("prompt instructs AI not to re-penalise compliant documents", async () => {
+    const { buildRiskAssessmentPrompt } = await import("./domains/ai/aiAnalysisService");
+    const product = { productName: "Test Toy", brand: "TestBrand", ageGroup: "3+", targetMarket: "EU", status: "pending" };
+    const prompt = buildRiskAssessmentPrompt(product as any, [], null);
+    expect(prompt).toContain("do NOT re-penalise");
+  });
 });
 
 describe("aiAnalysis.getLatest", () => {

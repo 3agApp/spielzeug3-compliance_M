@@ -94,8 +94,9 @@ function ScoreRing({ score }: { score: number }) {
   );
 }
 
-function CategoryBar({ label, score, icon: Icon }: { label: string; score: number; icon: any }) {
+function CategoryBar({ label, score, icon: Icon, reason }: { label: string; score: number; icon: any; reason?: string | null }) {
   const c = scoreColor(score);
+  const [open, setOpen] = useState(false);
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between text-sm">
@@ -103,11 +104,28 @@ function CategoryBar({ label, score, icon: Icon }: { label: string; score: numbe
           <Icon className="h-3.5 w-3.5" />
           {label}
         </span>
-        <span className={`font-semibold text-xs ${c.text}`}>{score}%</span>
+        <div className="flex items-center gap-1.5">
+          <span className={`font-semibold text-xs ${c.text}`}>{score}%</span>
+          {reason && (
+            <button
+              type="button"
+              onClick={() => setOpen((o) => !o)}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+              title="Why this score?"
+            >
+              {open ? <ChevronUp className="h-3.5 w-3.5" /> : <Info className="h-3.5 w-3.5" />}
+            </button>
+          )}
+        </div>
       </div>
       <div className="h-1.5 rounded-full bg-muted overflow-hidden">
         <div className={`h-full rounded-full transition-all duration-700 ${c.bar}`} style={{ width: `${score}%` }} />
       </div>
+      {reason && open && (
+        <p className={`text-xs leading-relaxed rounded-md px-2.5 py-2 mt-1 border ${c.bg} ${c.border} ${c.text}`}>
+          {reason}
+        </p>
+      )}
     </div>
   );
 }
@@ -463,6 +481,12 @@ function RiskAssessmentSection({ analysis }: { analysis: any }) {
   const findings = (analysis.findings as any[] | null) ?? [];
   const recommendations = (analysis.recommendations as string[] | null) ?? [];
   const overallColor = scoreColor(overall);
+  const scoreReasons = (analysis as any).scoreReasons as {
+    documentCompleteness?: string | null;
+    contentPlausibility?: string | null;
+    formalCorrectness?: string | null;
+    consistency?: string | null;
+  } | null;
 
   return (
     <div className="space-y-5">
@@ -485,10 +509,10 @@ function RiskAssessmentSection({ analysis }: { analysis: any }) {
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <CategoryBar label="Document Completeness" score={docScore} icon={FileText} />
-            <CategoryBar label="Content Plausibility" score={contentScore} icon={CheckCircle2} />
-            <CategoryBar label="Formal Correctness" score={formalScore} icon={Info} />
-            <CategoryBar label="Consistency" score={consistencyScore} icon={Sparkles} />
+            <CategoryBar label="Document Completeness" score={docScore} icon={FileText} reason={scoreReasons?.documentCompleteness} />
+            <CategoryBar label="Content Plausibility" score={contentScore} icon={CheckCircle2} reason={scoreReasons?.contentPlausibility} />
+            <CategoryBar label="Formal Correctness" score={formalScore} icon={Info} reason={scoreReasons?.formalCorrectness} />
+            <CategoryBar label="Consistency" score={consistencyScore} icon={Sparkles} reason={scoreReasons?.consistency} />
           </div>
         </div>
       </div>

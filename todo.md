@@ -814,3 +814,14 @@
 - [x] Frontend: Hinweis-Text "Click a finding to expand details" wenn Details vorhanden
 - [x] Frontend: Abwärtskompatibel – alte Findings ohne detail/remediation bleiben nicht-aufklappbar
 - [x] Tests für erweitertes Finding-Schema (3 neue Tests, 252 Tests total, alle grün)
+
+## Score-Erklärungen und Risk-Assessment-Synchronisation
+- [x] KI-Prompt: scoreReasons-Objekt (documentCompletenessReason, contentPlausibilityReason, formalCorrectnessReason, consistencyReason) zum JSON-Schema hinzugefügt
+- [x] KI-Prompt: Risk Assessment erhält Dokument-Analyseergebnisse als Kontext (damit EN71.pdf "Compliant" nicht doppelt bestraft wird)
+- [x] KI-Prompt: Instruktion "do NOT re-penalise compliant documents" hinzugefügt
+- [x] DB: scoreReasons JSON-Spalte in ai_analysis_results (ALTER TABLE Migration)
+- [x] Backend: AI-Scores direkt aus LLM-Antwort übernehmen (statt algorithmisch berechnen)
+- [x] Frontend: CategoryBar um aufklappbare Erklärung erweitert (Info-Icon neben Score-Prozentzahl)
+- [x] Frontend: Farbkodierte Erklärungs-Box (grün/orange/rot je nach Score)
+- [x] Frontend: Besonders Content Plausibility: Klick auf Info zeigt was nicht plausibel ist
+- [x] Tests für erweiterte Score-Felder (4 neue Tests, 255 Tests total, alle grün)

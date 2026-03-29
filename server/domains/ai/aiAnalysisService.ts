@@ -233,7 +233,8 @@ export function buildRiskAssessmentPrompt(
   docs: any[],
   safety: any | null,
   components?: any[],
-  componentDocs?: any[]
+  componentDocs?: any[],
+  documentAnalysisResults?: any[]
 ): string {
   const docList =
     docs.length > 0
@@ -270,30 +271,53 @@ export function buildRiskAssessmentPrompt(
     componentSection = `\n\nPRODUCT COMPONENTS (${components.length} total):\n${compLines}`;
   }
 
+   // Build document analysis context section if available
+  let docAnalysisSection = "";
+  if (documentAnalysisResults && documentAnalysisResults.length > 0) {
+    const lines = documentAnalysisResults.map((d: any) => {
+      const positives = (d.positives ?? []).join("; ") || "none";
+      const issues = (d.issues ?? []).join("; ") || "none";
+      const missing = (d.missingElements ?? []).join("; ") || "none";
+      return `  - ${d.fileName ?? d.documentType} (${d.documentType}, score: ${d.score}/100, status: ${d.status}):\n    Positives: ${positives}\n    Issues: ${issues}\n    Missing elements: ${missing}`;
+    });
+    docAnalysisSection = `\n\nDOCUMENT ANALYSIS RESULTS (already evaluated per-document – use these as ground truth for your assessment):\n${lines.join("\n")}`;
+  }
+
   return `You are a senior toy industry compliance expert specialising in EU and Swiss toy safety regulations (Toy Safety Directive 2009/48/EC, GPSR 2023/988, REACH, EN 71 series, Swiss Toy Safety Ordinance SR 817.023.11).
 Perform an overall compliance risk assessment for the following product.
-
 PRODUCT: ${product.productName}
 BRAND: ${product.brand ?? "–"}
 AGE GROUP: ${product.ageGroup ?? "–"}
 TARGET MARKET: ${product.targetMarket ?? "EU/Switzerland"}
 STATUS: ${product.status}${safetySection}${componentSection}
-
 DOCUMENTS (${docs.length} total):
-${docList}
-
+${docList}${docAnalysisSection}
 EVALUATE:
-1. Documentation completeness (test reports, declarations of conformity, and certificates have highest priority under 2009/48/EC)
+1. Documentation completeness (test reports, declarations of conformity, and certificates have highest priority under 2009/48/EC). Use the document analysis results above as ground truth – do NOT re-penalise documents that were already scored as compliant.
 2. Safety data plausibility (age grading, warnings, material information vs. EN 71 requirements)
 3. Formal correctness (standard references, expiry dates, accreditation requirements)
 4. Consistency between safety data and documents
 5. Missing mandatory documents for EU/Swiss market entry
+
+For each of the four score dimensions, provide a 1-2 sentence explanation of the key reason(s) behind your score:
+- documentCompletenessReason: What documents are present/missing and why this affects the score?
+- contentPlausibilityReason: What specific content is implausible, contradictory, or raises concerns? Be specific.
+- formalCorrectnessReason: What formal elements (standard references, dates, accreditation) are correct or incorrect?
+- consistencyReason: Are safety data and documents consistent with each other? What inconsistencies exist?
 
 Return ONLY valid JSON matching this exact schema – no extra text:
 {
   "overallScore": <0-100>,
   "riskLevel": "low" | "medium" | "high",
   "summary": "<2-3 sentence summary in English>",
+  "documentCompletenessScore": <0-100>,
+  "documentCompletenessReason": "<1-2 sentences>",
+  "contentPlausibilityScore": <0-100>,
+  "contentPlausibilityReason": "<1-2 sentences explaining what is or is not plausible>",
+  "formalCorrectnessScore": <0-100>,
+  "formalCorrectnessReason": "<1-2 sentences>",
+  "consistencyScore": <0-100>,
+  "consistencyReason": "<1-2 sentences>",
   "findings": [
     {
       "type": "positive" | "warning" | "critical",
@@ -479,7 +503,7 @@ export const aiAnalysisService = {
       }
 
       // ── Step 2: Overall risk assessment ────────────────────────────────────
-      const riskPrompt = buildRiskAssessmentPrompt(product, docs, safety, components, componentDocs);
+      const riskPrompt = buildRiskAssessmentPrompt(product, docs, safety, components, componentDocs, documentAnalysis);
       const riskResponse = await invokeTenantLLM({
         messages: [
           {
@@ -500,6 +524,14 @@ export const aiAnalysisService = {
                 overallScore: { type: "number" },
                 riskLevel: { type: "string" },
                 summary: { type: "string" },
+                documentCompletenessScore: { type: "number" },
+                documentCompletenessReason: { type: "string" },
+                contentPlausibilityScore: { type: "number" },
+                contentPlausibilityReason: { type: "string" },
+                formalCorrectnessScore: { type: "number" },
+                formalCorrectnessReason: { type: "string" },
+                consistencyScore: { type: "number" },
+                consistencyReason: { type: "string" },
                 findings: {
                   type: "array",
                   items: {
@@ -522,6 +554,14 @@ export const aiAnalysisService = {
                 "overallScore",
                 "riskLevel",
                 "summary",
+                "documentCompletenessScore",
+                "documentCompletenessReason",
+                "contentPlausibilityScore",
+                "contentPlausibilityReason",
+                "formalCorrectnessScore",
+                "formalCorrectnessReason",
+                "consistencyScore",
+                "consistencyReason",
                 "findings",
                 "recommendations",
                 "missingDocuments",
@@ -534,20 +574,21 @@ export const aiAnalysisService = {
 
       const parsed = JSON.parse(riskResponse.content);
 
-      // ── Derive sub-scores ──────────────────────────────────────────────────
+      // ── Use AI-provided sub-scores (with fallback to algorithmic calculation) ───────
       const findings = parsed.findings ?? [];
       const positiveCount = findings.filter((f: any) => f.type === "positive").length;
       const warningCount = findings.filter((f: any) => f.type === "warning").length;
       const criticalCount = findings.filter((f: any) => f.type === "critical").length;
       const totalFindings = findings.length || 1;
-
       const missingDocs = parsed.missingDocuments ?? [];
-      const docScore = Math.max(0, 100 - missingDocs.length * 15);
-      const contentScore = Math.round(((positiveCount + 1) / (totalFindings + 1)) * 100);
-      const formalScore = Math.max(0, 100 - criticalCount * 25);
-      const consistencyScore = Math.max(0, 100 - warningCount * 15);
 
-      // ── Save to DB ─────────────────────────────────────────────────────────
+      // Prefer AI-provided scores; fall back to algorithmic if not present
+      const docScore = parsed.documentCompletenessScore ?? Math.max(0, 100 - missingDocs.length * 15);
+      const contentScore = parsed.contentPlausibilityScore ?? Math.round(((positiveCount + 1) / (totalFindings + 1)) * 100);
+      const formalScore = parsed.formalCorrectnessScore ?? Math.max(0, 100 - criticalCount * 25);
+      const consistencyScore = parsed.consistencyScore ?? Math.max(0, 100 - warningCount * 15);
+
+      // ── Save to DB ──────────────────────────────────────────────────────
       await updateAiAnalysis(analysisId, {
         status: "completed",
         overallScore: String(parsed.overallScore ?? 0),
@@ -563,6 +604,13 @@ export const aiAnalysisService = {
         analyzedDocumentIds: docs.map((d) => d.id),
         modelUsed: riskResponse.model,
         completedAt: new Date(),
+        // Store score reasons as part of findings metadata
+        scoreReasons: {
+          documentCompleteness: parsed.documentCompletenessReason ?? null,
+          contentPlausibility: parsed.contentPlausibilityReason ?? null,
+          formalCorrectness: parsed.formalCorrectnessReason ?? null,
+          consistency: parsed.consistencyReason ?? null,
+        },
       } as any);
 
       await createAuditLog({
