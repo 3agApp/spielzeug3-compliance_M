@@ -592,3 +592,8 @@
 - [x] Frontend: State + Query für RISK_AUTO_REASSESS in AdminSettings.tsx
 - [x] Frontend: Switch-Block im AI-Tab (nach dem bestehenden KI-Analyse-Inhalt)
 - [x] Frontend: Speichern-Button nutzt saveSealSettingMutation
+
+## Risikobericht PDF-Export
+- [x] Backend: generateRiskReportPdf() in riskReportPdf.ts (PDFKit, Deckblatt, Score-Gauge, Risiko-Karten, Maßnahmen, fehlende Infos)
+- [x] Backend: GET /api/reports/risk-assessment/:productId in pdfRoutes.ts
+- [x] Frontend: Download-Button im RiskAssessmentTab (nur bei vorhandener Bewertung)

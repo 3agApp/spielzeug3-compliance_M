@@ -43,10 +43,14 @@ import {
   getLatestAiAnalysisByProduct,
   getProductById,
   getSupplierById,
+  getDb,
 } from "./db";
 import { generateAiAnalysisPdf } from "./pdfGenerator";
 import { generateSealLabelPdf, type SealLabelStatus } from "./sealLabelPdf";
+import { generateRiskReportPdf } from "./riskReportPdf";
 import { getTenantById } from "./tenantDb";
+import { productRiskAssessments } from "../drizzle/schema";
+import { eq, and, desc } from "drizzle-orm";
 
 export function registerPdfRoutes(app: Express) {
   /**
@@ -294,6 +298,122 @@ export function registerPdfRoutes(app: Express) {
       res.send(pdfBuffer);
     } catch (err: any) {
       console.error("[PDF] Example seal label generation failed:", err);
+      res.status(500).json({ error: "PDF-Generierung fehlgeschlagen", details: err.message });
+    }
+  });
+
+  /**
+   * GET /api/reports/risk-assessment/:productId
+   * Returns the latest (or a specific) risk assessment as a PDF download.
+   * Query param ?assessmentId=N to download a specific historical assessment.
+   * Authentication: required (session cookie).
+   */
+  app.get("/api/reports/risk-assessment/:productId", async (req, res) => {
+    try {
+      // Authenticate
+      let user: any;
+      try {
+        user = await sdk.authenticateRequest(req);
+      } catch {
+        res.status(401).json({ error: "Nicht authentifiziert" });
+        return;
+      }
+
+      const productId = parseInt(req.params.productId ?? "0");
+      if (!productId || isNaN(productId)) {
+        res.status(400).json({ error: "Ungültige Produkt-ID" });
+        return;
+      }
+
+      // Load product
+      const product = await getProductById(productId);
+      if (!product) {
+        res.status(404).json({ error: "Produkt nicht gefunden" });
+        return;
+      }
+
+      // Load assessment – specific or latest completed
+      const db = await getDb();
+      if (!db) {
+        res.status(503).json({ error: "Datenbank nicht verfügbar" });
+        return;
+      }
+
+      let assessment: any;
+      const assessmentIdParam = req.query.assessmentId;
+      if (assessmentIdParam) {
+        const [found] = await db.select().from(productRiskAssessments)
+          .where(and(
+            eq(productRiskAssessments.productId, productId),
+            eq(productRiskAssessments.id, parseInt(String(assessmentIdParam)))
+          ))
+          .limit(1);
+        assessment = found ?? null;
+      } else {
+        const [latest] = await db.select().from(productRiskAssessments)
+          .where(and(
+            eq(productRiskAssessments.productId, productId),
+            eq(productRiskAssessments.status, "completed")
+          ))
+          .orderBy(desc(productRiskAssessments.createdAt))
+          .limit(1);
+        assessment = latest ?? null;
+      }
+
+      if (!assessment) {
+        res.status(404).json({ error: "Keine Risikobewertung vorhanden" });
+        return;
+      }
+
+      // Enrich with supplier name
+      let supplierName: string | null = null;
+      if ((product as any).supplierId) {
+        const supplier = await getSupplierById((product as any).supplierId);
+        supplierName = supplier?.name ?? null;
+      }
+
+      // Parse risks and missingInfo from JSON strings if needed
+      const risks = typeof assessment.risks === "string"
+        ? JSON.parse(assessment.risks)
+        : (assessment.risks ?? []);
+      const missingInfo = typeof assessment.missingInfo === "string"
+        ? JSON.parse(assessment.missingInfo)
+        : (assessment.missingInfo ?? []);
+
+      const pdfBuffer = await generateRiskReportPdf({
+        product: {
+          productName: (product as any).productName,
+          internalArticleNumber: (product as any).internalArticleNumber,
+          supplierArticleNumber: (product as any).supplierArticleNumber,
+          ean: (product as any).ean,
+          brand: (product as any).brand,
+          status: (product as any).status,
+          supplierName,
+        },
+        assessment: {
+          id: assessment.id,
+          overallRiskScore: assessment.overallRiskScore,
+          riskLevel: assessment.riskLevel,
+          summary: assessment.summary ?? "",
+          risks,
+          missingInfo,
+          modelUsed: assessment.modelUsed,
+          tokensUsed: assessment.tokensUsed,
+          createdAt: assessment.createdAt,
+        },
+      });
+
+      const safeName = ((product as any).productName ?? "produkt")
+        .replace(/[^a-zA-Z0-9äöüÄÖÜß\-_]/g, "_")
+        .slice(0, 50);
+      const filename = `Risikobericht_${safeName}_${new Date(assessment.createdAt).toISOString().slice(0, 10)}.pdf`;
+
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      res.setHeader("Content-Length", pdfBuffer.length);
+      res.send(pdfBuffer);
+    } catch (err: any) {
+      console.error("[PDF] Risk report generation failed:", err);
       res.status(500).json({ error: "PDF-Generierung fehlgeschlagen", details: err.message });
     }
   });

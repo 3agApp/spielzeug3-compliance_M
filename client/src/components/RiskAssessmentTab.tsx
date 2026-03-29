@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   ChevronDown,
   ChevronRight,
+  Download,
   History,
   Loader2,
   RefreshCw,
@@ -223,6 +224,7 @@ export default function RiskAssessmentTab({ productId, isInternalRole }: Props) 
     score:          lang === "de" ? "Score" : "Score",
     noHistory:      lang === "de" ? "Kein Verlauf vorhanden." : "No history available.",
     errorRun:       lang === "de" ? "Fehler beim Starten der Bewertung" : "Error starting assessment",
+    downloadPdf:    lang === "de" ? "PDF exportieren" : "Export PDF",
   };
 
   return (
@@ -238,21 +240,41 @@ export default function RiskAssessmentTab({ productId, isInternalRole }: Props) 
               </CardTitle>
               <CardDescription className="mt-0.5">{t.subtitle}</CardDescription>
             </div>
-            {isInternalRole && (
-              <Button
-                size="sm"
-                onClick={() => runMutation.mutate({ productId })}
-                disabled={runMutation.isPending || latestQuery.isLoading}
-                className="gap-2 flex-shrink-0"
-              >
-                {runMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-4 w-4" />
-                )}
-                {runMutation.isPending ? t.running : t.runBtn}
-              </Button>
-            )}
+            <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
+              {latest && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  asChild
+                  className="gap-2"
+                >
+                  <a
+                    href={`/api/reports/risk-assessment/${productId}`}
+                    download
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Download className="h-4 w-4" />
+                    {t.downloadPdf}
+                  </a>
+                </Button>
+              )}
+              {isInternalRole && (
+                <Button
+                  size="sm"
+                  onClick={() => runMutation.mutate({ productId })}
+                  disabled={runMutation.isPending || latestQuery.isLoading}
+                  className="gap-2"
+                >
+                  {runMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4" />
+                  )}
+                  {runMutation.isPending ? t.running : t.runBtn}
+                </Button>
+              )}
+            </div>
           </div>
           {runMutation.isError && (
             <p className="text-sm text-destructive mt-2">
