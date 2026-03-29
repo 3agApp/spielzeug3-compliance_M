@@ -1,0 +1,55 @@
+{
+  "query": "SELECT id, productId, status, overallScore, documentCompletenessScore, contentPlausibilityScore, formalCorrectnessScore, consistencyScore, summary, errorMessage, modelUsed, completedAt, createdAt FROM ai_analysis_results ORDER BY id DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user J1L9FvUd1r4oKv8.75a96d268c41 --database kgkV5LdecSJ3HqPv7WFR7a --execute SELECT id, productId, status, overallScore, documentCompletenessScore, contentPlausibilityScore, formalCorrectnessScore, consistencyScore, summary, errorMessage, modelUsed, completedAt, createdAt FROM ai_analysis_results ORDER BY id DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "3",
+      "productId": "60001",
+      "status": "pending",
+      "overallScore": "0.00",
+      "documentCompletenessScore": "NULL",
+      "contentPlausibilityScore": "NULL",
+      "formalCorrectnessScore": "NULL",
+      "consistencyScore": "NULL",
+      "summary": "NULL",
+      "errorMessage": "NULL",
+      "modelUsed": "NULL",
+      "completedAt": "NULL",
+      "createdAt": "2026-03-29 11:16:23"
+    },
+    {
+      "id": "2",
+      "productId": "60001",
+      "status": "failed",
+      "overallScore": "0.00",
+      "documentCompletenessScore": "NULL",
+      "contentPlausibilityScore": "NULL",
+      "formalCorrectnessScore": "NULL",
+      "consistencyScore": "NULL",
+      "summary": "NULL",
+      "errorMessage": "Legacy pending entry – superseded by new analysis",
+      "modelUsed": "NULL",
+      "completedAt": "NULL",
+      "createdAt": "2026-03-29 11:09:41"
+    },
+    {
+      "id": "1",
+      "productId": "60001",
+      "status": "failed",
+      "overallScore": "0.00",
+      "documentCompletenessScore": "NULL",
+      "contentPlausibilityScore": "NULL",
+      "formalCorrectnessScore": "NULL",
+      "consistencyScore": "NULL",
+      "summary": "NULL",
+      "errorMessage": "Legacy pending entry – superseded by new analysis",
+      "modelUsed": "NULL",
+      "completedAt": "NULL",
+      "createdAt": "2026-03-29 10:04:16"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tproductId\tstatus\toverallScore\tdocumentCompletenessScore\tcontentPlausibilityScore\tformalCorrectnessScore\tconsistencyScore\tsummary\terrorMessage\tmodelUsed\tcompletedAt\tcreatedAt\n3\t60001\tpending\t0.00\tNULL\tNULL\tNULL\tNULL\tNULL\tNULL\tNULL\tNULL\t2026-03-29 11:16:23\n2\t60001\tfailed\t0.00\tNULL\tNULL\tNULL\tNULL\tNULL\tLegacy pending entry – superseded by new analysis\tNULL\tNULL\t2026-03-29 11:09:41\n1\t60001\tfailed\t0.00\tNULL\tNULL\tNULL\tNULL\tNULL\tLegacy pending entry – superseded by new analysis\tNULL\tNULL\t2026-03-29 10:04:16\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

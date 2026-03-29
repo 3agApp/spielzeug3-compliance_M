@@ -183,8 +183,7 @@ export const aiAnalysisService = {
       overallScore: "0",
       triggeredByUserId: user.id,
     } as any);
-    const analysisId =
-      typeof analysisRecord === "number" ? analysisRecord : (analysisRecord as any)?.id ?? 0;
+    const analysisId = analysisRecord; // createAiAnalysis now returns insertId directly as number
 
     try {
       const response = await invokeLLM({

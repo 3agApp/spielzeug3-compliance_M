@@ -668,11 +668,13 @@ export async function upsertSystemSetting(
 }
 
 // ─── AI Analysis Results ─────────────────────────────────────────────────────
-export async function createAiAnalysis(data: typeof aiAnalysisResults.$inferInsert) {
+export async function createAiAnalysis(data: typeof aiAnalysisResults.$inferInsert): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
   const result = await db.insert(aiAnalysisResults).values(data);
-  return result;
+  // MySQL/TiDB Drizzle returns [ResultSetHeader, ...] – insertId is in result[0]
+  const insertId = (result as any)?.[0]?.insertId ?? (result as any)?.insertId ?? 0;
+  return insertId;
 }
 
 export async function updateAiAnalysis(
