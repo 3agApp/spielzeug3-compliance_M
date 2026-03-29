@@ -1,0 +1,20 @@
+{
+  "query": "\nSELECT id, productName, internalArticleNumber, categoryId, templateId FROM products WHERE internalArticleNumber = 'MT4300' OR productName LIKE '%Magna-Tiles Classic%' LIMIT 5;\nSELECT id, name, categoryId FROM product_templates WHERE name LIKE '%Magna-Tiles%' LIMIT 5;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user J1L9FvUd1r4oKv8.75a96d268c41 --database kgkV5LdecSJ3HqPv7WFR7a --execute \nSELECT id, productName, internalArticleNumber, categoryId, templateId FROM products WHERE internalArticleNumber = 'MT4300' OR productName LIKE '%Magna-Tiles Classic%' LIMIT 5;\nSELECT id, name, categoryId FROM product_templates WHERE name LIKE '%Magna-Tiles%' LIMIT 5;\n",
+  "rows": [
+    {
+      "id": "60001",
+      "productName": "Magna-Tiles® Classic Set (100-teilig)",
+      "internalArticleNumber": "MT4300",
+      "categoryId": "NULL",
+      "templateId": "NULL"
+    }
+  ],
+  "messages": [
+    "id\tname\tcategoryId",
+    "30001\tMagna-Tiles Magnetbausteine\t30001"
+  ],
+  "stdout": "id\tproductName\tinternalArticleNumber\tcategoryId\ttemplateId\n60001\tMagna-Tiles® Classic Set (100-teilig)\tMT4300\tNULL\tNULL\nid\tname\tcategoryId\n30001\tMagna-Tiles Magnetbausteine\t30001\n",
+  "stderr": "",
+  "execution_time_ms": 63
+}

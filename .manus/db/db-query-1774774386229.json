@@ -1,0 +1,59 @@
+{
+  "query": "SELECT requirementType, required, isMissing, status, sourceSystem FROM missing_requirements WHERE productId = 60001 ORDER BY required DESC, requirementType;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user J1L9FvUd1r4oKv8.75a96d268c41 --database kgkV5LdecSJ3HqPv7WFR7a --execute SELECT requirementType, required, isMissing, status, sourceSystem FROM missing_requirements WHERE productId = 60001 ORDER BY required DESC, requirementType;",
+  "rows": [
+    {
+      "requirementType": "test_report",
+      "required": "1",
+      "isMissing": "1",
+      "status": "missing",
+      "sourceSystem": "template"
+    },
+    {
+      "requirementType": "declaration_of_conformity",
+      "required": "1",
+      "isMissing": "1",
+      "status": "missing",
+      "sourceSystem": "template"
+    },
+    {
+      "requirementType": "certificate",
+      "required": "1",
+      "isMissing": "1",
+      "status": "missing",
+      "sourceSystem": "template"
+    },
+    {
+      "requirementType": "safety_image",
+      "required": "1",
+      "isMissing": "1",
+      "status": "missing",
+      "sourceSystem": "template"
+    },
+    {
+      "requirementType": "manual",
+      "required": "0",
+      "isMissing": "1",
+      "status": "missing",
+      "sourceSystem": "template"
+    },
+    {
+      "requirementType": "product_image",
+      "required": "0",
+      "isMissing": "1",
+      "status": "missing",
+      "sourceSystem": "template"
+    },
+    {
+      "requirementType": "regulatory_document",
+      "required": "0",
+      "isMissing": "1",
+      "status": "missing",
+      "sourceSystem": "template"
+    }
+  ],
+  "messages": [],
+  "stdout": "requirementType\trequired\tisMissing\tstatus\tsourceSystem\ntest_report\t1\t1\tmissing\ttemplate\ndeclaration_of_conformity\t1\t1\tmissing\ttemplate\ncertificate\t1\t1\tmissing\ttemplate\nsafety_image\t1\t1\tmissing\ttemplate\nmanual\t0\t1\tmissing\ttemplate\nproduct_image\t0\t1\tmissing\ttemplate\nregulatory_document\t0\t1\tmissing\ttemplate\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}

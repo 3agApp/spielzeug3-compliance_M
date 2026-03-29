@@ -1,0 +1,28 @@
+{
+  "query": "\nSELECT p.id, p.productName, p.internalArticleNumber, p.categoryId, p.templateId, pt.name AS templateName, pc.labelDe AS categoryName\nFROM products p\nLEFT JOIN product_templates pt ON p.templateId = pt.id\nLEFT JOIN product_categories pc ON p.categoryId = pc.id\nWHERE p.id = 60001;\n\nSELECT requirementType, required, isMissing, status, sourceSystem\nFROM missing_requirements\nWHERE productId = 60001\nORDER BY required DESC, requirementType;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user J1L9FvUd1r4oKv8.75a96d268c41 --database kgkV5LdecSJ3HqPv7WFR7a --execute \nSELECT p.id, p.productName, p.internalArticleNumber, p.categoryId, p.templateId, pt.name AS templateName, pc.labelDe AS categoryName\nFROM products p\nLEFT JOIN product_templates pt ON p.templateId = pt.id\nLEFT JOIN product_categories pc ON p.categoryId = pc.id\nWHERE p.id = 60001;\n\nSELECT requirementType, required, isMissing, status, sourceSystem\nFROM missing_requirements\nWHERE productId = 60001\nORDER BY required DESC, requirementType;\n",
+  "rows": [
+    {
+      "id": "60001",
+      "productName": "Magna-Tiles® Classic Set (100-teilig)",
+      "internalArticleNumber": "MT4300",
+      "categoryId": "30001",
+      "templateId": "30001",
+      "templateName": "Magna-Tiles Magnetbausteine",
+      "categoryName": "Magnetspielzeug"
+    }
+  ],
+  "messages": [
+    "requirementType\trequired\tisMissing\tstatus\tsourceSystem",
+    "test_report\t1\t1\tmissing\ttemplate",
+    "declaration_of_conformity\t1\t1\tmissing\ttemplate",
+    "certificate\t1\t1\tmissing\ttemplate",
+    "safety_image\t1\t1\tmissing\ttemplate",
+    "manual\t0\t1\tmissing\ttemplate",
+    "product_image\t0\t1\tmissing\ttemplate",
+    "regulatory_document\t0\t1\tmissing\ttemplate"
+  ],
+  "stdout": "id\tproductName\tinternalArticleNumber\tcategoryId\ttemplateId\ttemplateName\tcategoryName\n60001\tMagna-Tiles® Classic Set (100-teilig)\tMT4300\t30001\t30001\tMagna-Tiles Magnetbausteine\tMagnetspielzeug\nrequirementType\trequired\tisMissing\tstatus\tsourceSystem\ntest_report\t1\t1\tmissing\ttemplate\ndeclaration_of_conformity\t1\t1\tmissing\ttemplate\ncertificate\t1\t1\tmissing\ttemplate\nsafety_image\t1\t1\tmissing\ttemplate\nmanual\t0\t1\tmissing\ttemplate\nproduct_image\t0\t1\tmissing\ttemplate\nregulatory_document\t0\t1\tmissing\ttemplate\n",
+  "stderr": "",
+  "execution_time_ms": 59
+}
