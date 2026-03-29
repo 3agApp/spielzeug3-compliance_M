@@ -768,3 +768,10 @@
 - [x] Frontend: AI-Toggle-Button in Dokumentenliste (violett = aktiv, grau = inaktiv)
 - [x] Frontend: Tab-Umbenennung "AI Analysis" → "AI Document Analysis"
 - [x] Frontend: i18n-Übersetzungen aktualisieren (DE + EN)
+
+## AI Prompt-Korrekturen (CH/EU + Dokument-Fokus)
+- [x] Recherche: CH-Spielzeugverordnung SR 817.023.11 – Äquivalenz zu EU-Richtlinie 2009/48/EC (MRA RS 0.946.526.81 bestätigt)
+- [x] Prompt: CH akzeptiert EU-CE-Konformität (keine separate CH-Referenz erforderlich wenn EU-DoC vorhanden)
+- [x] Prompt: Verpackungsanforderungen (CE-Marking auf Produkt, Herstelleradresse auf Verpackung) aus Dokument-Analyse entfernt
+- [x] Prompt: Fokus nur auf den Dokumentinhalt selbst (CRITICAL RULES im Prompt)
+- [x] Prompt: Klare CRITICAL RULES: nur Dokumentinhalt prüfen, keine Produktkennzeichnungsanforderungen bemfängeln

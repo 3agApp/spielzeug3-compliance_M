@@ -38,37 +38,50 @@ import { invokeTenantLLM, getTenantAIConfig, testTenantAIKey } from "./tenantLLM
 
 const LEGAL_REQUIREMENTS: Record<string, string> = {
   declaration_of_conformity: `
-EU Declaration of Conformity (DoC) – mandatory requirements under Toy Safety Directive 2009/48/EC and GPSR 2023/988:
+EU Declaration of Conformity (DoC) – mandatory elements that must appear IN THE DOCUMENT ITSELF under Toy Safety Directive 2009/48/EC and GPSR 2023/988:
 - Full product name and model/article number
 - Name and address of manufacturer or authorised representative in the EU
-- Reference to all applicable EU directives (2009/48/EC, REACH Regulation 1907/2006, RoHS if applicable)
+- Reference to all applicable EU directives (at minimum: 2009/48/EC; also REACH 1907/2006 and RoHS 2011/65/EU if applicable)
 - List of harmonised standards applied (e.g. EN 71-1:2014+A1:2018, EN 71-2:2011+A1:2014, EN 71-3:2019+A1:2021)
 - Name, position, and handwritten or electronic signature of authorised signatory
 - Date of issue
-- For Switzerland: must also reference the Swiss Toy Safety Ordinance (SR 817.023.11) and conform to MRA CH-EU
 
-If any of these elements are missing or unclear, the DoC is legally incomplete.`,
+SWITZERLAND NOTE: Switzerland has a Mutual Recognition Agreement (MRA) with the EU (RS 0.946.526.81). A valid EU DoC (2009/48/EC) is fully accepted for the Swiss market. A separate reference to the Swiss Toy Safety Ordinance SR 817.023.11 is NOT required and must NOT be flagged as missing.
+
+DO NOT flag as missing: CE marking on the product/packaging, manufacturer address on the product/packaging, product identification code on the toy itself. These are product labelling requirements, not DoC document requirements.
+
+If any of the above document elements are missing or unclear in the DoC itself, it is legally incomplete.`,
+
 
   test_report: `
-Test Report – mandatory requirements for CE marking under Toy Safety Directive 2009/48/EC:
+Test Report – mandatory elements that must appear IN THE DOCUMENT ITSELF under Toy Safety Directive 2009/48/EC:
 - Must be issued by an accredited third-party laboratory (ISO/IEC 17025 accreditation required for EN 71-1, EN 71-2, EN 71-3)
 - Must clearly identify the product (name, model, article number, age group)
-- Must reference the exact standard(s) tested (e.g. EN 71-1:2014+A1:2018 – Mechanical and Physical Properties)
-- Must cover all relevant parts of EN 71 for the product category (EN 71-1, EN 71-2, EN 71-3, EN 71-8 if applicable)
+- Must reference the exact standard(s) tested with year (e.g. EN 71-1:2014+A1:2018 – Mechanical and Physical Properties)
 - Must include pass/fail result for each test clause
 - Must include test date and report issue date
 - Validity: typically 3–5 years; must be re-tested if product changes or standard is revised
-- For Switzerland: same requirements apply under the Swiss MRA; accredited labs recognised by ILAC/EA are accepted`,
+
+SWITZERLAND NOTE: Switzerland accepts test reports from ILAC/EA-accredited laboratories (same as EU). No separate Swiss accreditation is required. A test report valid for EU CE marking is fully valid for the Swiss market under the MRA.
+
+DO NOT flag as missing: CE marking on the product, manufacturer address on the product or packaging, product identification code on the toy itself, EU importer address on the packaging. These are product labelling requirements, NOT test report requirements.
+
+Evaluate ONLY what is present or missing in the test report document itself.`,
+
 
   certificate: `
-Certificate (e.g. CE Certificate, GS Certificate, UKCA) – requirements:
+Certificate (e.g. CE Certificate, GS Certificate, UKCA) – mandatory elements IN THE DOCUMENT ITSELF:
 - Issued by a Notified Body (NB) or accredited certification body
 - Must include NB number (for EU CE) or equivalent body identification
 - Must reference the applicable directive and standard
 - Must include product description, manufacturer details, and certificate number
 - Must include validity period (issue date and expiry date)
 - Must be signed by an authorised person at the certification body
-- For Switzerland: STS-accredited bodies or bodies recognised under the MRA CH-EU`,
+
+SWITZERLAND NOTE: Certificates from EU Notified Bodies or ILAC/EA-accredited bodies are fully recognised in Switzerland under the MRA. No separate Swiss certification is required.
+
+DO NOT flag product labelling requirements (CE marking on product, packaging markings) as missing from this certificate document.`,
+
 
   safety_data_sheet: `
 Safety Data Sheet (SDS/MSDS) – requirements under REACH Regulation 1907/2006 and CLP Regulation 1272/2008:
@@ -106,12 +119,17 @@ RoHS Compliance Documentation – requirements under RoHS Directive 2011/65/EU (
 - Must include product description and date of assessment`,
 
   default: `
-General compliance document requirements for toys sold in the EU/Switzerland:
+General compliance document – mandatory elements IN THE DOCUMENT ITSELF for toys sold in the EU/Switzerland:
 - Must clearly identify the product (name, model, article number)
 - Must include manufacturer or importer name and address
 - Must reference applicable regulations and standards
 - Must include date of issue and, where applicable, expiry date
-- Must be signed by an authorised person`,
+- Must be signed by an authorised person
+
+SWITZERLAND NOTE: Switzerland has a Mutual Recognition Agreement (MRA) with the EU. EU-compliant documents are accepted for the Swiss market. Do NOT flag missing Swiss-specific references as a compliance issue if valid EU documentation is present.
+
+DO NOT flag product labelling requirements (CE marking on product, packaging markings, address on packaging) as missing from compliance documents.`,
+
 };
 
 function getLegalRequirements(documentType: string): string {
@@ -174,12 +192,17 @@ CRITICAL INSTRUCTION: The "Internal review status" field (pending/approved/rejec
 DOCUMENTS TO ANALYSE (${docs.length} total):
 ${docSections}
 
+CRITICAL RULES – READ BEFORE ANALYSING:
+1. Evaluate ONLY the DOCUMENT CONTENT itself. Do NOT flag product/packaging labelling requirements (e.g. CE marking on the toy, manufacturer address on packaging, product ID code on the toy) as missing from a document.
+2. Switzerland FULLY accepts EU-compliant documentation under the MRA (RS 0.946.526.81). Do NOT flag missing Swiss Toy Safety Ordinance (SR 817.023.11) references as a compliance issue if valid EU documentation is present.
+3. The "Internal review status" (pending/approved/rejected) is our company's internal workflow status. NEVER flag "pending" status as a legal compliance issue.
+4. If the document content has been extracted (see EXTRACTED DOCUMENT CONTENT above), base your evaluation primarily on the actual content, not assumptions.
+
 TASK: For each document, evaluate:
 1. Does the document type match what is legally required for this product?
-2. Does the file name/standard reference suggest the correct content?
-3. Based on the document type and available metadata, which mandatory legal elements are likely present or missing?
-4. Are there any expiry or validity concerns?
-5. What specific issues should be discussed with the manufacturer/supplier?
+2. Based on the EXTRACTED CONTENT (if available), which mandatory legal elements are present or missing IN THE DOCUMENT ITSELF?
+3. Are there any expiry or validity concerns visible in the document?
+4. What specific document-level issues (not product/packaging issues) should be discussed with the manufacturer/supplier?
 
 For each document, also generate a professional email template (in English) that can be sent to the manufacturer/supplier to request corrections or missing information.
 
