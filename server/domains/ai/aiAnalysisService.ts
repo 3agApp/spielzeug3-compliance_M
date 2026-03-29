@@ -2,6 +2,12 @@
  * server/domains/ai/aiAnalysisService.ts
  * ─────────────────────────────────────────────────────────────────────────────
  * Business logic for AI-powered compliance analysis.
+ *
+ * Two analysis types:
+ *  1. Document Analysis  – per-document review (completeness, formal correctness, content)
+ *  2. Risk Assessment    – overall product risk evaluation (all docs + safety data)
+ *
+ * All AI output is in English regardless of UI language.
  */
 
 import {
@@ -22,88 +28,140 @@ import { invokeLLM } from "../../_core/llm";
 import { Errors, requireRole, assertSupplierOrInternal, ADMIN_ROLES } from "../../shared";
 import type { UserContext } from "../../shared/tenantGuard";
 
-// ─── OpenAI helper (isolated for testability) ─────────────────────────────────
+// ─── Prompt builders ──────────────────────────────────────────────────────────
 
-async function callOpenAI(apiKey: string, payload: object): Promise<any> {
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    throw Errors.external("OpenAI", `HTTP ${res.status}: ${err}`);
+/**
+ * Build a per-document analysis prompt.
+ */
+export function buildDocumentAnalysisPrompt(
+  product: any,
+  docs: any[]
+): string {
+  if (docs.length === 0) {
+    return `You are a toy industry compliance expert (EN 71, CE, CPSIA, REACH, GPSR).
+No documents have been uploaded for product "${product.productName}".
+Return a JSON analysis indicating that no documents are available.`;
   }
-  return res.json();
+
+  const docList = docs
+    .map(
+      (d, i) =>
+        `${i + 1}. ID:${d.id} | Type: ${d.documentType} | File: ${d.fileName ?? "–"} | Status: ${d.reviewStatus}` +
+        (d.standard ? ` | Standard: ${d.standard}` : "") +
+        (d.expiresAt ? ` | Expires: ${new Date(d.expiresAt).toISOString().slice(0, 10)}` : "")
+    )
+    .join("\n");
+
+  return `You are a toy industry compliance expert specializing in EN 71, CE marking, CPSIA, REACH, and GPSR regulations.
+
+PRODUCT: ${product.productName}
+BRAND: ${product.brand ?? "–"}
+AGE GROUP: ${product.ageGroup ?? "–"}
+TARGET MARKET: ${product.targetMarket ?? "–"}
+
+UPLOADED DOCUMENTS (${docs.length} total):
+${docList}
+
+TASK: Analyze each document individually. For each document, evaluate:
+1. Formal correctness (correct document type for the product, valid standards referenced, expiry dates present)
+2. Content completeness (does the document cover what is expected for this product type?)
+3. Any issues or concerns
+
+Return ONLY valid JSON matching this exact schema – no extra text:
+{
+  "documentAnalysis": [
+    {
+      "documentId": <number – the ID from the list above>,
+      "documentType": "<string>",
+      "fileName": "<string>",
+      "score": <0-100>,
+      "status": "ok" | "warning" | "critical",
+      "issues": ["<string>"],
+      "positives": ["<string>"]
+    }
+  ]
+}`;
 }
 
-// ─── Prompt builder (isolated for testability) ────────────────────────────────
-
-export function buildAnalysisPrompt(
+/**
+ * Build the overall risk assessment prompt.
+ */
+export function buildRiskAssessmentPrompt(
   product: any,
   docs: any[],
   safety: any | null,
   components?: any[],
   componentDocs?: any[]
 ): string {
-  const docList = docs.length > 0
-    ? docs.map((d, i) =>
-        `${i + 1}. Typ: ${d.documentType}, Dateiname: ${d.fileName ?? "–"}, Status: ${d.reviewStatus}` +
-        (d.standard ? `, Norm: ${d.standard}` : "") +
-        (d.expiresAt ? `, Ablauf: ${new Date(d.expiresAt).toISOString().slice(0, 10)}` : "")
-      ).join("\n")
-    : "(Keine Dokumente vorhanden)";
+  const docList =
+    docs.length > 0
+      ? docs
+          .map(
+            (d, i) =>
+              `${i + 1}. Type: ${d.documentType}, File: ${d.fileName ?? "–"}, Status: ${d.reviewStatus}` +
+              (d.standard ? `, Standard: ${d.standard}` : "") +
+              (d.expiresAt ? `, Expires: ${new Date(d.expiresAt).toISOString().slice(0, 10)}` : "")
+          )
+          .join("\n")
+      : "(No documents uploaded)";
 
   const safetySection = safety
-    ? `\nSICHERHEITSDATEN:\n  Sicherheitstext: ${safety.safetyText ?? "–"}\n  Warnhinweis: ${safety.warningText ?? "–"}\n  Altersfreigabe: ${safety.ageGrading ?? "–"}\n  Materialinformation: ${safety.materialInformation ?? "–"}\n  Verwendungsbeschränkungen: ${safety.usageRestrictions ?? "–"}\n  Sicherheitshinweise: ${safety.safetyNotes ?? "–"}`
-    : "\nSICHERHEITSDATEN: (Keine Sicherheitsdaten hinterlegt)";
+    ? `\nSAFETY DATA:\n  Safety text: ${safety.safetyText ?? "–"}\n  Warning text: ${safety.warningText ?? "–"}\n  Age grading: ${safety.ageGrading ?? "–"}\n  Material information: ${safety.materialInformation ?? "–"}\n  Usage restrictions: ${safety.usageRestrictions ?? "–"}\n  Safety notes: ${safety.safetyNotes ?? "–"}`
+    : "\nSAFETY DATA: (No safety data provided)";
 
   let componentSection = "";
   if (components && components.length > 0) {
     const compLines = components
       .map((c) => {
         const cDocs = (componentDocs ?? []).filter((d: any) => d.componentId === c.id);
-        const cDocList = cDocs.length > 0
-          ? cDocs.map((d: any, i: number) =>
-              `     ${i + 1}. Typ: ${d.documentType}, Norm: ${d.standard ?? "–"}, Datei: ${d.fileName}, Status: ${d.reviewStatus}`
-            ).join("\n")
-          : "     (Keine Dokumente)";
-        return `  - ${c.name} (Material: ${c.materialType ?? "unbekannt"}, Teilenr.: ${c.partNumber ?? "–"}):\n${cDocList}`;
-      }).join("\n");
-    componentSection = `\n\nPRODUKTKOMPONENTEN (${components.length} Stück):\n${compLines}`;
+        const cDocList =
+          cDocs.length > 0
+            ? cDocs
+                .map(
+                  (d: any, i: number) =>
+                    `     ${i + 1}. Type: ${d.documentType}, Standard: ${d.standard ?? "–"}, File: ${d.fileName}, Status: ${d.reviewStatus}`
+                )
+                .join("\n")
+            : "     (No documents)";
+        return `  - ${c.name} (Material: ${c.materialType ?? "unknown"}, Part no.: ${c.partNumber ?? "–"}):\n${cDocList}`;
+      })
+      .join("\n");
+    componentSection = `\n\nPRODUCT COMPONENTS (${components.length} total):\n${compLines}`;
   }
 
-  return `Du bist ein Compliance-Experte für Produktsicherheit und Spielzeugrichtlinien (EN 71, CE, REACH, GPSR etc.).
-Analysiere die folgende Produktdokumentation auf Plausibilität und Vollständigkeit.
+  return `You are a toy industry compliance expert specializing in EN 71, CE marking, CPSIA, REACH, and GPSR regulations.
+Perform an overall risk assessment for the following product.
 
-PRODUKT: ${product.productName}
-MARKE: ${product.brand ?? "–"}
-ALTERSGRUPPE: ${product.ageGroup ?? "–"}
-ZIELMARKT: ${product.targetMarket ?? "–"}
+PRODUCT: ${product.productName}
+BRAND: ${product.brand ?? "–"}
+AGE GROUP: ${product.ageGroup ?? "–"}
+TARGET MARKET: ${product.targetMarket ?? "–"}
 STATUS: ${product.status}${safetySection}${componentSection}
 
-DOKUMENTE (${docs.length} Stück):
+DOCUMENTS (${docs.length} total):
 ${docList}
 
-BEWERTE:
-1. Vollständigkeit der Dokumentation (Testberichte, Konformitätserklärungen, Zertifikate haben höchste Priorität)
-2. Plausibilität der Sicherheitsdaten (Altersfreigabe, Warnhinweise, Materialangaben)
-3. Formale Korrektheit (Normenreferenzen, Ablaufdaten, Statusangaben)
-4. Konsistenz zwischen Sicherheitsdaten und Dokumenten
+EVALUATE:
+1. Documentation completeness (test reports, declarations of conformity, and certificates have highest priority)
+2. Safety data plausibility (age grading, warnings, material information)
+3. Formal correctness (standard references, expiry dates, review status)
+4. Consistency between safety data and documents
 
-Gib deine Analyse als JSON zurück:
+Return ONLY valid JSON matching this exact schema – no extra text:
 {
   "overallScore": <0-100>,
   "riskLevel": "low" | "medium" | "high",
-  "summary": "<2-3 Sätze Zusammenfassung auf Deutsch>",
-  "findings": [{"type": "positive"|"warning"|"critical", "message": "<string>"}],
+  "summary": "<2-3 sentence summary in English>",
+  "findings": [
+    { "type": "positive" | "warning" | "critical", "message": "<string>" }
+  ],
   "recommendations": ["<string>"],
   "missingDocuments": ["<string>"]
 }`;
 }
+
+// Legacy alias for backward compatibility with tests
+export const buildAnalysisPrompt = buildRiskAssessmentPrompt;
 
 // ─── Service ──────────────────────────────────────────────────────────────────
 
@@ -115,19 +173,17 @@ export const aiAnalysisService = {
     if (!setting?.settingValue) return { configured: false, maskedKey: null };
     const key = setting.settingValue;
     const masked =
-      key.length > 8 ? `${key.slice(0, 7)}${"*".repeat(key.length - 11)}${key.slice(-4)}` : "****";
+      key.length > 8
+        ? `${key.slice(0, 7)}${"*".repeat(key.length - 11)}${key.slice(-4)}`
+        : "****";
     return { configured: true, maskedKey: masked };
   },
 
   /** Test the stored API key with a minimal request. */
   async testApiKey(user: UserContext) {
     requireRole(user.complianceRole, ["administrator", "compliance_manager"]);
-    const setting = await getSystemSetting("openai_api_key");
-    if (!setting?.settingValue) throw Errors.precondition("Kein API-Schlüssel hinterlegt");
-    const result = await callOpenAI(setting.settingValue, {
-      model: "gpt-4o-mini",
-      messages: [{ role: "user", content: "Antworte mit: OK" }],
-      max_tokens: 5,
+    const result = await invokeLLM({
+      messages: [{ role: "user", content: "Reply with: OK" }],
     });
     return {
       success: true,
@@ -142,7 +198,10 @@ export const aiAnalysisService = {
   },
 
   /** Batch analyse multiple products. */
-  async analyzeProducts(user: UserContext & { id: number }, productIds: number[]) {
+  async analyzeProducts(
+    user: UserContext & { id: number },
+    productIds: number[]
+  ) {
     requireRole(user.complianceRole, ADMIN_ROLES);
     const results: Array<{
       productId: number;
@@ -161,12 +220,17 @@ export const aiAnalysisService = {
     return { results };
   },
 
-   /** Run a new AI analysis for a product using the built-in LLM (no external API key needed). */
+  /**
+   * Run a full analysis for a product:
+   *  - Per-document analysis (Document Analysis tab)
+   *  - Overall risk assessment (Risk Assessment tab)
+   * Uses the built-in LLM – no external API key needed.
+   */
   async analyze(user: UserContext & { id: number }, productId: number) {
     requireRole(user.complianceRole, ADMIN_ROLES);
     const enabledSetting = await getSystemSetting("AI_ANALYSIS_ENABLED");
     if (enabledSetting?.settingValue === "false") {
-      throw Errors.precondition("AI-Analyse ist deaktiviert.");
+      throw Errors.precondition("AI analysis is disabled.");
     }
     const product = await getProductById(productId);
     if (!product) throw Errors.notFound("Product", productId);
@@ -175,29 +239,84 @@ export const aiAnalysisService = {
     const safety = await getProductSafety(productId);
     const components = await getComponentsByProduct(productId);
     const componentDocs = await getAllComponentDocumentsByProduct(productId);
-    const prompt = buildAnalysisPrompt(product, docs, safety, components, componentDocs);
 
-    const analysisRecord = await createAiAnalysis({
+    // Create pending record
+    const analysisId = await createAiAnalysis({
       productId,
       status: "pending",
       overallScore: "0",
       triggeredByUserId: user.id,
     } as any);
-    const analysisId = analysisRecord; // createAiAnalysis now returns insertId directly as number
 
     try {
-      const response = await invokeLLM({
+      // ── Step 1: Per-document analysis ──────────────────────────────────────
+      let documentAnalysis: any[] = [];
+
+      if (docs.length > 0) {
+        const docPrompt = buildDocumentAnalysisPrompt(product, docs);
+        const docResponse = await invokeLLM({
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are a toy industry compliance expert. Respond ONLY with valid JSON, no markdown, no extra text.",
+            },
+            { role: "user", content: docPrompt },
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "document_analysis",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  documentAnalysis: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        documentId: { type: "number" },
+                        documentType: { type: "string" },
+                        fileName: { type: "string" },
+                        score: { type: "number" },
+                        status: { type: "string" },
+                        issues: { type: "array", items: { type: "string" } },
+                        positives: { type: "array", items: { type: "string" } },
+                      },
+                      required: ["documentId", "documentType", "fileName", "score", "status", "issues", "positives"],
+                      additionalProperties: false,
+                    },
+                  },
+                },
+                required: ["documentAnalysis"],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+
+        const docRaw = docResponse.choices?.[0]?.message?.content ?? "{}";
+        const docContent = typeof docRaw === "string" ? docRaw : JSON.stringify(docRaw);
+        const docParsed = JSON.parse(docContent);
+        documentAnalysis = docParsed.documentAnalysis ?? [];
+      }
+
+      // ── Step 2: Overall risk assessment ────────────────────────────────────
+      const riskPrompt = buildRiskAssessmentPrompt(product, docs, safety, components, componentDocs);
+      const riskResponse = await invokeLLM({
         messages: [
           {
             role: "system",
-            content: "Du bist ein Compliance-Experte für Produktsicherheit. Antworte ausschließlich mit validem JSON.",
+            content:
+              "You are a toy industry compliance expert. Respond ONLY with valid JSON, no markdown, no extra text.",
           },
-          { role: "user", content: prompt },
+          { role: "user", content: riskPrompt },
         ],
         response_format: {
           type: "json_schema",
           json_schema: {
-            name: "compliance_analysis",
+            name: "risk_assessment",
             strict: true,
             schema: {
               type: "object",
@@ -227,30 +346,24 @@ export const aiAnalysisService = {
         },
       });
 
-      const rawContent = response.choices?.[0]?.message?.content ?? "{}";
-      const content = typeof rawContent === "string" ? rawContent : JSON.stringify(rawContent);
-      const parsed = JSON.parse(content);
+      const riskRaw = riskResponse.choices?.[0]?.message?.content ?? "{}";
+      const riskContent = typeof riskRaw === "string" ? riskRaw : JSON.stringify(riskRaw);
+      const parsed = JSON.parse(riskContent);
 
-      // Derive sub-scores from findings if not explicitly provided
+      // ── Derive sub-scores ──────────────────────────────────────────────────
       const findings = parsed.findings ?? [];
       const positiveCount = findings.filter((f: any) => f.type === "positive").length;
       const warningCount = findings.filter((f: any) => f.type === "warning").length;
       const criticalCount = findings.filter((f: any) => f.type === "critical").length;
       const totalFindings = findings.length || 1;
 
-      // Document completeness: based on missing documents
       const missingDocs = parsed.missingDocuments ?? [];
       const docScore = Math.max(0, 100 - missingDocs.length * 15);
-
-      // Content plausibility: based on positive vs warning/critical ratio
       const contentScore = Math.round(((positiveCount + 1) / (totalFindings + 1)) * 100);
-
-      // Formal correctness: deduct for critical findings
       const formalScore = Math.max(0, 100 - criticalCount * 25);
-
-      // Consistency: deduct for warnings
       const consistencyScore = Math.max(0, 100 - warningCount * 15);
 
+      // ── Save to DB ─────────────────────────────────────────────────────────
       await updateAiAnalysis(analysisId, {
         status: "completed",
         overallScore: String(parsed.overallScore ?? 0),
@@ -261,6 +374,8 @@ export const aiAnalysisService = {
         summary: parsed.summary ?? null,
         findings: parsed.findings ?? [],
         recommendations: parsed.recommendations ?? [],
+        documentAnalysis: documentAnalysis,
+        analyzedDocumentIds: docs.map((d) => d.id),
         modelUsed: "built-in",
         completedAt: new Date(),
       });
@@ -272,7 +387,14 @@ export const aiAnalysisService = {
         performedByUserId: user.id,
       });
 
-      return { success: true, analysisId, result: parsed };
+      return {
+        success: true,
+        analysisId,
+        result: {
+          ...parsed,
+          documentAnalysis,
+        },
+      };
     } catch (err) {
       await updateAiAnalysis(analysisId, {
         status: "failed",
@@ -285,7 +407,6 @@ export const aiAnalysisService = {
   /** Get the latest analysis result for a product. */
   async getLatest(user: UserContext, productId: number) {
     const product = await getProductById(productId);
-    // If product not found, return null/undefined gracefully (no analysis exists)
     if (!product) return undefined;
     assertSupplierOrInternal(user, product.supplierId);
     return getLatestAiAnalysisByProduct(productId);
@@ -300,7 +421,10 @@ export const aiAnalysisService = {
   },
 
   /** Update AI analysis settings (admin only). */
-  async updateSettings(user: UserContext, settings: { apiKey?: string; enabled?: boolean }) {
+  async updateSettings(
+    user: UserContext,
+    settings: { apiKey?: string; enabled?: boolean }
+  ) {
     requireRole(user.complianceRole, ["administrator", "compliance_manager"]);
     if (settings.apiKey !== undefined) {
       await upsertSystemSetting("openai_api_key", settings.apiKey);

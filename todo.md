@@ -659,3 +659,12 @@
 - [x] Fix: summary, findings, recommendations werden in die richtigen DB-Spalten geschrieben
 - [x] Fix: modelUsed="built-in" gesetzt, completedAt korrekt gesetzt
 - [x] Retroaktiv: bestehende "pending"-Einträge auf "failed" gesetzt
+
+## AI Analysis Umstrukturierung
+- [x] aiAnalysisService: System-Prompt auf Englisch umstellen
+- [x] aiAnalysisService: Findings-Schema fixen (leere Objekte → strings mit title/description/severity)
+- [x] aiAnalysisService: Dokument-Einzelbewertung einbauen (pro Dokument: name, type, score, issues)
+- [x] Frontend: Tab "AI Analysis" → zwei Sektionen: "Document Analysis" + "Risk Assessment"
+- [x] Frontend: Document Analysis zeigt jedes Dokument einzeln mit Score und Findings
+- [x] Frontend: Risk Assessment zeigt Gesamtrisiko, Summary, Recommendations
+- [x] Sprache: alle KI-Ausgaben auf Englisch (unabhängig von UI-Sprache)

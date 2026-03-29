@@ -366,6 +366,7 @@ export const aiAnalysisResults = mysqlTable("ai_analysis_results", {
   findings: json("findings"), // array of { category, severity, description }
   recommendations: json("recommendations"), // array of strings
   analyzedDocumentIds: json("analyzedDocumentIds"), // array of document IDs
+  documentAnalysis: json("documentAnalysis"), // per-document analysis results
   modelUsed: varchar("modelUsed", { length: 64 }),
   tokensUsed: int("tokensUsed"),
   status: mysqlEnum("status", ["pending", "running", "completed", "failed"]).default("pending").notNull(),

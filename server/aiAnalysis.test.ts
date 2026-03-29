@@ -120,13 +120,14 @@ describe("aiAnalysis.analyzeProduct", () => {
     vi.clearAllMocks();
   });
 
-  it("throws BAD_REQUEST when no API key configured", async () => {
-    const { getSystemSetting } = await import("./db");
-    vi.mocked(getSystemSetting).mockResolvedValue(undefined);
+  it("throws NOT_FOUND when product does not exist (built-in LLM, no API key required)", async () => {
+    const { getSystemSetting, getProductById } = await import("./db");
+    vi.mocked(getSystemSetting).mockResolvedValue(undefined); // no API key – but built-in LLM doesn't need one
+    vi.mocked(getProductById).mockResolvedValue(undefined);
 
     const caller = appRouter.createCaller(makeCtx("compliance_manager"));
     await expect(caller.aiAnalysis.analyzeProduct({ productId: 1 })).rejects.toMatchObject({
-      code: "BAD_REQUEST",
+      code: "NOT_FOUND",
     });
   });
 
