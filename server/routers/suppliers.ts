@@ -68,8 +68,12 @@ export const suppliersRouter = router({
         return await supplierService.update(ctx.user as any, {
           supplierId: id,
           name: rest.name,
+          email: rest.email,
+          phone: rest.phone,
+          address: rest.address,
           country: rest.country,
-          contactEmail: rest.email,
+          kontorId: rest.kontorId,
+          active: rest.active,
         });
       } catch (err) {
         throw toTRPCError(err);

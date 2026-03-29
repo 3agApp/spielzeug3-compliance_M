@@ -26,16 +26,25 @@ export interface CreateSupplierInput {
   supplierCode?: string;
   contactEmail?: string;
   contactName?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
   country?: string;
+  kontorId?: string;
   tenantId?: number;
 }
 
 export interface UpdateSupplierInput {
   supplierId: number;
   name?: string;
+  email?: string;
   contactEmail?: string;
   contactName?: string;
+  phone?: string;
+  address?: string;
   country?: string;
+  kontorId?: string;
+  active?: boolean;
   isActive?: boolean;
 }
 
@@ -73,7 +82,11 @@ export const supplierService = {
     const result = await createSupplier({
       name: input.name,
       supplierCode: input.supplierCode ?? "",
-      email: input.contactEmail,
+      email: input.email ?? input.contactEmail,
+      phone: input.phone,
+      address: input.address,
+      country: input.country,
+      kontorId: input.kontorId,
       tenantId: input.tenantId ?? user.tenantId ?? 1,
     } as any);
     await createAuditLog({
@@ -95,8 +108,16 @@ export const supplierService = {
     const supplier = await getSupplierById(input.supplierId);
     if (!supplier) throw Errors.notFound("Supplier", input.supplierId);
 
-    const { supplierId, ...fields } = input;
-    await updateSupplier(supplierId, fields);
+    const { supplierId, isActive, ...rest } = input;
+    const updateData: Record<string, unknown> = { ...rest };
+    // Normalize active flag
+    if (isActive !== undefined) updateData.active = isActive;
+    // Normalize email aliases
+    if (rest.contactEmail !== undefined) updateData.email = rest.contactEmail;
+    delete updateData.contactEmail;
+    delete updateData.contactName;
+
+    await updateSupplier(supplierId, updateData as any);
     await createAuditLog({
       entityType: "supplier",
       entityId: supplierId,

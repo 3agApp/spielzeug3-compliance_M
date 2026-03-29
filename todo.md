@@ -605,3 +605,10 @@
 - [x] Frontend: Löschen-Button im Header der Produktdetailseite (mit Bestätigungs-Dialog)
 - [x] Frontend: Mehrfachauswahl-Checkboxen in Produktliste + Bulk-Löschen-Button
 - [x] Tests: 219 Tests grün, 0 TypeScript-Fehler
+
+## Lieferanten-Übersicht: Bugfixes + Bearbeiten
+- [x] Bugfix: s.supplierName → s.name korrigiert (Feld-Mapping)
+- [x] Bugfix: Anlegen-Formular überträgt Land, Kontor-ID, Telefon, Adresse korrekt
+- [x] Feature: Bearbeiten-Dialog für Lieferanten (Name, Land, Kontor-ID, Kontakt, E-Mail, Telefon, Adresse, Aktiv-Toggle)
+- [x] Backend: suppliers.update-Endpoint alle Felder weitergeleitet
+- [x] 219 Tests grün, 0 TypeScript-Fehler
