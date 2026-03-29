@@ -802,6 +802,13 @@ export const translations: Record<Language, any> = {
       expiredTitle: "Dokument ist abgelaufen",
       autoRevokeTitle: "Abgelaufene Dokumente automatisch aus der öffentlichen Freigabe entfernen",
       autoRevokeDesc: "Dokumente mit abgelaufenem Gültigkeitsdatum werden täglich automatisch aus der Endkunden-Landingpage entfernt.",
+      uploadModeTitle: "Bereits vorhandene Dokumente dieses Typs",
+      uploadModeDesc: "Es gibt bereits {count} Dokument(e) dieses Typs. Möchten Sie ein vorhandenes ersetzen oder ein neues hinzufügen?",
+      uploadModeReplace: "Vorhandenes ersetzen",
+      uploadModeAdd: "Neu hinzufügen (zusätzlich)",
+      uploadModeReplaceSelect: "Zu ersetzendes Dokument auswählen",
+      uploadModeReplaceHint: "Das ausgewählte Dokument wird archiviert und durch das neue ersetzt.",
+      uploadModeAddHint: "Das neue Dokument wird zusätzlich gespeichert. Beide Dokumente sind dann aktiv.",
     },
     // Admin Settings
     adminSettings: {
@@ -1737,6 +1744,13 @@ export const translations: Record<Language, any> = {
       expiredTitle: "Document has expired",
       autoRevokeTitle: "Automatically remove expired documents from public view",
       autoRevokeDesc: "Documents with an expired validity date are automatically removed from the customer landing page daily.",
+      uploadModeTitle: "Existing documents of this type",
+      uploadModeDesc: "There are already {count} document(s) of this type. Do you want to replace an existing one or add a new one?",
+      uploadModeReplace: "Replace existing",
+      uploadModeAdd: "Add new (additional)",
+      uploadModeReplaceSelect: "Select document to replace",
+      uploadModeReplaceHint: "The selected document will be archived and replaced by the new one.",
+      uploadModeAddHint: "The new document will be saved additionally. Both documents will then be active.",
     },
     adminSettings: {
       title: "Settings",

@@ -531,6 +531,7 @@ export default function ProductDetail() {
               role={role}
               isOperator={isInternalRole}
               t={t}
+              existingDocuments={documents}
               onSuccess={(confirmedAtReset?: boolean) => {
                 documentsQuery.refetch();
                 utils.products.getById.invalidate({ id: productId });
@@ -1878,7 +1879,7 @@ function DocumentRow({ doc, productId, role, isInternalRole, t, onDelete }: any)
 }
 
 // ─── Upload Document Card ────────────────────────────────────────────
-function UploadDocumentCard({ productId, role, isOperator, t, onSuccess }: any) {
+function UploadDocumentCard({ productId, role, isOperator, t, onSuccess, existingDocuments }: any) {
   const [open, setOpen] = useState(false);
   const [docType, setDocType] = useState<string>("test_report");
   const [file, setFile] = useState<File | null>(null);
@@ -1886,12 +1887,31 @@ function UploadDocumentCard({ productId, role, isOperator, t, onSuccess }: any) 
   const [operatorComment, setOperatorComment] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // Upload-Modus: "replace" | "add" | null (noch nicht gewählt)
+  const [uploadMode, setUploadMode] = useState<"replace" | "add" | null>(null);
+  const [replacesDocumentId, setReplacesDocumentId] = useState<string>("");
+
+  // Vorhandene aktive Dokumente des gewählten Typs
+  const docsOfType = (existingDocuments ?? []).filter(
+    (d: any) => d.documentType === docType && !d.isArchived
+  );
+  const hasExisting = docsOfType.length > 0;
+
+  // Upload-Modus zurücksetzen wenn Typ wechselt
+  function handleDocTypeChange(val: string) {
+    setDocType(val);
+    setUploadMode(null);
+    setReplacesDocumentId("");
+  }
+
   const uploadMutation = trpc.documents.upload.useMutation({
     onSuccess: (data) => {
       toast.success(t.msg.uploadSuccess);
       setOpen(false);
       setFile(null);
       setOperatorComment("");
+      setUploadMode(null);
+      setReplacesDocumentId("");
       onSuccess?.(data?.confirmedAtReset ?? false);
     },
     onError: (e) => toast.error(translateError(e.message, t)),
@@ -1899,6 +1919,8 @@ function UploadDocumentCard({ productId, role, isOperator, t, onSuccess }: any) 
 
   const handleUpload = async () => {
     if (!file) return;
+    // Wenn vorhandene Dokumente existieren und kein Modus gewählt: Abbruch
+    if (hasExisting && !uploadMode) return;
     const reader = new FileReader();
     reader.onload = (e) => {
       const base64 = (e.target?.result as string).split(",")[1];
@@ -1911,6 +1933,8 @@ function UploadDocumentCard({ productId, role, isOperator, t, onSuccess }: any) 
         fileSizeBytes: file.size,
         expiryDate: expiryDate || undefined,
         operatorComment: isOperator && operatorComment.trim() ? operatorComment.trim() : undefined,
+        replacesDocumentId: uploadMode === "replace" && replacesDocumentId ? parseInt(replacesDocumentId) : undefined,
+        addAsNew: uploadMode === "add" ? true : undefined,
       });
     };
     reader.readAsDataURL(file);
@@ -1945,7 +1969,7 @@ function UploadDocumentCard({ productId, role, isOperator, t, onSuccess }: any) 
           <div className="space-y-4">
             <div>
               <Label>{t.documents.typeLabel}</Label>
-              <Select value={docType} onValueChange={setDocType}>
+              <Select value={docType} onValueChange={handleDocTypeChange}>
                 <SelectTrigger className="mt-1">
                   <SelectValue />
                 </SelectTrigger>
@@ -1958,6 +1982,61 @@ function UploadDocumentCard({ productId, role, isOperator, t, onSuccess }: any) 
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Upload-Modus-Abfrage: nur wenn bereits Dokumente dieses Typs vorhanden */}
+            {hasExisting && (
+              <div className="rounded-md border border-amber-200 bg-amber-50 p-3 space-y-3">
+                <p className="text-sm font-medium text-amber-800">
+                  {t.documents.uploadModeTitle}
+                </p>
+                <p className="text-xs text-amber-700">
+                  {(t.documents.uploadModeDesc as string).replace("{count}", String(docsOfType.length))}
+                </p>
+                <div className="flex gap-2 flex-wrap">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={uploadMode === "replace" ? "default" : "outline"}
+                    onClick={() => { setUploadMode("replace"); setReplacesDocumentId(docsOfType.length === 1 ? String(docsOfType[0].id) : ""); }}
+                  >
+                    {t.documents.uploadModeReplace}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={uploadMode === "add" ? "default" : "outline"}
+                    onClick={() => { setUploadMode("add"); setReplacesDocumentId(""); }}
+                  >
+                    {t.documents.uploadModeAdd}
+                  </Button>
+                </div>
+
+                {uploadMode === "replace" && docsOfType.length > 1 && (
+                  <div>
+                    <Label className="text-xs">{t.documents.uploadModeReplaceSelect}</Label>
+                    <Select value={replacesDocumentId} onValueChange={setReplacesDocumentId}>
+                      <SelectTrigger className="mt-1 h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {docsOfType.map((d: any) => (
+                          <SelectItem key={d.id} value={String(d.id)}>
+                            {d.fileName} (v{d.version})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {uploadMode === "replace" && (
+                  <p className="text-xs text-amber-600">{t.documents.uploadModeReplaceHint}</p>
+                )}
+                {uploadMode === "add" && (
+                  <p className="text-xs text-amber-600">{t.documents.uploadModeAddHint}</p>
+                )}
+              </div>
+            )}
             <div>
               <Label>{t.documents.fileLabel}</Label>
               <Input
@@ -2001,7 +2080,7 @@ function UploadDocumentCard({ productId, role, isOperator, t, onSuccess }: any) 
             </Button>
             <Button
               onClick={handleUpload}
-              disabled={!file || uploadMutation.isPending}
+              disabled={!file || uploadMutation.isPending || (hasExisting && !uploadMode) || (uploadMode === "replace" && !replacesDocumentId)}
             >
               {uploadMutation.isPending ? t.msg.loading : t.action.upload}
             </Button>

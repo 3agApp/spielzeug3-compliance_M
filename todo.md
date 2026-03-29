@@ -626,3 +626,9 @@
 - [x] Bearbeiten-Dialog in Produktdetailseite: alle Stammdaten editierbar (Name, interne Artikelnummer, Lieferanten-Artikelnummer, Bestellnummer, EAN, Marke, Lieferant-Dropdown, Kategorie, Vorlage)
 - [x] Backend: products.update Mutation um supplierId, categoryId, templateId, kontorId erweitert
 - [x] Frontend: "Bearbeiten"-Button im Produkt-Header öffnet Dialog mit allen Feldern
+
+## Upload-Dialog: Ersetzen oder neu hinzufügen
+- [x] Upload-Dialog: wenn gleicher Dokumenttyp bereits vorhanden → Abfrage "Ersetzen oder neu hinzufügen"
+- [x] Bei "Ersetzen": Auswahl des zu ersetzenden Dokuments (Dropdown mit vorhandenen Docs des Typs)
+- [x] Bei "Neu": normaler Upload ohne Archivierung, Dokument wird parallel gespeichert
+- [x] Mehrere Dokumente desselben Typs (z.B. 2x Test Report) gleichzeitig möglich

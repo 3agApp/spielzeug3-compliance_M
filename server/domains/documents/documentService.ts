@@ -54,6 +54,8 @@ export interface UploadDocumentInput {
   fileSizeBytes?: number;
   expiryDate?: string;
   operatorComment?: string; // optional note added by operator (admin/compliance_manager)
+  replacesDocumentId?: number; // wenn gesetzt: nur dieses Dokument archivieren (statt alle)
+  addAsNew?: boolean; // wenn true: kein Archivieren, neues Dokument parallel hinzufügen
 }
 
 export interface UpdateReviewStatusInput {
@@ -156,17 +158,32 @@ export const documentService = {
 
     const newDocId = (insertResult as any).insertId as number;
 
-    // Archive all previously active documents of the same type
+    // Archive logic: depends on upload mode
     let archivedCount = 0;
-    // Capture metadata of the most recent predecessor for the audit log
-    const primaryPredecessor = activeDocs.length > 0
-      ? activeDocs.reduce((latest: any, d: any) =>
-          new Date(d.uploadedAt) > new Date(latest.uploadedAt) ? d : latest
-        )
-      : null;
-    for (const oldDoc of activeDocs) {
-      await archiveDocument(oldDoc.id, newDocId);
-      archivedCount++;
+    let primaryPredecessor: any = null;
+
+    if (input.addAsNew) {
+      // "Neu hinzufügen": kein Archivieren, Dokument wird parallel gespeichert
+      primaryPredecessor = null;
+    } else if (input.replacesDocumentId) {
+      // "Ersetzen": nur das explizit ausgewählte Dokument archivieren
+      const targetDoc = activeDocs.find((d: any) => d.id === input.replacesDocumentId);
+      if (targetDoc) {
+        primaryPredecessor = targetDoc;
+        await archiveDocument(targetDoc.id, newDocId);
+        archivedCount = 1;
+      }
+    } else {
+      // Standard: alle aktiven Dokumente desselben Typs archivieren
+      primaryPredecessor = activeDocs.length > 0
+        ? activeDocs.reduce((latest: any, d: any) =>
+            new Date(d.uploadedAt) > new Date(latest.uploadedAt) ? d : latest
+          )
+        : null;
+      for (const oldDoc of activeDocs) {
+        await archiveDocument(oldDoc.id, newDocId);
+        archivedCount++;
+      }
     }
 
     // Mark requirement as provided

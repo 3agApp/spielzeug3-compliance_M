@@ -58,6 +58,8 @@ export const documentsRouter = router({
         expiryDate: z.string().optional(),
         requirementId: z.number().optional(),
         operatorComment: z.string().max(500).optional(),
+        replacesDocumentId: z.number().optional(),
+        addAsNew: z.boolean().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
