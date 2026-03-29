@@ -3245,8 +3245,56 @@ function LabellingChecklistCard({ productId, role, t }: { productId: number; rol
 
   const [editingNote, setEditingNote] = useState<string | null>(null);
   const [noteValue, setNoteValue] = useState("");
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [uploadingFor, setUploadingFor] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const activeUploadKey = useRef<string | null>(null);
 
   const canEdit = ["administrator", "compliance_manager", "internal_employee", "super_admin"].includes(role);
+
+  // Load all proof images for this product
+  const { data: allImages, refetch: refetchImages } = trpc.labellingChecks.getImagesByProduct.useQuery({ productId });
+  const imagesByKey = (allImages ?? []).reduce((acc: Record<string, any[]>, img: any) => {
+    if (!acc[img.checkKey]) acc[img.checkKey] = [];
+    acc[img.checkKey].push(img);
+    return acc;
+  }, {});
+
+  const uploadImageMutation = trpc.labellingChecks.uploadImage.useMutation({
+    onSuccess: () => { refetchImages(); setUploadingFor(null); },
+    onError: (e) => { toast.error(e.message); setUploadingFor(null); },
+  });
+  const deleteImageMutation = trpc.labellingChecks.deleteImage.useMutation({
+    onSuccess: () => refetchImages(),
+    onError: (e) => toast.error(e.message),
+  });
+
+  function handleFileSelect(checkKey: string) {
+    activeUploadKey.current = checkKey;
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+      fileInputRef.current.click();
+    }
+  }
+
+  async function handleFilesChosen(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length || !activeUploadKey.current) return;
+    const key = activeUploadKey.current;
+    setUploadingFor(key);
+    for (const file of files) {
+      if (file.size > 5 * 1024 * 1024) { toast.error(`${file.name} exceeds 5 MB`); continue; }
+      const mimeType = file.type as "image/jpeg" | "image/png" | "image/webp";
+      if (!["image/jpeg", "image/png", "image/webp"].includes(mimeType)) { toast.error(`${file.name} is not a supported image type`); continue; }
+      const base64 = await new Promise<string>((res) => {
+        const reader = new FileReader();
+        reader.onload = () => res(reader.result as string);
+        reader.readAsDataURL(file);
+      });
+      await uploadImageMutation.mutateAsync({ productId, checkKey: key, base64, mimeType });
+    }
+    setUploadingFor(null);
+  }
 
   // Group by category
   const grouped = (checks ?? []).reduce((acc: Record<string, any[]>, c: any) => {
@@ -3370,6 +3418,43 @@ function LabellingChecklistCard({ productId, role, t }: { productId: number; rol
                                   {check.notes ? "Edit note" : "Add note"}
                                 </button>
                               )}
+                              {canEdit && (
+                                <button
+                                  className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 inline-flex items-center gap-1"
+                                  onClick={() => handleFileSelect(check.checkKey)}
+                                  disabled={uploadingFor === check.checkKey}
+                                >
+                                  {uploadingFor === check.checkKey
+                                    ? <Loader2 className="h-3 w-3 animate-spin" />
+                                    : <Camera className="h-3 w-3" />}
+                                  Add picture(s)
+                                </button>
+                              )}
+                            </div>
+                          )}
+                          {/* Proof images thumbnail gallery */}
+                          {(imagesByKey[check.checkKey] ?? []).length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {(imagesByKey[check.checkKey] as any[]).map((img: any) => (
+                                <div key={img.id} className="relative group">
+                                  <img
+                                    src={img.url}
+                                    alt="Proof"
+                                    className="h-16 w-16 object-cover rounded-md border cursor-pointer hover:opacity-80 transition-opacity"
+                                    onClick={() => setLightboxUrl(img.url)}
+                                    title={`Uploaded ${new Date(img.uploadedAt).toLocaleDateString()} by ${img.uploadedByName ?? "unknown"}`}
+                                  />
+                                  {canEdit && (
+                                    <button
+                                      className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow"
+                                      onClick={() => deleteImageMutation.mutate({ imageId: img.id })}
+                                      title="Remove image"
+                                    >
+                                      <X className="h-2.5 w-2.5" />
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
                             </div>
                           )}
                         </div>
@@ -3379,6 +3464,36 @@ function LabellingChecklistCard({ productId, role, t }: { productId: number; rol
                 </div>
               </div>
             ))}
+          </div>
+        )}
+        {/* Hidden file input for image upload */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          multiple
+          className="hidden"
+          onChange={handleFilesChosen}
+        />
+        {/* Lightbox */}
+        {lightboxUrl && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+            onClick={() => setLightboxUrl(null)}
+          >
+            <div className="relative max-w-3xl max-h-[90vh] p-2" onClick={(e) => e.stopPropagation()}>
+              <img
+                src={lightboxUrl}
+                alt="Proof image"
+                className="max-w-full max-h-[85vh] rounded-lg object-contain shadow-2xl"
+              />
+              <button
+                className="absolute top-0 right-0 m-1 h-7 w-7 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80"
+                onClick={() => setLightboxUrl(null)}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         )}
       </CardContent>

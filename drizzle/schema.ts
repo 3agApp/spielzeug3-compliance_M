@@ -652,3 +652,18 @@ export const productLabellingChecks = mysqlTable("product_labelling_checks", {
 });
 export type ProductLabellingCheck = typeof productLabellingChecks.$inferSelect;
 export type InsertProductLabellingCheck = typeof productLabellingChecks.$inferInsert;
+
+// ─── Product Labelling Check Images ──────────────────────────────────────────
+export const labellingCheckImages = mysqlTable("labelling_check_images", {
+  id: int("id").autoincrement().primaryKey(),
+  productId: int("product_id").notNull(),
+  tenantId: varchar("tenant_id", { length: 64 }).notNull().default("1"),
+  checkKey: varchar("check_key", { length: 64 }).notNull(),
+  url: varchar("url", { length: 2048 }).notNull(),
+  fileKey: varchar("file_key", { length: 512 }).notNull(),
+  uploadedAt: bigint("uploaded_at", { mode: "number" }).notNull(),
+  uploadedByUserId: int("uploaded_by_user_id"),
+  uploadedByName: varchar("uploaded_by_name", { length: 128 }),
+});
+export type LabellingCheckImage = typeof labellingCheckImages.$inferSelect;
+export type InsertLabellingCheckImage = typeof labellingCheckImages.$inferInsert;

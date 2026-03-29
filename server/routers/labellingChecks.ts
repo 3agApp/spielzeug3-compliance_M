@@ -2,8 +2,9 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { productLabellingChecks, products } from "../../drizzle/schema";
+import { productLabellingChecks, labellingCheckImages, products } from "../../drizzle/schema";
 import { and, eq } from "drizzle-orm";
+import { storagePut } from "../storage";
 
 // ─── Predefined labelling requirements ────────────────────────────────────────
 
@@ -266,5 +267,91 @@ export const labellingChecksRouter = router({
           )
         );
       return { success: true };
+    }),
+
+  /** Upload a proof image for a labelling check */
+  uploadImage: protectedProcedure
+    .input(
+      z.object({
+        productId: z.number(),
+        checkKey: z.string(),
+        base64: z.string(),
+        mimeType: z.enum(["image/jpeg", "image/png", "image/webp"]),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const tenantId = String(ctx.user.tenantId ?? 1);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+
+      // Verify product belongs to tenant
+      const product = await db
+        .select()
+        .from(products)
+        .where(and(eq(products.id, input.productId), eq(products.tenantId, ctx.user.tenantId ?? 1)));
+      if (product.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Product not found" });
+
+      // Decode base64 and upload to S3
+      const base64Data = input.base64.replace(/^data:[^;]+;base64,/, "");
+      const buffer = Buffer.from(base64Data, "base64");
+      if (buffer.byteLength > 5 * 1024 * 1024) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Image must be under 5 MB" });
+      }
+      const ext = input.mimeType === "image/png" ? "png" : input.mimeType === "image/webp" ? "webp" : "jpg";
+      const suffix = Math.random().toString(36).slice(2, 8);
+      const fileKey = `labelling-checks/${tenantId}/${input.productId}/${input.checkKey}-${suffix}.${ext}`;
+      const { url } = await storagePut(fileKey, buffer, input.mimeType);
+
+      // Insert DB record
+      await db.insert(labellingCheckImages).values({
+        productId: input.productId,
+        tenantId,
+        checkKey: input.checkKey,
+        url,
+        fileKey,
+        uploadedAt: Date.now(),
+        uploadedByUserId: ctx.user.id,
+        uploadedByName: ctx.user.name ?? ctx.user.openId,
+      });
+
+      return { success: true, url, fileKey };
+    }),
+
+  /** Delete a proof image */
+  deleteImage: protectedProcedure
+    .input(z.object({ imageId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const tenantId = String(ctx.user.tenantId ?? 1);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+
+      // Verify ownership via tenantId
+      const img = await db
+        .select()
+        .from(labellingCheckImages)
+        .where(and(eq(labellingCheckImages.id, input.imageId), eq(labellingCheckImages.tenantId, tenantId)));
+      if (img.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Image not found" });
+
+      await db.delete(labellingCheckImages).where(eq(labellingCheckImages.id, input.imageId));
+      return { success: true };
+    }),
+
+  /** Get all proof images for a product (all checks) */
+  getImagesByProduct: protectedProcedure
+    .input(z.object({ productId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const tenantId = String(ctx.user.tenantId ?? 1);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+
+      return db
+        .select()
+        .from(labellingCheckImages)
+        .where(
+          and(
+            eq(labellingCheckImages.productId, input.productId),
+            eq(labellingCheckImages.tenantId, tenantId)
+          )
+        );
     }),
 });

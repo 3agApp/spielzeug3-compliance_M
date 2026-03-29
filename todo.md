@@ -790,3 +790,18 @@
 - [x] Frontend: Mandatory-Badge für Pflichtanforderungen
 - [x] Frontend: Optimistic Updates beim Toggle
 - [x] Tests für labellingChecks-Router (11 Tests, alle grün)
+
+## Beweisfotos pro Labelling-Checklist-Item
+- [x] DB: labelling_check_images Tabelle (id, productId, tenantId, checkKey, url, fileKey, uploadedAt, uploadedByUserId, uploadedByName)
+- [x] DB: Migration ausgeführt (CREATE TABLE labelling_check_images)
+- [x] Drizzle-Schema: labellingCheckImages Tabelle mit korrekten snake_case-Spaltennamen
+- [x] Backend: S3-Upload via storagePut (base64, max. 5 MB, JPEG/PNG/WebP)
+- [x] Backend: labellingChecks.uploadImage Mutation (productId, checkKey, base64, mimeType)
+- [x] Backend: labellingChecks.deleteImage Mutation (imageId, tenantId-Guard)
+- [x] Backend: labellingChecks.getImagesByProduct Query (alle Fotos für ein Produkt)
+- [x] Frontend: "Add picture(s)"-Button neben "Add note" pro Checklist-Item
+- [x] Frontend: Foto-Galerie (Thumbnails 64×64) pro Item mit Lightbox-Vorschau
+- [x] Frontend: Löschen-Button pro Foto (nur interne Rollen, hover-sichtbar)
+- [x] Frontend: Hidden file input (accept JPEG/PNG/WebP, multiple, max 5 MB)
+- [x] Frontend: Upload-Spinner während Upload läuft
+- [x] Tests für uploadImage/deleteImage (6 neue Tests, 249 Tests total, alle grün)

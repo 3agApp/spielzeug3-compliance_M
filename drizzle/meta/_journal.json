@@ -127,6 +127,13 @@
       "when": 1774795288911,
       "tag": "0017_silly_warbird",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1774795903657,
+      "tag": "0018_daily_lester",
+      "breakpoints": true
     }
   ]
 }

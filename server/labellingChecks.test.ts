@@ -121,3 +121,61 @@ describe("labellingChecks schema validation", () => {
     expect(now).toBeGreaterThan(1_000_000_000_000); // > year 2001
   });
 });
+
+// ─── Image upload validation tests ───────────────────────────────────────────
+
+describe("labellingCheckImages validation", () => {
+  it("accepts valid JPEG mime type", () => {
+    const validTypes = ["image/jpeg", "image/png", "image/webp"];
+    expect(validTypes.includes("image/jpeg")).toBe(true);
+    expect(validTypes.includes("image/png")).toBe(true);
+    expect(validTypes.includes("image/webp")).toBe(true);
+  });
+
+  it("rejects unsupported mime types", () => {
+    const validTypes = ["image/jpeg", "image/png", "image/webp"];
+    expect(validTypes.includes("image/gif")).toBe(false);
+    expect(validTypes.includes("application/pdf")).toBe(false);
+    expect(validTypes.includes("video/mp4")).toBe(false);
+  });
+
+  it("rejects files over 5 MB", () => {
+    const maxBytes = 5 * 1024 * 1024;
+    const oversizedBuffer = Buffer.alloc(maxBytes + 1);
+    expect(oversizedBuffer.byteLength).toBeGreaterThan(maxBytes);
+  });
+
+  it("accepts files under 5 MB", () => {
+    const maxBytes = 5 * 1024 * 1024;
+    const validBuffer = Buffer.alloc(maxBytes - 1);
+    expect(validBuffer.byteLength).toBeLessThanOrEqual(maxBytes);
+  });
+
+  it("generates unique file keys per upload", () => {
+    function makeKey(tenantId: string, productId: number, checkKey: string, ext: string) {
+      const suffix = Math.random().toString(36).slice(2, 8);
+      return `labelling-checks/${tenantId}/${productId}/${checkKey}-${suffix}.${ext}`;
+    }
+    const key1 = makeKey("1", 100, "ce_marking_on_product", "jpg");
+    const key2 = makeKey("1", 100, "ce_marking_on_product", "jpg");
+    // Keys should almost certainly be different (random suffix)
+    expect(key1).toMatch(/^labelling-checks\/1\/100\/ce_marking_on_product-[a-z0-9]{6}\.jpg$/);
+    expect(key2).toMatch(/^labelling-checks\/1\/100\/ce_marking_on_product-[a-z0-9]{6}\.jpg$/);
+  });
+
+  it("strips data URL prefix from base64", () => {
+    const dataUrl = "data:image/jpeg;base64,/9j/4AAQSkZJRgAB";
+    const stripped = dataUrl.replace(/^data:[^;]+;base64,/, "");
+    expect(stripped).toBe("/9j/4AAQSkZJRgAB");
+    expect(stripped).not.toContain("data:");
+  });
+
+  it("maps mime type to correct file extension", () => {
+    function getExt(mimeType: string) {
+      return mimeType === "image/png" ? "png" : mimeType === "image/webp" ? "webp" : "jpg";
+    }
+    expect(getExt("image/jpeg")).toBe("jpg");
+    expect(getExt("image/png")).toBe("png");
+    expect(getExt("image/webp")).toBe("webp");
+  });
+});

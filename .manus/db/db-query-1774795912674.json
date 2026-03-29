@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `labelling_check_images` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`product_id` int NOT NULL,\n\t`tenant_id` varchar(64) NOT NULL DEFAULT '1',\n\t`check_key` varchar(64) NOT NULL,\n\t`url` varchar(2048) NOT NULL,\n\t`file_key` varchar(512) NOT NULL,\n\t`uploaded_at` bigint NOT NULL,\n\t`uploaded_by_user_id` int,\n\t`uploaded_by_name` varchar(128),\n\tCONSTRAINT `labelling_check_images_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user J1L9FvUd1r4oKv8.75a96d268c41 --database kgkV5LdecSJ3HqPv7WFR7a --execute CREATE TABLE `labelling_check_images` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`product_id` int NOT NULL,\n\t`tenant_id` varchar(64) NOT NULL DEFAULT '1',\n\t`check_key` varchar(64) NOT NULL,\n\t`url` varchar(2048) NOT NULL,\n\t`file_key` varchar(512) NOT NULL,\n\t`uploaded_at` bigint NOT NULL,\n\t`uploaded_by_user_id` int,\n\t`uploaded_by_name` varchar(128),\n\tCONSTRAINT `labelling_check_images_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 263
+}
