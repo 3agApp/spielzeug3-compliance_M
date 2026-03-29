@@ -55,13 +55,23 @@ describe("DEFAULT_LABELLING_CHECKS", () => {
     expect(unique.size).toBe(keys.length);
   });
 
-  it("includes mandatory CE marking check", () => {
+  it("includes mandatory CE marking check (EU-only)", () => {
     const ceCheck = DEFAULT_LABELLING_CHECKS.find(
       (c) => c.checkKey === "ce_marking_on_product"
     );
     expect(ceCheck).toBeDefined();
     expect(ceCheck?.isMandatory).toBe(true);
-    expect(ceCheck?.market).toBe("EU/CH");
+    // CE marking is an EU requirement only – Switzerland uses PrSG SR 930.11
+    expect(ceCheck?.market).toBe("EU");
+  });
+
+  it("includes CH-specific conformity declaration check", () => {
+    const chCheck = DEFAULT_LABELLING_CHECKS.find(
+      (c) => c.checkKey === "ch_conformity_declaration"
+    );
+    expect(chCheck).toBeDefined();
+    expect(chCheck?.market).toBe("CH");
+    expect(chCheck?.category).toBe("CE Marking");
   });
 
   it("includes manufacturer info check", () => {

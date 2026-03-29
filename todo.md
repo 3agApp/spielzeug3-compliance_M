@@ -866,3 +866,10 @@
 - [x] Frontend: E-Mail-Dialog mit Betreff (Produktname + Anzahl Critical/Warning), Body, Copy + Open in Email Client-Buttons
 - [x] Frontend: "Click a finding to expand details" nur noch auf größeren Bildschirmen (hidden sm:block)
 - [x] 266 Tests, 0 TypeScript-Fehler
+
+## Bugfix: CE-Marking Labelling Checklist – Markt-Korrektur
+- [x] CE-Marking-Einträge (ce_marking_on_product, ce_marking_legible) von EU/CH auf EU-only korrigiert
+- [x] Label-Text um "(EU market requirement)" ergänzt für Klarheit
+- [x] Neuer CH-Eintrag: ch_conformity_declaration (PrSG SR 930.11 / Toy Safety Ordinance SR 817.023.11, market: CH, optional)
+- [x] Kommentar im Code: Cassis-de-Dijon-Prinzip und rechtliche Grundlage dokumentiert
+- [x] Tests aktualisiert + CH-Konformitäts-Test hinzugefügt (267 Tests, alle grün)

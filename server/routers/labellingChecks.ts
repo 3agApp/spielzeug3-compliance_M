@@ -7,22 +7,37 @@ import { and, eq } from "drizzle-orm";
 import { storagePut } from "../storage";
 
 // ─── Predefined labelling requirements ────────────────────────────────────────
+// Note on CE Marking vs. Switzerland:
+// CE marking is an EU requirement (Toy Safety Directive 2009/48/EC).
+// Switzerland does NOT require CE marking for domestic market entry.
+// However, Swiss importers often accept CE-marked products under the
+// Cassis-de-Dijon principle. CH-specific conformity is governed by
+// the Swiss Product Safety Act (PrSG / SR 930.11) and the Ordinance
+// on Toy Safety (SR 817.023.11). CE-marking items are therefore EU-only.
 
 export const DEFAULT_LABELLING_CHECKS = [
-  // CE Marking & Compliance
+  // CE Marking & Compliance (EU only – not required for CH domestic market)
   {
     checkKey: "ce_marking_on_product",
-    label: "CE marking visible on product or packaging",
+    label: "CE marking visible on product or packaging (EU market requirement)",
     category: "CE Marking",
-    market: "EU/CH",
+    market: "EU",
     isMandatory: true,
   },
   {
     checkKey: "ce_marking_legible",
-    label: "CE marking is legible and at least 5mm in height",
+    label: "CE marking is legible and at least 5mm in height (EU market requirement)",
     category: "CE Marking",
-    market: "EU/CH",
+    market: "EU",
     isMandatory: true,
+  },
+  // CH Conformity (Swiss Product Safety Act – PrSG SR 930.11)
+  {
+    checkKey: "ch_conformity_declaration",
+    label: "Swiss conformity declaration available (PrSG SR 930.11 / Toy Safety Ordinance SR 817.023.11)",
+    category: "CE Marking",
+    market: "CH",
+    isMandatory: false,
   },
   // Manufacturer / Importer
   {
