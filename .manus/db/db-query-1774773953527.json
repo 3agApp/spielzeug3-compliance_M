@@ -1,0 +1,66 @@
+{
+  "query": "SELECT id, `key`, labelDe, labelEn, sortOrder FROM product_categories ORDER BY sortOrder;\nSELECT id, categoryId, name, descriptionDe, requiredDocuments, optionalDocuments, requiredDataFields FROM product_templates WHERE active = 1 ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user J1L9FvUd1r4oKv8.75a96d268c41 --database kgkV5LdecSJ3HqPv7WFR7a --execute SELECT id, `key`, labelDe, labelEn, sortOrder FROM product_categories ORDER BY sortOrder;\nSELECT id, categoryId, name, descriptionDe, requiredDocuments, optionalDocuments, requiredDataFields FROM product_templates WHERE active = 1 ORDER BY id;",
+  "rows": [
+    {
+      "id": "1",
+      "key": "holzspielzeug",
+      "labelDe": "Holzspielzeug",
+      "labelEn": "Wooden Toys",
+      "sortOrder": "1"
+    },
+    {
+      "id": "2",
+      "key": "elektronik",
+      "labelDe": "Elektronisches Spielzeug",
+      "labelEn": "Electronic Toys",
+      "sortOrder": "2"
+    },
+    {
+      "id": "3",
+      "key": "pluesch",
+      "labelDe": "Plüsch & Stofftiere",
+      "labelEn": "Plush & Soft Toys",
+      "sortOrder": "3"
+    },
+    {
+      "id": "4",
+      "key": "brettspiele",
+      "labelDe": "Brettspiele & Puzzles",
+      "labelEn": "Board Games & Puzzles",
+      "sortOrder": "4"
+    },
+    {
+      "id": "5",
+      "key": "outdoor",
+      "labelDe": "Outdoor & Sport",
+      "labelEn": "Outdoor & Sports",
+      "sortOrder": "5"
+    },
+    {
+      "id": "6",
+      "key": "kreativ",
+      "labelDe": "Kreativ & Basteln",
+      "labelEn": "Creative & Crafts",
+      "sortOrder": "6"
+    },
+    {
+      "id": "7",
+      "key": "baby",
+      "labelDe": "Baby & Kleinkind",
+      "labelEn": "Baby & Toddler",
+      "sortOrder": "7"
+    }
+  ],
+  "messages": [
+    "id\tcategoryId\tname\tdescriptionDe\trequiredDocuments\toptionalDocuments\trequiredDataFields",
+    "1\t1\tHolzspielzeug Standard\tStandardvorlage für Holzspielzeug (EN 71)\t[\"test_report\", \"declaration_of_conformity\", \"certificate\"]\t[\"manual\", \"product_image\", \"safety_image\"]\t[\"safety_text\", \"age_grading\", \"material_information\"]",
+    "2\t2\tElektronisches Spielzeug\tVorlage für Spielzeug mit Elektronik (EN 62115, LVD)\t[\"test_report\", \"declaration_of_conformity\", \"certificate\", \"regulatory_document\"]\t[\"manual\", \"product_image\", \"safety_image\"]\t[\"safety_text\", \"warning_text\", \"age_grading\", \"material_information\", \"usage_restrictions\"]",
+    "3\t3\tPlüsch & Stofftiere\tVorlage für Plüsch- und Stoffspielzeug (EN 71-1)\t[\"test_report\", \"declaration_of_conformity\"]\t[\"certificate\", \"product_image\", \"safety_image\"]\t[\"safety_text\", \"age_grading\", \"material_information\"]",
+    "4\t4\tBrettspiele Standard\tVorlage für Brettspiele und Puzzles\t[\"declaration_of_conformity\"]\t[\"test_report\", \"manual\", \"product_image\"]\t[\"age_grading\"]",
+    "5\t7\tBaby & Kleinkind (0-3 Jahre)\tStrenge Vorlage für Babyspielzeug (EN 71-1, Erstickungsgefahr)\t[\"test_report\", \"declaration_of_conformity\", \"certificate\", \"safety_image\"]\t[\"manual\", \"product_image\", \"regulatory_document\"]\t[\"safety_text\", \"warning_text\", \"age_grading\", \"material_information\", \"usage_restrictions\", \"safety_instructions\"]"
+  ],
+  "stdout": "id\tkey\tlabelDe\tlabelEn\tsortOrder\n1\tholzspielzeug\tHolzspielzeug\tWooden Toys\t1\n2\telektronik\tElektronisches Spielzeug\tElectronic Toys\t2\n3\tpluesch\tPlüsch & Stofftiere\tPlush & Soft Toys\t3\n4\tbrettspiele\tBrettspiele & Puzzles\tBoard Games & Puzzles\t4\n5\toutdoor\tOutdoor & Sport\tOutdoor & Sports\t5\n6\tkreativ\tKreativ & Basteln\tCreative & Crafts\t6\n7\tbaby\tBaby & Kleinkind\tBaby & Toddler\t7\nid\tcategoryId\tname\tdescriptionDe\trequiredDocuments\toptionalDocuments\trequiredDataFields\n1\t1\tHolzspielzeug Standard\tStandardvorlage für Holzspielzeug (EN 71)\t[\"test_report\", \"declaration_of_conformity\", \"certificate\"]\t[\"manual\", \"product_image\", \"safety_image\"]\t[\"safety_text\", \"age_grading\", \"material_information\"]\n2\t2\tElektronisches Spielzeug\tVorlage für Spielzeug mit Elektronik (EN 62115, LVD)\t[\"test_report\", \"declaration_of_conformity\", \"certificate\", \"regulatory_document\"]\t[\"manual\", \"product_image\", \"safety_image\"]\t[\"safety_text\", \"warning_text\", \"age_grading\", \"material_information\", \"usage_restrictions\"]\n3\t3\tPlüsch & Stofftiere\tVorlage für Plüsch- und Stoffspielzeug (EN 71-1)\t[\"test_report\", \"declaration_of_conformity\"]\t[\"certificate\", \"product_image\", \"safety_image\"]\t[\"safety_text\", \"age_grading\", \"material_information\"]\n4\t4\tBrettspiele Standard\tVorlage für Brettspiele und Puzzles\t[\"declaration_of_conformity\"]\t[\"test_report\", \"manual\", \"product_image\"]\t[\"age_grading\"]\n5\t7\tBaby & Kleinkind (0-3 Jahre)\tStrenge Vorlage für Babyspielzeug (EN 71-1, Erstickungsgefahr)\t[\"test_report\", \"declaration_of_conformity\", \"certificate\", \"safety_image\"]\t[\"manual\", \"product_image\", \"regulatory_document\"]\t[\"safety_text\", \"warning_text\", \"age_grading\", \"material_information\", \"usage_restrictions\", \"safety_instructions\"]\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

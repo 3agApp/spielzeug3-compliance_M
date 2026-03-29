@@ -1,0 +1,8 @@
+{
+  "query": "\nSELECT pc.id as cat_id, pc.key, pc.label_de, pc.label_en FROM product_categories pc ORDER BY pc.sort_order;\nSELECT pt.id, pt.name, pt.description_de, pt.required_documents, pt.optional_documents, pt.required_data_fields FROM product_templates pt WHERE pt.active = true ORDER BY pt.id;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user J1L9FvUd1r4oKv8.75a96d268c41 --database kgkV5LdecSJ3HqPv7WFR7a --execute \nSELECT pc.id as cat_id, pc.key, pc.label_de, pc.label_en FROM product_categories pc ORDER BY pc.sort_order;\nSELECT pt.id, pt.name, pt.description_de, pt.required_documents, pt.optional_documents, pt.required_data_fields FROM product_templates pt WHERE pt.active = true ORDER BY pt.id;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 2: Unknown column 'pc.sort_order' in 'order clause'"
+  ]
+}

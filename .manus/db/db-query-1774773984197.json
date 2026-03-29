@@ -1,0 +1,19 @@
+{
+  "query": "\nSELECT pc.id, pc.`key`, pc.labelDe, pc.labelEn FROM product_categories pc WHERE pc.`key` = 'magnetspielzeug';\nSELECT pt.id, pt.categoryId, pt.name, pt.descriptionDe, pt.requiredDocuments, pt.optionalDocuments, pt.requiredDataFields FROM product_templates pt WHERE pt.name LIKE '%Magna%';\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user J1L9FvUd1r4oKv8.75a96d268c41 --database kgkV5LdecSJ3HqPv7WFR7a --execute \nSELECT pc.id, pc.`key`, pc.labelDe, pc.labelEn FROM product_categories pc WHERE pc.`key` = 'magnetspielzeug';\nSELECT pt.id, pt.categoryId, pt.name, pt.descriptionDe, pt.requiredDocuments, pt.optionalDocuments, pt.requiredDataFields FROM product_templates pt WHERE pt.name LIKE '%Magna%';\n",
+  "rows": [
+    {
+      "id": "30001",
+      "key": "magnetspielzeug",
+      "labelDe": "Magnetspielzeug",
+      "labelEn": "Magnetic Toys"
+    }
+  ],
+  "messages": [
+    "id\tcategoryId\tname\tdescriptionDe\trequiredDocuments\toptionalDocuments\trequiredDataFields",
+    "30001\t30001\tMagna-Tiles Magnetbausteine\tVorlage für MAGNA-TILES® Magnetbaustein-Sets. Abdeckt EN 71-1 (mechanische/physikalische Eigenschaften), EN 71-8 (Magnete), CPSIA, CE-Kennzeichnung. Material: MABS-Kunststoff (lebensmittelechte Qualität), BPA-/Phthalat-/Latex-frei, eingekapselte Neodym-Magnete. Altersfreigabe: ab 3 Jahren.\t[\"test_report\", \"declaration_of_conformity\", \"certificate\", \"safety_image\"]\t[\"manual\", \"product_image\", \"regulatory_document\"]\t[\"safety_text\", \"warning_text\", \"age_grading\", \"material_information\", \"usage_restrictions\"]"
+  ],
+  "stdout": "id\tkey\tlabelDe\tlabelEn\n30001\tmagnetspielzeug\tMagnetspielzeug\tMagnetic Toys\nid\tcategoryId\tname\tdescriptionDe\trequiredDocuments\toptionalDocuments\trequiredDataFields\n30001\t30001\tMagna-Tiles Magnetbausteine\tVorlage für MAGNA-TILES® Magnetbaustein-Sets. Abdeckt EN 71-1 (mechanische/physikalische Eigenschaften), EN 71-8 (Magnete), CPSIA, CE-Kennzeichnung. Material: MABS-Kunststoff (lebensmittelechte Qualität), BPA-/Phthalat-/Latex-frei, eingekapselte Neodym-Magnete. Altersfreigabe: ab 3 Jahren.\t[\"test_report\", \"declaration_of_conformity\", \"certificate\", \"safety_image\"]\t[\"manual\", \"product_image\", \"regulatory_document\"]\t[\"safety_text\", \"warning_text\", \"age_grading\", \"material_information\", \"usage_restrictions\"]\n",
+  "stderr": "",
+  "execution_time_ms": 59
+}

@@ -612,3 +612,11 @@
 - [x] Feature: Bearbeiten-Dialog für Lieferanten (Name, Land, Kontor-ID, Kontakt, E-Mail, Telefon, Adresse, Aktiv-Toggle)
 - [x] Backend: suppliers.update-Endpoint alle Felder weitergeleitet
 - [x] 219 Tests grün, 0 TypeScript-Fehler
+
+## Produktvorlage Magna-Tiles Magnetspielzeug
+- [x] Neue Kategorie "Magnetspielzeug" (DE) / "Magnetic Toys" (EN) angelegt (sortOrder 8)
+- [x] Vorlage "Magna-Tiles Magnetbausteine" mit EN 71-1, EN 71-8, CPSIA, CE-Infos erstellt
+- [x] Pflichtdokumente: Prüfbericht, Konformitätserklärung, Zertifikat, Sicherheitsbild
+- [x] Optionale Dokumente: Bedienungsanleitung, Produktbild, Regulatorisches Dokument
+- [x] Pflichtfelder: Sicherheitshinweis, Warnhinweis, Altersfreigabe, Materialinfos, Verwendungsbeschränkungen
+- [x] Vorlage in Portal unter /admin/templates → Kategorie "Magnetspielzeug" sichtbar
