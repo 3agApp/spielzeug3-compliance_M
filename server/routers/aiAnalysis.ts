@@ -16,12 +16,14 @@ export const aiAnalysisRouter = router({
     .input(z.object({
       apiKey: z.string().min(10),
       provider: z.enum(["openai", "anthropic", "gemini"]),
+      model: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       try {
         return await aiAnalysisService.updateSettings(ctx.user as any, {
           apiKey: input.apiKey,
           provider: input.provider,
+          model: input.model,
         });
       } catch (err) {
         throw toTRPCError(err);

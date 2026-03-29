@@ -747,3 +747,11 @@
 - [ ] Frontend: Settings AI-Tab – Provider-Dropdown (OpenAI/Anthropic/Gemini), API-Key-Eingabe, Test-Button
 - [ ] Frontend: AI Analysis Tab – wenn kein Key: Hinweis-Banner mit Link zu Settings
 - [ ] Frontend: AI-Analyse-Button deaktiviert wenn kein Key konfiguriert
+
+## Modell-Dropdown pro AI-Provider
+- [x] Backend: ai_model in system_settings speichern
+- [x] Backend: tenantLLM lädt Modell aus DB (Fallback auf Default)
+- [x] Backend: updateSettings um model-Feld erweitern
+- [x] Backend: getApiKeyStatus gibt model zurück
+- [x] Frontend: Modell-Dropdown pro Provider (OpenAI: gpt-4o, gpt-4o-mini, gpt-4-turbo; Anthropic: claude-3-5-sonnet, claude-3-haiku; Gemini: gemini-1.5-pro, gemini-1.5-flash, gemini-2.0-flash)
+- [x] Frontend: Modell-Anzeige im Status-Badge (konfigurierter Provider + Modell)

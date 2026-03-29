@@ -199,15 +199,20 @@ export default function AdminSettings() {
 
   const [aiKey, setAiKey] = useState("");
   const [aiProvider, setAiProvider] = useState<"openai" | "anthropic" | "gemini">("openai");
+  const [aiModel, setAiModel] = useState("");
   const [showKey, setShowKey] = useState(false);
   const [testResult, setTestResult] = useState<"idle" | "success" | "error">("idle");
   const [testMessage, setTestMessage] = useState("");
 
   const apiKeyStatusQuery = trpc.aiAnalysis.getApiKeyStatus.useQuery();
-  // Pre-select the saved provider when loaded
+  // Pre-select the saved provider + model when loaded
   const savedProvider = (apiKeyStatusQuery.data as any)?.provider;
+  const savedModel = (apiKeyStatusQuery.data as any)?.model;
   if (savedProvider && savedProvider !== aiProvider && aiKey === "") {
     setAiProvider(savedProvider);
+  }
+  if (savedModel && aiModel === "") {
+    setAiModel(savedModel);
   }
   const saveKeyMutation = trpc.aiAnalysis.saveApiKey.useMutation({
     onSuccess: () => {
@@ -700,9 +705,12 @@ export default function AdminSettings() {
                     </p>
                     {apiKeyStatusQuery.data?.configured && (
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        {lang === "de" ? "Anbieter" : "Provider"}: <span className="font-medium capitalize">{(apiKeyStatusQuery.data as any)?.provider ?? "–"}</span>
+                        <span className="capitalize font-medium">{(apiKeyStatusQuery.data as any)?.provider ?? "–"}</span>
+                        {(apiKeyStatusQuery.data as any)?.model && (
+                          <span className="ml-1.5 rounded bg-muted px-1.5 py-0.5 font-mono text-xs">{(apiKeyStatusQuery.data as any).model}</span>
+                        )}
                         {apiKeyStatusQuery.data?.maskedKey && (
-                          <span className="font-mono ml-2">{apiKeyStatusQuery.data.maskedKey}</span>
+                          <span className="font-mono ml-2 text-muted-foreground/70">{apiKeyStatusQuery.data.maskedKey}</span>
                         )}
                       </p>
                     )}
@@ -757,7 +765,7 @@ export default function AdminSettings() {
                       </button>
                     </div>
                     <Button
-                      onClick={() => aiKey && saveKeyMutation.mutate({ apiKey: aiKey, provider: aiProvider })}
+                      onClick={() => aiKey && saveKeyMutation.mutate({ apiKey: aiKey, provider: aiProvider, model: aiModel || undefined })}
                       disabled={!aiKey || saveKeyMutation.isPending}
                     >
                       {saveKeyMutation.isPending ? (
@@ -773,6 +781,45 @@ export default function AdminSettings() {
                     {aiProvider === "openai" && <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">platform.openai.com/api-keys</a>}
                     {aiProvider === "anthropic" && <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">console.anthropic.com</a>}
                     {aiProvider === "gemini" && <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">aistudio.google.com</a>}
+                  </p>
+                </div>
+
+                {/* Model selection */}
+                <div className="space-y-1.5">
+                  <Label>{lang === "de" ? "Modell" : "Model"}</Label>
+                  <select
+                    value={aiModel}
+                    onChange={(e) => setAiModel(e.target.value)}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="">{lang === "de" ? "Standard (empfohlen)" : "Default (recommended)"}</option>
+                    {aiProvider === "openai" && (
+                      <>
+                        <option value="gpt-4o">GPT-4o (Recommended)</option>
+                        <option value="gpt-4o-mini">GPT-4o mini – Faster &amp; cheaper</option>
+                        <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo – Budget</option>
+                      </>
+                    )}
+                    {aiProvider === "anthropic" && (
+                      <>
+                        <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet (Recommended)</option>
+                        <option value="claude-3-haiku-20240307">Claude 3 Haiku – Fast &amp; cheap</option>
+                        <option value="claude-3-opus-20240229">Claude 3 Opus – Most capable</option>
+                      </>
+                    )}
+                    {aiProvider === "gemini" && (
+                      <>
+                        <option value="gemini-1.5-pro">Gemini 1.5 Pro (Recommended)</option>
+                        <option value="gemini-1.5-flash">Gemini 1.5 Flash – Fast &amp; cheap</option>
+                        <option value="gemini-2.0-flash">Gemini 2.0 Flash – Latest</option>
+                      </>
+                    )}
+                  </select>
+                  <p className="text-xs text-muted-foreground">
+                    {lang === "de"
+                      ? "Das gewählte Modell wird für alle KI-Analysen verwendet. Günstigere Modelle sind schneller, aber weniger präzise."
+                      : "The selected model is used for all AI analyses. Cheaper models are faster but less precise."}
                   </p>
                 </div>
               </div>

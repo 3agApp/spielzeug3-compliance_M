@@ -46,6 +46,7 @@ export interface TenantLLMResult {
 export interface TenantAIConfig {
   provider: AIProvider;
   apiKey: string;
+  model: string;
   configured: true;
 }
 
@@ -56,8 +57,11 @@ export interface TenantAIConfigMissing {
 // ─── Config loader ────────────────────────────────────────────────────────────
 
 export async function getTenantAIConfig(): Promise<TenantAIConfig | TenantAIConfigMissing> {
-  const providerSetting = await getSystemSetting("ai_provider");
-  const keySetting = await getSystemSetting("ai_api_key");
+  const [providerSetting, keySetting, modelSetting] = await Promise.all([
+    getSystemSetting("ai_provider"),
+    getSystemSetting("ai_api_key"),
+    getSystemSetting("ai_model"),
+  ]);
 
   const provider = (providerSetting?.settingValue ?? "").trim() as AIProvider;
   const apiKey = (keySetting?.settingValue ?? "").trim();
@@ -66,7 +70,13 @@ export async function getTenantAIConfig(): Promise<TenantAIConfig | TenantAIConf
     return { configured: false };
   }
 
-  return { configured: true, provider, apiKey };
+  // Use saved model or fall back to provider default
+  const savedModel = (modelSetting?.settingValue ?? "").trim();
+  const model = savedModel && PROVIDER_MODELS[provider]?.includes(savedModel)
+    ? savedModel
+    : PROVIDER_MODELS[provider][0];
+
+  return { configured: true, provider, apiKey, model };
 }
 
 /**
@@ -86,20 +96,36 @@ export async function requireTenantAIConfig(): Promise<TenantAIConfig> {
 
 // ─── Provider adapters ────────────────────────────────────────────────────────
 
-const PROVIDER_MODELS: Record<AIProvider, string> = {
-  openai: "gpt-4o",
-  anthropic: "claude-3-5-sonnet-20241022",
-  gemini: "gemini-1.5-pro",
+// All available models per provider (first entry = default)
+export const PROVIDER_MODELS: Record<AIProvider, string[]> = {
+  openai: ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"],
+  anthropic: ["claude-3-5-sonnet-20241022", "claude-3-haiku-20240307", "claude-3-opus-20240229"],
+  gemini: ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-2.0-flash"],
+};
+
+// Human-readable model labels
+export const MODEL_LABELS: Record<string, string> = {
+  "gpt-4o": "GPT-4o (Recommended)",
+  "gpt-4o-mini": "GPT-4o mini (Faster & cheaper)",
+  "gpt-4-turbo": "GPT-4 Turbo",
+  "gpt-3.5-turbo": "GPT-3.5 Turbo (Budget)",
+  "claude-3-5-sonnet-20241022": "Claude 3.5 Sonnet (Recommended)",
+  "claude-3-haiku-20240307": "Claude 3 Haiku (Fast & cheap)",
+  "claude-3-opus-20240229": "Claude 3 Opus (Most capable)",
+  "gemini-1.5-pro": "Gemini 1.5 Pro (Recommended)",
+  "gemini-1.5-flash": "Gemini 1.5 Flash (Fast & cheap)",
+  "gemini-2.0-flash": "Gemini 2.0 Flash (Latest)",
 };
 
 async function invokeOpenAI(
   apiKey: string,
+  model: string,
   messages: LLMMessage[],
   responseFormat?: LLMResponseFormat,
   maxTokens = 8192
 ): Promise<string> {
   const payload: Record<string, unknown> = {
-    model: PROVIDER_MODELS.openai,
+    model,
     messages,
     max_tokens: maxTokens,
   };
@@ -129,6 +155,7 @@ async function invokeOpenAI(
 
 async function invokeAnthropic(
   apiKey: string,
+  model: string,
   messages: LLMMessage[],
   responseFormat?: LLMResponseFormat,
   maxTokens = 8192
@@ -149,7 +176,7 @@ async function invokeAnthropic(
   }
 
   const payload: Record<string, unknown> = {
-    model: PROVIDER_MODELS.anthropic,
+    model,
     max_tokens: maxTokens,
     messages: userMessages,
   };
@@ -183,11 +210,11 @@ async function invokeAnthropic(
 
 async function invokeGemini(
   apiKey: string,
+  model: string,
   messages: LLMMessage[],
   responseFormat?: LLMResponseFormat,
   maxTokens = 8192
 ): Promise<string> {
-  const model = PROVIDER_MODELS.gemini;
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
   // Convert messages to Gemini format
@@ -248,13 +275,13 @@ export async function invokeTenantLLM(params: TenantLLMParams): Promise<TenantLL
 
   switch (config.provider) {
     case "openai":
-      content = await invokeOpenAI(config.apiKey, messages, response_format, maxTokens);
+      content = await invokeOpenAI(config.apiKey, config.model, messages, response_format, maxTokens);
       break;
     case "anthropic":
-      content = await invokeAnthropic(config.apiKey, messages, response_format, maxTokens);
+      content = await invokeAnthropic(config.apiKey, config.model, messages, response_format, maxTokens);
       break;
     case "gemini":
-      content = await invokeGemini(config.apiKey, messages, response_format, maxTokens);
+      content = await invokeGemini(config.apiKey, config.model, messages, response_format, maxTokens);
       break;
     default:
       throw new TRPCError({
@@ -266,7 +293,7 @@ export async function invokeTenantLLM(params: TenantLLMParams): Promise<TenantLL
   return {
     content,
     provider: config.provider,
-    model: PROVIDER_MODELS[config.provider],
+    model: config.model,
   };
 }
 
@@ -298,7 +325,7 @@ export async function testTenantAIKey(): Promise<{
     return {
       success: false,
       provider: config.provider,
-      model: PROVIDER_MODELS[config.provider],
+      model: config.model,
       reply: "",
       error: err instanceof Error ? err.message : String(err),
     };

@@ -573,7 +573,7 @@ export const aiAnalysisService = {
   },
 
   /** Update AI analysis settings (admin only). */
-  async updateSettings(user: UserContext, settings: { apiKey?: string; provider?: string; enabled?: boolean }) {
+  async updateSettings(user: UserContext, settings: { apiKey?: string; provider?: string; model?: string; enabled?: boolean }) {
     requireRole(user.complianceRole, ["administrator", "compliance_manager"]);
     if (settings.apiKey !== undefined) {
       await upsertSystemSetting("ai_api_key", settings.apiKey);
@@ -584,6 +584,9 @@ export const aiAnalysisService = {
         throw Errors.validation(`Invalid provider. Must be one of: ${validProviders.join(", ")}`);
       }
       await upsertSystemSetting("ai_provider", settings.provider);
+    }
+    if (settings.model !== undefined) {
+      await upsertSystemSetting("ai_model", settings.model);
     }
     if (settings.enabled !== undefined) {
       await upsertSystemSetting("AI_ANALYSIS_ENABLED", String(settings.enabled));
