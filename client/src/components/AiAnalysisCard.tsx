@@ -565,7 +565,27 @@ function FindingCard({ f, index, productName, productArticleNumber }: { f: any; 
   );
 }
 
+function buildAllIssuesEmail(findings: any[], productName?: string, productArticleNumber?: string): string {
+  const today = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
+  const openFindings = findings.filter((f: any) => f.type === "critical" || f.type === "warning");
+  const findingsSections = openFindings.map((f: any, idx: number) => {
+    const regList = (f.affectedRegulations as string[] ?? []).map((r: string) => `  – ${r}`).join("\n");
+    const quotesSection = (f.regulatoryQuotes as any[] ?? []).length > 0
+      ? `\n  Legal basis:\n${(f.regulatoryQuotes as any[]).map((q: any) => `    ${q.source ?? ""} ${q.article ?? ""}:\n    "${q.quote ?? q.verbatim ?? ""}"`).join("\n\n")}`
+      : "";
+    const remediationSection = f.remediation ? `\n  Requested action: ${f.remediation}` : "";
+    return `${idx + 1}. [${f.type?.toUpperCase()}] ${f.message}\n${f.detail ? `  ${f.detail}\n` : ""}${regList ? `  Affected regulations:\n${regList}` : ""}${quotesSection}${remediationSection}`;
+  }).join("\n\n─────────────────────────────────\n\n");
+  return `Date: ${today}\n\nDear Sir or Madam,\n\nWe are writing regarding the compliance documentation for the following product:\n\nProduct: ${productName ?? "–"}\nArticle Number: ${productArticleNumber ?? "–"}\n\nDuring our compliance review, we identified ${openFindings.length} issue${openFindings.length !== 1 ? "s" : ""} that require your attention. Please review each point and provide updated or corrected documentation at your earliest convenience.\n\n${
+    openFindings.filter((f: any) => f.type === "critical").length > 0
+      ? `⚠ CRITICAL ISSUES (${openFindings.filter((f: any) => f.type === "critical").length}): These must be resolved before market release.\n\n`
+      : ""
+  }${findingsSections}\n\nWe kindly request that you address all points listed above and provide the relevant documentation as soon as possible. If you have any questions or require clarification, please do not hesitate to contact us.\n\nKind regards,\n\n[Your Name]\n[Your Position]\nspielezeug3 AG\n[Contact Details]`;
+}
+
 function RiskAssessmentSection({ analysis, productName, productArticleNumber }: { analysis: any; productName?: string; productArticleNumber?: string }) {
+  const [allIssuesEmailOpen, setAllIssuesEmailOpen] = useState(false);
+  const [allIssuesCopied, setAllIssuesCopied] = useState(false);
   const { lang } = useLang();
   const needsTranslation = lang !== "en" && !!analysis?.id;
 
@@ -649,11 +669,27 @@ function RiskAssessmentSection({ analysis, productName, productArticleNumber }: 
         <>
           <Separator />
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
               <p className="text-sm font-semibold">Findings ({findings.length})</p>
-              {findings.some((f: any) => f.detail || f.affectedRegulations?.length > 0 || f.remediation) && (
-                <p className="text-xs text-muted-foreground">Click a finding to expand details</p>
-              )}
+              <div className="flex items-center gap-2">
+                {findings.some((f: any) => f.detail || f.affectedRegulations?.length > 0 || f.remediation) && (
+                  <p className="text-xs text-muted-foreground hidden sm:block">Click a finding to expand details</p>
+                )}
+                {findings.filter((f: any) => f.type === "critical" || f.type === "warning").length > 0 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5 text-xs h-7 border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-950/30"
+                    onClick={() => setAllIssuesEmailOpen(true)}
+                  >
+                    <Mail className="h-3.5 w-3.5" />
+                    Request All Issues
+                    <Badge variant="outline" className="ml-0.5 px-1 py-0 text-[10px] h-4 border-amber-300 text-amber-700 dark:border-amber-700 dark:text-amber-400">
+                      {findings.filter((f: any) => f.type === "critical" || f.type === "warning").length}
+                    </Badge>
+                  </Button>
+                )}
+              </div>
             </div>
             <div className="space-y-2">
               {findings.map((f: any, i: number) => (
@@ -661,6 +697,61 @@ function RiskAssessmentSection({ analysis, productName, productArticleNumber }: 
               ))}
             </div>
           </div>
+
+          {/* Consolidated all-issues email dialog */}
+          <Dialog open={allIssuesEmailOpen} onOpenChange={setAllIssuesEmailOpen}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-base">
+                  <Mail className="h-4 w-4" />
+                  Request All Issues – {productName ?? "Product"}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  Consolidated email template covering all {findings.filter((f: any) => f.type === "critical" || f.type === "warning").length} open findings
+                  ({findings.filter((f: any) => f.type === "critical").length} critical,{" "}
+                  {findings.filter((f: any) => f.type === "warning").length} warnings). Edit as needed before sending.
+                </p>
+                <Textarea
+                  className="font-mono text-xs min-h-[380px] resize-y"
+                  value={buildAllIssuesEmail(findings, productName, productArticleNumber)}
+                  readOnly
+                />
+                <div className="flex gap-2 justify-end">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5"
+                    onClick={() => {
+                      navigator.clipboard.writeText(buildAllIssuesEmail(findings, productName, productArticleNumber));
+                      setAllIssuesCopied(true);
+                      setTimeout(() => setAllIssuesCopied(false), 2000);
+                      toast.success("All issues email copied to clipboard");
+                    }}
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                    {allIssuesCopied ? "Copied!" : "Copy"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => {
+                      const body = encodeURIComponent(buildAllIssuesEmail(findings, productName, productArticleNumber));
+                      const critCount = findings.filter((f: any) => f.type === "critical").length;
+                      const subject = encodeURIComponent(
+                        `Compliance Documentation Request – ${productName ?? "Product"} (${critCount > 0 ? `${critCount} Critical, ` : ""}${findings.filter((f: any) => f.type === "warning").length} Warnings)`
+                      );
+                      window.open(`mailto:?subject=${subject}&body=${body}`);
+                    }}
+                  >
+                    <Mail className="h-3.5 w-3.5" />
+                    Open in Email Client
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </>
       )}
 

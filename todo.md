@@ -857,3 +857,12 @@
 - [x] Frontend: Copy-to-clipboard und "Send to Manufacturer"-Button (tRPC email.sendManufacturerEmail)
 - [x] productName/articleNumber als Props an FindingCard weitergereicht
 - [x] Tests für regulatoryQuotes-Schema (3 neue Tests, 266 Tests total, alle grün)
+
+## "Request All Issues"-Button in Findings
+- [x] Frontend: Button "Request All Issues" in Findings-Überschrift (amber-farbig, nur wenn Critical/Warning-Findings vorhanden)
+- [x] Frontend: Badge im Button zeigt Anzahl offener Findings (Critical + Warning)
+- [x] Frontend: buildAllIssuesEmail()-Funktion: konsolidierte E-Mail mit allen Findings (nummeriert, je Abschnitt: Typ, Detail, Normen, Zitate, Lösungsvorschlag, Trennlinie)
+- [x] Frontend: Warnung "⚠ CRITICAL ISSUES (n): These must be resolved before market release" wenn Critical-Findings vorhanden
+- [x] Frontend: E-Mail-Dialog mit Betreff (Produktname + Anzahl Critical/Warning), Body, Copy + Open in Email Client-Buttons
+- [x] Frontend: "Click a finding to expand details" nur noch auf größeren Bildschirmen (hidden sm:block)
+- [x] 266 Tests, 0 TypeScript-Fehler
