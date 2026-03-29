@@ -343,6 +343,28 @@ export const tenantService = {
     };
   },
 
+  /**
+   * Generate a preview QR code for a product without activating the seal.
+   * Creates publicUuid + QR code so the product page can be previewed.
+   * The page will show "IN PROGRESS" status until the seal is activated.
+   * Requires administrator / compliance_manager / super_admin.
+   */
+  async generatePreviewQr(user: UserContext, productId: number) {
+    requireRole(user.complianceRole, ["administrator", "compliance_manager", "super_admin"]);
+    const tenantId = user.tenantId ?? 1;
+    const tenant = await getTenantById(tenantId);
+    if (!tenant) throw Errors.notFound("Tenant", tenantId);
+
+    // ensureProductPublicUuid creates UUID + QR code if not already present,
+    // but does NOT set sealEnabledAt – so the seal stays in "IN PROGRESS" state.
+    const result = await ensureProductPublicUuid(productId, tenant.slug);
+    return {
+      ...result,
+      publicUrl: getPublicProductUrl(result.publicUuid),
+      isPreview: true,
+    };
+  },
+
   /** Toggle the public visibility of a product's landing page. */
   async setPublicVisible(user: UserContext, productId: number, visible: boolean) {
     requireRole(user.complianceRole, ["administrator", "compliance_manager", "super_admin"]);

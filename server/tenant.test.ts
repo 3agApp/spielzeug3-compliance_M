@@ -108,6 +108,53 @@ describe("tenantDb", () => {
   });
 });
 
+// ─── Tests: generatePreviewQr service method ────────────────────────────────
+describe("tenantService.generatePreviewQr", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns publicUuid, qrCodeUrl, publicUrl and isPreview=true", async () => {
+    const { tenantService } = await import("../server/domains/tenants/tenantService");
+    const user = { complianceRole: "administrator", tenantId: 1, id: 1 };
+    const result = await tenantService.generatePreviewQr(user as any, 42);
+    expect(result.publicUuid).toMatch(/^[0-9a-f-]{36}$/);
+    expect(result.qrCodeUrl).toBeTruthy();
+    expect(result.publicUrl).toContain(result.publicUuid);
+    expect(result.isPreview).toBe(true);
+  });
+
+  it("throws FORBIDDEN for supplier role", async () => {
+    const { tenantService } = await import("../server/domains/tenants/tenantService");
+    const user = { complianceRole: "supplier", tenantId: 1, id: 99 };
+    await expect(tenantService.generatePreviewQr(user as any, 42)).rejects.toThrow();
+  });
+
+  it("throws FORBIDDEN for internal_employee role", async () => {
+    const { tenantService } = await import("../server/domains/tenants/tenantService");
+    const user = { complianceRole: "internal_employee", tenantId: 1, id: 99 };
+    await expect(tenantService.generatePreviewQr(user as any, 42)).rejects.toThrow();
+  });
+
+  it("compliance_manager can also generate preview QR", async () => {
+    const { tenantService } = await import("../server/domains/tenants/tenantService");
+    const user = { complianceRole: "compliance_manager", tenantId: 1, id: 2 };
+    const result = await tenantService.generatePreviewQr(user as any, 42);
+    expect(result.isPreview).toBe(true);
+  });
+
+  it("does NOT set sealEnabledAt (preview does not activate seal)", async () => {
+    // The generatePreviewQr method calls ensureProductPublicUuid which does NOT
+    // set sealEnabledAt – this is verified by checking the mock is called correctly
+    const { ensureProductPublicUuid } = await import("../server/tenantDb");
+    const { tenantService } = await import("../server/domains/tenants/tenantService");
+    const user = { complianceRole: "administrator", tenantId: 1, id: 1 };
+    await tenantService.generatePreviewQr(user as any, 42);
+    // ensureProductPublicUuid should have been called (it does not set sealEnabledAt)
+    expect(ensureProductPublicUuid).toHaveBeenCalledWith(42, "spielzeug3");
+  });
+});
+
 // ─── Tests: Tenant module guard logic ────────────────────────────────────────
 describe("Tenant module guard", () => {
   it("seal module is included in professional plan modules", async () => {

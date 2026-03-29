@@ -177,6 +177,19 @@ export const tenantRouter = router({
       }
     }),
 
+  // ── Generate preview QR code (without activating the seal) ─────────────────
+  // This creates a publicUuid and QR code but does NOT set sealEnabledAt,
+  // so the product page shows "IN PROGRESS" status until the seal is activated.
+  generatePreviewQr: protectedProcedure
+    .input(z.object({ productId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        return await tenantService.generatePreviewQr(ctx.user as any, input.productId);
+      } catch (err) {
+        throw toTRPCError(err);
+      }
+    }),
+
   // ── Override seal status (admin only) ────────────────────────────────────
   setSealStatusOverride: protectedProcedure
     .input(z.object({

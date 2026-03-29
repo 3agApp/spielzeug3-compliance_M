@@ -873,3 +873,5 @@
 - [x] Neuer CH-Eintrag: ch_conformity_declaration (PrSG SR 930.11 / Toy Safety Ordinance SR 817.023.11, market: CH, optional)
 - [x] Kommentar im Code: Cassis-de-Dijon-Prinzip und rechtliche Grundlage dokumentiert
 - [x] Tests aktualisiert + CH-Konformitäts-Test hinzugefügt (267 Tests, alle grün)
+- [ ] Seal-Vorschau: QR-Code und Link zur öffentlichen Produktseite im Seal & QR Code Tab anzeigen (auch vor Aktivierung als Preview-Modus)
+- [x] Seal-Vorschau: QR-Code und Link zur öffentlichen Produktseite im Seal & QR Code Tab anzeigen (auch vor Aktivierung als Preview-Modus)

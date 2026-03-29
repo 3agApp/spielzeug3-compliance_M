@@ -1059,7 +1059,7 @@ function SealTab({
   isSupplier?: boolean;
   onSealActivated?: () => void;
 }) {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const utils = trpc.useUtils();
   const sealQuery = trpc.tenant.getSealInfo.useQuery({ productId });
   const seal = sealQuery.data;
@@ -1096,6 +1096,17 @@ function SealTab({
       toast.success(t.seal.activateSuccess);
       sealQuery.refetch();
       onSealActivated?.();
+    },
+    onError: (e) => toast.error(translateError(e.message, t)),
+  });
+
+  const previewQrMutation = trpc.tenant.generatePreviewQr.useMutation({
+    onSuccess: (data) => {
+      toast.success(
+        lang === "de" ? "Vorschau-QR generiert" : "Preview QR generated",
+        { description: lang === "de" ? "QR-Code und öffentliche Seite sind jetzt verfügbar." : "QR code and public page are now available." }
+      );
+      sealQuery.refetch();
     },
     onError: (e) => toast.error(translateError(e.message, t)),
   });
@@ -1298,19 +1309,66 @@ function SealTab({
           </div>
 
           {!seal?.publicUuid && canManage && (
-            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg space-y-3">
               <p className="text-sm text-amber-800 font-medium mb-2">{t.seal.notActivatedTitle}</p>
-              <p className="text-xs text-amber-700 mb-3">
+              <p className="text-xs text-amber-700">
                 {t.seal.notActivatedDesc}
               </p>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => previewQrMutation.mutate({ productId })}
+                  disabled={previewQrMutation.isPending}
+                  className="border-amber-400 text-amber-800 hover:bg-amber-100"
+                >
+                  {previewQrMutation.isPending ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <QrCode className="mr-2 h-4 w-4" />
+                  )}
+                  {lang === "de" ? "Vorschau-QR generieren" : "Generate preview QR"}
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => activateMutation.mutate({ productId })}
+                  disabled={activateMutation.isPending}
+                  className="bg-[#C8102E] hover:bg-[#a00d24] text-white"
+                >
+                  <ShieldCheck className="mr-2 h-4 w-4" />
+                  {activateMutation.isPending ? t.seal.activating : t.seal.activateWithQr}
+                </Button>
+              </div>
+              <p className="text-xs text-amber-600">
+                {lang === "de"
+                  ? "Vorschau-QR: Seite ist sichtbar, zeigt aber \"IN PROGRESS\" Status. Siegel aktivieren = Status wird zu \"VERIFIED\" (wenn Produkt genehmigt)."
+                  : "Preview QR: page is visible but shows \"IN PROGRESS\" status. Activate seal = status becomes \"VERIFIED\" (when product is approved)."}
+              </p>
+            </div>
+          )}
+
+          {/* Preview banner: UUID exists but seal not yet activated */}
+          {seal?.publicUuid && !seal?.sealEnabledAt && canManage && (
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-3">
+              <QrCode className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-blue-800 font-medium">
+                  {lang === "de" ? "Vorschau aktiv – Siegel noch nicht aktiviert" : "Preview active – seal not yet activated"}
+                </p>
+                <p className="text-xs text-blue-700 mt-0.5">
+                  {lang === "de"
+                    ? "Die öffentliche Seite ist erreichbar und zeigt \"IN PROGRESS\". Aktiviere das Siegel um den Status auf \"VERIFIED\" zu setzen."
+                    : "The public page is accessible and shows \"IN PROGRESS\". Activate the seal to set status to \"VERIFIED\"."}
+                </p>
+              </div>
               <Button
                 size="sm"
                 onClick={() => activateMutation.mutate({ productId })}
                 disabled={activateMutation.isPending}
-                className="bg-[#C8102E] hover:bg-[#a00d24] text-white"
+                className="bg-[#C8102E] hover:bg-[#a00d24] text-white flex-shrink-0"
               >
-                <ShieldCheck className="mr-2 h-4 w-4" />
-                {activateMutation.isPending ? t.seal.activating : t.seal.activateWithQr}
+                <ShieldCheck className="mr-1 h-3 w-3" />
+                {lang === "de" ? "Aktivieren" : "Activate"}
               </Button>
             </div>
           )}
