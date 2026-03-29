@@ -45,6 +45,8 @@ import {
   ShieldCheck,
   Trash2,
   Upload,
+  Files,
+  Sparkles,
   XCircle,
   Globe,
   GlobeLock,
@@ -526,6 +528,7 @@ export default function ProductDetail() {
         {/* Documents Tab */}
         <TabsContent value="documents" className="mt-4 space-y-4">
           {(role === "supplier" || isInternalRole) && (
+            <div className="flex items-center gap-2 flex-wrap">
             <UploadDocumentCard
               productId={productId}
               role={role}
@@ -543,6 +546,19 @@ export default function ProductDetail() {
                 }
               }}
             />
+            <BatchUploadCard
+              productId={productId}
+              product={product}
+              role={role}
+              isOperator={isInternalRole}
+              t={t}
+              existingDocuments={documents}
+              onSuccess={() => {
+                documentsQuery.refetch();
+                utils.products.getById.invalidate({ id: productId });
+              }}
+            />
+            </div>
           )}
           <Card>
             <CardContent className="p-0">
@@ -2090,6 +2106,302 @@ function UploadDocumentCard({ productId, role, isOperator, t, onSuccess, existin
     </>
   );
 }
+// ─── Batch Upload Card ──────────────────────────────────────────────────────
+function BatchUploadCard({ productId, product, role, isOperator, t, existingDocuments, onSuccess }: any) {
+  const [open, setOpen] = useState(false);
+  const [files, setFiles] = useState<File[]>([]);
+  const [classifying, setClassifying] = useState(false);
+  const [rows, setRows] = useState<Array<{
+    file: File;
+    documentType: string;
+    confidence: string;
+    reason: string;
+    uploadMode: "replace" | "add" | "new";
+    replacesDocumentId: string;
+  }>>([]);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const classifyMutation = trpc.documents.classifyBatch.useMutation();
+  const uploadBatchMutation = trpc.documents.uploadBatch.useMutation({
+    onSuccess: (data) => {
+      toast.success((t.documents.batchUploadSuccess as string).replace("{count}", String(data.uploaded)));
+      setOpen(false);
+      setFiles([]);
+      setRows([]);
+      onSuccess?.();
+    },
+    onError: (e) => toast.error(translateError(e.message, t)),
+  });
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const selected = Array.from(e.target.files ?? []).slice(0, 20);
+    setFiles(selected);
+    setRows([]);
+  }
+
+  async function handleClassify() {
+    if (files.length === 0) return;
+    setClassifying(true);
+    try {
+      const result = await classifyMutation.mutateAsync({
+        files: files.map((f) => ({ fileName: f.name, mimeType: f.type, fileSizeBytes: f.size })),
+        productContext: { name: product?.productName ?? "", category: product?.categoryName ?? "" },
+      });
+      setRows(result.map((r, i) => {
+        const docsOfType = (existingDocuments ?? []).filter(
+          (d: any) => d.documentType === r.documentType && !d.isArchived
+        );
+        const defaultMode: "replace" | "add" | "new" = docsOfType.length > 0 ? "replace" : "new";
+        const defaultReplaceId = docsOfType.length === 1 ? String(docsOfType[0].id) : "";
+        return {
+          file: files[i],
+          documentType: r.documentType,
+          confidence: r.confidence,
+          reason: r.reason,
+          uploadMode: defaultMode,
+          replacesDocumentId: defaultReplaceId,
+        };
+      }));
+    } catch {
+      toast.error("KI-Analyse fehlgeschlagen. Bitte Typen manuell setzen.");
+      setRows(files.map((f) => ({
+        file: f,
+        documentType: "other",
+        confidence: "low",
+        reason: "",
+        uploadMode: "new" as const,
+        replacesDocumentId: "",
+      })));
+    } finally {
+      setClassifying(false);
+    }
+  }
+
+  function updateRow(i: number, patch: Partial<typeof rows[0]>) {
+    setRows((prev) => prev.map((r, idx) => idx === i ? { ...r, ...patch } : r));
+  }
+
+  function removeRow(i: number) {
+    setRows((prev) => prev.filter((_, idx) => idx !== i));
+    setFiles((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
+  async function handleUpload() {
+    if (rows.length === 0) return;
+    const filePayloads = await Promise.all(
+      rows.map((row) => new Promise<{ documentType: string; fileName: string; fileBase64: string; mimeType: string; fileSizeBytes: number; replacesDocumentId?: number; addAsNew?: boolean }>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const base64 = (e.target?.result as string).split(",")[1];
+          resolve({
+            documentType: row.documentType,
+            fileName: row.file.name,
+            fileBase64: base64,
+            mimeType: row.file.type,
+            fileSizeBytes: row.file.size,
+            replacesDocumentId: row.uploadMode === "replace" && row.replacesDocumentId ? parseInt(row.replacesDocumentId) : undefined,
+            addAsNew: row.uploadMode === "add" ? true : undefined,
+          });
+        };
+        reader.readAsDataURL(row.file);
+      }))
+    );
+    uploadBatchMutation.mutate({ productId, files: filePayloads as any });
+  }
+
+  const confidenceColor = (c: string) =>
+    c === "high" ? "bg-green-100 text-green-800 border-green-200" :
+    c === "medium" ? "bg-amber-100 text-amber-800 border-amber-200" :
+    "bg-red-100 text-red-800 border-red-200";
+
+  const confidenceLabel = (c: string) =>
+    c === "high" ? t.documents.batchUploadHigh :
+    c === "medium" ? t.documents.batchUploadMedium :
+    t.documents.batchUploadLow;
+
+  return (
+    <>
+      <Button onClick={() => setOpen(true)} variant="outline" size="sm">
+        <Files className="mr-2 h-4 w-4" />
+        {t.documents.batchUploadBtn}
+      </Button>
+
+      <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setFiles([]); setRows([]); } }}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Files className="h-5 w-5" />
+              {t.documents.batchUploadTitle}
+            </DialogTitle>
+          </DialogHeader>
+
+          <p className="text-sm text-muted-foreground">{t.documents.batchUploadDesc}</p>
+
+          {/* Datei-Auswahl */}
+          <div className="flex items-center gap-3">
+            <Input
+              ref={fileRef}
+              type="file"
+              multiple
+              accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp,.xls,.xlsx"
+              onChange={handleFileChange}
+              className="flex-1"
+            />
+            <Button
+              onClick={handleClassify}
+              disabled={files.length === 0 || classifying}
+              variant="outline"
+              size="sm"
+              className="shrink-0"
+            >
+              {classifying ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t.documents.batchUploadAnalyzing}</>
+              ) : (
+                <><Sparkles className="mr-2 h-4 w-4 text-violet-500" />{t.documents.batchUploadAnalyzeBtn}</>
+              )}
+            </Button>
+          </div>
+
+          {/* Datei-Liste vor Klassifizierung */}
+          {files.length > 0 && rows.length === 0 && !classifying && (
+            <div className="rounded-md border bg-muted/30 p-3">
+              <p className="text-xs text-muted-foreground mb-2">{files.length} {files.length === 1 ? "Datei" : "Dateien"} ausgewählt – KI-Analyse starten:</p>
+              <ul className="space-y-1">
+                {files.map((f, i) => (
+                  <li key={i} className="text-xs flex items-center gap-2">
+                    <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    <span className="truncate">{f.name}</span>
+                    <span className="text-muted-foreground shrink-0">({Math.round(f.size / 1024)} KB)</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Klassifizierungs-Ergebnisse */}
+          {rows.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <Sparkles className="h-4 w-4 text-violet-500" />
+                KI-Analyse abgeschlossen – Typen prüfen und anpassen:
+              </div>
+              <div className="space-y-3">
+                {rows.map((row, i) => {
+                  const docsOfType = (existingDocuments ?? []).filter(
+                    (d: any) => d.documentType === row.documentType && !d.isArchived
+                  );
+                  return (
+                    <div key={i} className="rounded-md border bg-card p-3 space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <span className="text-sm font-medium truncate">{row.file.name}</span>
+                          <span className="text-xs text-muted-foreground shrink-0">({Math.round(row.file.size / 1024)} KB)</span>
+                        </div>
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 shrink-0" onClick={() => removeRow(i)}>
+                          <XCircle className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <Label className="text-xs">{t.documents.batchUploadType}</Label>
+                          <Select value={row.documentType} onValueChange={(v) => {
+                            const newDocsOfType = (existingDocuments ?? []).filter((d: any) => d.documentType === v && !d.isArchived);
+                            updateRow(i, {
+                              documentType: v,
+                              uploadMode: newDocsOfType.length > 0 ? "replace" : "new",
+                              replacesDocumentId: newDocsOfType.length === 1 ? String(newDocsOfType[0].id) : "",
+                            });
+                          }}>
+                            <SelectTrigger className="mt-1 h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {DOC_TYPES.map((dt) => (
+                                <SelectItem key={dt} value={dt} className="text-xs">
+                                  {(t.docType as any)[dt]}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="flex flex-col justify-end">
+                          <span className={`inline-flex items-center gap-1 self-start mt-5 rounded-full border px-2 py-0.5 text-xs font-medium ${confidenceColor(row.confidence)}`}>
+                            <Sparkles className="h-3 w-3" />
+                            {confidenceLabel(row.confidence)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {row.reason && (
+                        <p className="text-xs text-muted-foreground italic">„{row.reason}“</p>
+                      )}
+
+                      {/* Upload-Modus wenn Typ bereits vorhanden */}
+                      {docsOfType.length > 0 && (
+                        <div className="rounded border border-amber-200 bg-amber-50 p-2 space-y-2">
+                          <p className="text-xs text-amber-800 font-medium">
+                            {(t.documents.uploadModeDesc as string).replace("{count}", String(docsOfType.length))}
+                          </p>
+                          <div className="flex gap-2">
+                            <Button type="button" size="sm" variant={row.uploadMode === "replace" ? "default" : "outline"}
+                              className="h-7 text-xs"
+                              onClick={() => updateRow(i, { uploadMode: "replace", replacesDocumentId: docsOfType.length === 1 ? String(docsOfType[0].id) : "" })}>
+                              {t.documents.batchUploadModeReplace}
+                            </Button>
+                            <Button type="button" size="sm" variant={row.uploadMode === "add" ? "default" : "outline"}
+                              className="h-7 text-xs"
+                              onClick={() => updateRow(i, { uploadMode: "add", replacesDocumentId: "" })}>
+                              {t.documents.batchUploadModeAdd}
+                            </Button>
+                          </div>
+                          {row.uploadMode === "replace" && docsOfType.length > 1 && (
+                            <Select value={row.replacesDocumentId} onValueChange={(v) => updateRow(i, { replacesDocumentId: v })}>
+                              <SelectTrigger className="h-7 text-xs">
+                                <SelectValue placeholder={t.documents.uploadModeReplaceSelect} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {docsOfType.map((d: any) => (
+                                  <SelectItem key={d.id} value={String(d.id)} className="text-xs">
+                                    {d.fileName} (v{d.version})
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setOpen(false); setFiles([]); setRows([]); }}>
+              {t.action.cancel}
+            </Button>
+            <Button
+              onClick={handleUpload}
+              disabled={rows.length === 0 || uploadBatchMutation.isPending ||
+                rows.some((r) => r.uploadMode === "replace" && !r.replacesDocumentId && (existingDocuments ?? []).filter((d: any) => d.documentType === r.documentType && !d.isArchived).length > 1)}
+            >
+              {uploadBatchMutation.isPending ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t.documents.batchUploadProgress}</>
+              ) : (
+                <><Upload className="mr-2 h-4 w-4" />{t.documents.batchUploadSubmit} ({rows.length})</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
 // ─── Safety Data Cardd ────────────────────────────────────────────────────────
 function SafetyDataCard({ productId, safety, role, t, onSuccess }: any) {
   const [editing, setEditing] = useState(false);

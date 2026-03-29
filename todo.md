@@ -632,3 +632,12 @@
 - [x] Bei "Ersetzen": Auswahl des zu ersetzenden Dokuments (Dropdown mit vorhandenen Docs des Typs)
 - [x] Bei "Neu": normaler Upload ohne Archivierung, Dokument wird parallel gespeichert
 - [x] Mehrere Dokumente desselben Typs (z.B. 2x Test Report) gleichzeitig möglich
+
+## Batch-Upload mit KI-Dokumenttyp-Erkennung
+- [x] Backend: tRPC Mutation documents.classifyBatch – KI analysiert Dateinamen/MIME und gibt Typ-Vorschläge zurück
+- [x] Backend: tRPC Mutation documents.uploadBatch – mehrere Dokumente auf einmal hochladen
+- [x] Frontend: "Mehrere hochladen"-Button im Dokumente-Tab
+- [x] Frontend: Batch-Upload-Dialog – Datei-Auswahl (multi), KI-Analyse mit Ladeindikator
+- [x] Frontend: Vorschau mit KI-Vorschlag, Konfidenz-Badge (Hoch/Mittel/Niedrig) und editierbarem Typ-Dropdown
+- [x] Frontend: Upload-Modus (Ersetzen/Neu) pro Datei wenn Typ bereits vorhanden
+- [x] Frontend: Lade-Spinner während Upload
