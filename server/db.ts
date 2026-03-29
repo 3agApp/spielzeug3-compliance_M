@@ -227,8 +227,15 @@ export async function getAllProducts(filters?: {
 export async function getProductById(id: number) {
   const db = await getDb();
   if (!db) return null;
-  const result = await db.select().from(products).where(eq(products.id, id)).limit(1);
-  return result[0] ?? null;
+  const rows = await db
+    .select({ product: products, supplier: suppliers })
+    .from(products)
+    .leftJoin(suppliers, eq(products.supplierId, suppliers.id))
+    .where(eq(products.id, id))
+    .limit(1);
+  if (!rows[0]) return null;
+  const { product: p, supplier: s } = rows[0];
+  return { ...p, supplierName: s?.name ?? null };
 }
 
 export async function createProduct(data: typeof products.$inferInsert) {
