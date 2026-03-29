@@ -58,7 +58,7 @@ describe("buildRiskPrompt", () => {
 
   it("mentions no documents when list is empty", () => {
     const prompt = buildRiskPrompt(product, [], [], [], [], null);
-    expect(prompt).toContain("Keine Dokumente vorhanden");
+    expect(prompt).toContain("No documents available");
   });
 
   it("lists documents when provided", () => {
@@ -103,6 +103,6 @@ describe("buildRiskPrompt", () => {
 
   it("specifies 1-10 scale in prompt", () => {
     const prompt = buildRiskPrompt(product, [], [], [], [], null);
-    expect(prompt).toContain("1 (sehr niedrig) bis 10 (kritisch)");
+    expect(prompt).toContain("1 (very low) to 10 (critical)");
   });
 });

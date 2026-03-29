@@ -30,7 +30,7 @@ import type { UserContext } from "../../shared/tenantGuard";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface RiskItem {
-  category: string;           // e.g. "Produktsicherheit", "Dokumentation", "Chemikalien"
+  category: string;           // e.g. "Product Safety", "Documentation", "Chemical Risks"
   score: number;              // 1–10
   title: string;              // Short title of the risk
   description: string;        // Detailed explanation why this is a risk
@@ -57,90 +57,92 @@ export function buildRiskPrompt(
 ): string {
   const docList = docs.length > 0
     ? docs.map((d, i) =>
-        `  ${i + 1}. Typ: ${d.documentType}, Status: ${d.reviewStatus}, Datei: ${d.fileName ?? "–"}` +
-        (d.standard ? `, Norm: ${d.standard}` : "") +
-        (d.expiresAt ? `, Ablauf: ${new Date(d.expiresAt).toISOString().slice(0, 10)}` : "")
+        `  ${i + 1}. Type: ${d.documentType}, Status: ${d.reviewStatus}, File: ${d.fileName ?? "–"}` +
+        (d.standard ? `, Standard: ${d.standard}` : "") +
+        (d.expiresAt ? `, Expires: ${new Date(d.expiresAt).toISOString().slice(0, 10)}` : "")
       ).join("\n")
-    : "  (Keine Dokumente vorhanden)";
+    : "  (No documents available)";
 
   const compList = components.length > 0
     ? components.map((c) => {
         const cDocs = componentDocs.filter((d: any) => d.componentId === c.id);
         const cDocStr = cDocs.length > 0
           ? cDocs.map((d: any) => `    - ${d.documentType} (${d.reviewStatus})`).join("\n")
-          : "    (Keine Komponentendokumente)";
-        return `  - ${c.name} (Material: ${c.materialType ?? "unbekannt"}):\n${cDocStr}`;
+          : "    (No component documents)";
+        return `  - ${c.name} (Material: ${c.materialType ?? "unknown"}):\n${cDocStr}`;
       }).join("\n")
-    : "  (Keine Komponenten erfasst)";
+    : "  (No components recorded)";
 
   const missingList = missingReqs.length > 0
     ? missingReqs.map((r: any) => `  - ${r.requirementType}: ${r.description ?? ""}`).join("\n")
-    : "  (Keine offenen Anforderungen)";
+    : "  (No open requirements)";
 
   const aiSummary = latestAiAnalysis?.summary
-    ? `\nLETZTE COMPLIANCE-ANALYSE (Score ${latestAiAnalysis.overallScore}/100):\n  ${latestAiAnalysis.summary}`
+    ? `\nLATEST COMPLIANCE ANALYSIS (Score ${latestAiAnalysis.overallScore}/100):\n  ${latestAiAnalysis.summary}`
     : "";
 
-  return `Du bist ein Risikomanagement-Experte für Produktsicherheit, Spielzeugrichtlinien und Lieferketten-Compliance (EN 71, CE, REACH, RoHS, GPSR etc.).
+  return `You are a risk management expert specialising in product safety, toy safety regulations, and supply chain compliance (EN 71, CE, REACH, RoHS, GPSR, Toy Safety Directive 2009/48/EC).
 
-Deine Aufgabe: Bewerte das folgende Produkt auf alle relevanten Risiken und gib eine strukturierte Risikobewertung zurück.
+CRITICAL LANGUAGE INSTRUCTION: ALL output fields (summary, risk titles, descriptions, mitigations, missingInfo – ALL text strings) MUST be written in English. Do NOT use German, French, or any other language regardless of product name, brand, or any other context.
 
-PRODUKT-INFORMATIONEN:
+Task: Assess the following product for all relevant risks and return a structured risk assessment.
+
+PRODUCT INFORMATION:
   Name: ${product.productName}
-  Marke: ${product.brand ?? "–"}
-  Interne Artikelnummer: ${product.internalArticleNumber ?? "–"}
-  Altersgruppe: ${product.ageGroup ?? "–"}
-  Zielmarkt: ${product.targetMarket ?? "–"}
-  Compliance-Status: ${product.status}
-  Vollständigkeitsgrad: ${product.completenessScore ?? 0}%
-  Lieferant-ID: ${product.supplierId}${aiSummary}
+  Brand: ${product.brand ?? "–"}
+  Internal article number: ${product.internalArticleNumber ?? "–"}
+  Age group: ${product.ageGroup ?? "–"}
+  Target market: ${product.targetMarket ?? "–"}
+  Compliance status: ${product.status}
+  Completeness score: ${product.completenessScore ?? 0}%
+  Supplier ID: ${product.supplierId}${aiSummary}
 
-VORHANDENE DOKUMENTE (${docs.length}):
+AVAILABLE DOCUMENTS (${docs.length}):
 ${docList}
 
-PRODUKTKOMPONENTEN (${components.length}):
+PRODUCT COMPONENTS (${components.length}):
 ${compList}
 
-OFFENE ANFORDERUNGEN / FEHLENDE UNTERLAGEN (${missingReqs.length}):
+OPEN REQUIREMENTS / MISSING DOCUMENTS (${missingReqs.length}):
 ${missingList}
 
-BEWERTUNGSAUFGABE:
-Identifiziere alle relevanten Risiken in folgenden Kategorien (sofern zutreffend):
-1. Produktsicherheit (physische Gefahren, Verletzungsrisiken)
-2. Chemische Risiken (REACH, RoHS, Schadstoffe)
-3. Dokumentationslücken (fehlende/abgelaufene Zertifikate, Prüfberichte)
-4. Regulatorische Risiken (CE, EN 71, GPSR-Konformität)
-5. Altersgruppen-Risiken (Kleinteile, Erstickungsgefahr, Altersfreigabe)
-6. Lieferketten-Risiken (Lieferantenqualität, Herkunft, Rückverfolgbarkeit)
-7. Marktrisiken (Rückrufrisiko, Reputationsrisiko)
-8. Datenlücken (fehlende Produktinformationen, unvollständige Angaben)
+ASSESSMENT TASK:
+Identify all relevant risks in the following categories (where applicable):
+1. Product safety (physical hazards, injury risks)
+2. Chemical risks (REACH, RoHS, hazardous substances)
+3. Documentation gaps (missing/expired certificates, test reports)
+4. Regulatory risks (CE, EN 71, GPSR compliance)
+5. Age group risks (small parts, choking hazard, age labelling)
+6. Supply chain risks (supplier quality, origin, traceability)
+7. Market risks (recall risk, reputational risk)
+8. Data gaps (missing product information, incomplete specifications)
 
-Für jedes identifizierte Risiko:
-- Vergib einen Score von 1 (sehr niedrig) bis 10 (kritisch)
-- Erkläre präzise WARUM dieses Risiko besteht (basierend auf den vorliegenden Daten)
-- Nenne 2-4 konkrete Maßnahmen zur Risikoreduktion
+For each identified risk:
+- Assign a score from 1 (very low) to 10 (critical)
+- Explain precisely WHY this risk exists (based on the available data)
+- Provide 2-4 concrete mitigation measures
 
-Berechne den Gesamt-Risikoscore als gewichteten Durchschnitt (höhere Scores gewichten stärker).
-Klassifiziere: 1-3 = low, 4-6 = medium, 7-8 = high, 9-10 = critical.
+Calculate the overall risk score as a weighted average (higher scores weighted more heavily).
+Classify: 1-3 = low, 4-6 = medium, 7-8 = high, 9-10 = critical.
 
-Antworte AUSSCHLIESSLICH mit validem JSON in folgendem Format:
+Respond ONLY with valid JSON in the following format:
 {
-  "overallRiskScore": <Zahl 1.0-10.0>,
+  "overallRiskScore": <number 1.0-10.0>,
   "riskLevel": "<low|medium|high|critical>",
-  "summary": "<2-3 Sätze Executive Summary auf Deutsch>",
+  "summary": "<2-3 sentence executive summary in English>",
   "risks": [
     {
-      "category": "<Kategoriename>",
+      "category": "<category name in English>",
       "score": <1-10>,
-      "title": "<Kurztitel des Risikos>",
-      "description": "<Detaillierte Begründung warum dieses Risiko besteht>",
-      "mitigations": ["<Maßnahme 1>", "<Maßnahme 2>", ...]
+      "title": "<short risk title in English>",
+      "description": "<detailed explanation in English>",
+      "mitigations": ["<mitigation 1 in English>", "<mitigation 2 in English>", ...]
     }
   ],
-  "missingInfo": ["<Fehlende Info 1>", "<Fehlende Info 2>", ...]
+  "missingInfo": ["<missing info 1 in English>", "<missing info 2 in English>", ...]
 }
 
-Sortiere risks nach score absteigend. Identifiziere mindestens 3, maximal 10 Risiken.`;
+Sort risks by score descending. Identify at least 3, at most 10 risks.`;
 }
 
 // ─── Score → Level helper ─────────────────────────────────────────────────────
@@ -217,7 +219,7 @@ export const riskAssessmentService = {
         const prompt = buildRiskPrompt(product, productDocs, productComponentsList, compDocsList, missingReqs, latestAi ?? null);
         const response = await invokeLLM({
           messages: [
-            { role: "system", content: "Du bist ein Risikomanagement-Experte. Antworte ausschließlich mit validem JSON." },
+            { role: "system", content: "You are a risk management expert. Respond ONLY with valid JSON. ALL text values MUST be in English – never German or any other language." },
             { role: "user", content: prompt },
           ],
           response_format: {
@@ -266,14 +268,12 @@ export const riskAssessmentService = {
   /** Run a new AI risk assessment for a product. */
   async run(user: UserContext & { id: number }, productId: number) {
     requireRole(user.complianceRole, ADMIN_ROLES);
-
     const db = await getDb();
     if (!db) throw Errors.precondition("Database unavailable");
-
     // Load product
     const [product] = await db.select().from(products).where(eq(products.id, productId)).limit(1);
     if (!product) throw Errors.notFound("Product", productId);
-
+    assertSupplierOrInternal(user, product.tenantId ?? 1);
     // Load all related data
     const productDocs = await db.select().from(documents).where(eq(documents.productId, productId));
     const productComponentsList = await db.select().from(productComponents).where(eq(productComponents.productId, productId));
@@ -290,7 +290,6 @@ export const riskAssessmentService = {
       .where(and(eq(aiAnalysisResults.productId, productId), eq(aiAnalysisResults.status, "completed")))
       .orderBy(desc(aiAnalysisResults.createdAt))
       .limit(1);
-
     // Create pending record
     const assessmentId = await createRiskAssessment(db, {
       productId,
@@ -300,7 +299,6 @@ export const riskAssessmentService = {
       status: "running",
       triggeredByUserId: user.id,
     });
-
     try {
       const prompt = buildRiskPrompt(
         product,
@@ -310,12 +308,11 @@ export const riskAssessmentService = {
         missingReqs,
         latestAi ?? null
       );
-
       const response = await invokeLLM({
         messages: [
           {
             role: "system",
-            content: "Du bist ein Risikomanagement-Experte. Antworte ausschließlich mit validem JSON.",
+            content: "You are a risk management expert. Respond ONLY with valid JSON. ALL text values MUST be in English – never German or any other language.",
           },
           { role: "user", content: prompt },
         ],
@@ -353,14 +350,10 @@ export const riskAssessmentService = {
           },
         },
       });
-
       const content = response.choices?.[0]?.message?.content ?? "{}";
       const parsed: RiskAssessmentResult = typeof content === "string" ? JSON.parse(content) : content;
-
-      // Clamp score to 1-10
       const score = Math.max(1, Math.min(10, Number(parsed.overallRiskScore) || 5));
       const level = scoreToLevel(score);
-
       await updateRiskAssessment(db, assessmentId, {
         status: "completed",
         overallRiskScore: score.toFixed(1),
@@ -372,21 +365,9 @@ export const riskAssessmentService = {
         tokensUsed: response.usage?.total_tokens ?? 0,
         completedAt: new Date(),
       });
-
-      return {
-        success: true,
-        assessmentId,
-        overallRiskScore: score,
-        riskLevel: level,
-        summary: parsed.summary,
-        risks: parsed.risks,
-        missingInfo: parsed.missingInfo,
-      };
+      return assessmentId;
     } catch (err: any) {
-      await updateRiskAssessment(db, assessmentId, {
-        status: "failed",
-        errorMessage: err.message ?? "Unknown error",
-      });
+      await updateRiskAssessment(db, assessmentId, { status: "failed", errorMessage: err?.message ?? "Unknown" });
       throw err;
     }
   },
@@ -395,34 +376,28 @@ export const riskAssessmentService = {
   async getLatest(user: UserContext, productId: number) {
     const db = await getDb();
     if (!db) throw Errors.precondition("Database unavailable");
-
     const [product] = await db.select().from(products).where(eq(products.id, productId)).limit(1);
-    if (!product) return null;
-    assertSupplierOrInternal(user, product.supplierId);
-
-    const [latest] = await db.select().from(productRiskAssessments)
+    if (!product) throw Errors.notFound("Product", productId);
+    assertSupplierOrInternal(user, product.tenantId ?? 1);
+    const [assessment] = await db.select().from(productRiskAssessments)
       .where(and(
         eq(productRiskAssessments.productId, productId),
         eq(productRiskAssessments.status, "completed")
       ))
       .orderBy(desc(productRiskAssessments.createdAt))
       .limit(1);
-
-    return latest ?? null;
+    return assessment ?? null;
   },
 
-  /** Get the full assessment history for a product. */
+  /** Get all risk assessments for a product (history). */
   async getHistory(user: UserContext, productId: number) {
     const db = await getDb();
     if (!db) throw Errors.precondition("Database unavailable");
-
     const [product] = await db.select().from(products).where(eq(products.id, productId)).limit(1);
     if (!product) throw Errors.notFound("Product", productId);
-    assertSupplierOrInternal(user, product.supplierId);
-
+    assertSupplierOrInternal(user, product.tenantId ?? 1);
     return db.select().from(productRiskAssessments)
       .where(eq(productRiskAssessments.productId, productId))
-      .orderBy(desc(productRiskAssessments.createdAt))
-      .limit(20);
+      .orderBy(desc(productRiskAssessments.createdAt));
   },
 };

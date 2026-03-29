@@ -180,6 +180,8 @@ ${legalReqs}`;
 
   return `You are a senior toy industry compliance expert specialising in EU and Swiss toy safety regulations.
 
+CRITICAL LANGUAGE INSTRUCTION: ALL output fields (positives, issues, missingElements, emailTemplate subject and body, all text strings) MUST be written in English. Do NOT use German, French, or any other language regardless of the product name or brand.
+
 PRODUCT INFORMATION:
 - Product name: ${product.productName}
 - Brand: ${product.brand ?? "–"}
@@ -284,6 +286,9 @@ export function buildRiskAssessmentPrompt(
   }
 
   return `You are a senior toy industry compliance expert specialising in EU and Swiss toy safety regulations (Toy Safety Directive 2009/48/EC, GPSR 2023/988, REACH, EN 71 series, Swiss Toy Safety Ordinance SR 817.023.11).
+
+CRITICAL LANGUAGE INSTRUCTION: ALL output fields (summary, findings messages, details, remediations, recommendations, missingDocuments, score reasons, ALL text strings) MUST be written in English. Do NOT use German, French, or any other language regardless of the product name, brand, or any other context.
+
 Perform an overall compliance risk assessment for the following product.
 PRODUCT: ${product.productName}
 BRAND: ${product.brand ?? "–"}
@@ -435,7 +440,7 @@ export const aiAnalysisService = {
             {
               role: "system",
               content:
-                "You are a senior toy industry compliance expert. Respond ONLY with valid JSON, no markdown, no extra text. The internal review status (pending/approved/rejected) is a workflow status only – do NOT penalise documents for having 'pending' status.",
+                "You are a senior toy industry compliance expert. Respond ONLY with valid JSON, no markdown, no extra text. ALL text values in your JSON response MUST be in English – never German or any other language. The internal review status (pending/approved/rejected) is a workflow status only – do NOT penalise documents for having 'pending' status.",
             },
             { role: "user", content: docPrompt },
           ],
@@ -509,7 +514,7 @@ export const aiAnalysisService = {
           {
             role: "system",
             content:
-              "You are a senior toy industry compliance expert. Respond ONLY with valid JSON, no markdown, no extra text.",
+              "You are a senior toy industry compliance expert. Respond ONLY with valid JSON, no markdown, no extra text. ALL text values in your JSON response MUST be in English – never German or any other language.",
           },
           { role: "user", content: riskPrompt },
         ],

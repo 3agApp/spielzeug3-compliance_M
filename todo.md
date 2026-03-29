@@ -825,3 +825,10 @@
 - [x] Frontend: Farbkodierte Erklärungs-Box (grün/orange/rot je nach Score)
 - [x] Frontend: Besonders Content Plausibility: Klick auf Info zeigt was nicht plausibel ist
 - [x] Tests für erweiterte Score-Felder (4 neue Tests, 255 Tests total, alle grün)
+
+## Bugfix: KI-Analyse immer auf Englisch
+- [x] Document Analysis Prompt: CRITICAL LANGUAGE INSTRUCTION hinzugefügt (alle Felder auf Englisch)
+- [x] Risk Assessment Prompt (aiAnalysisService.ts): CRITICAL LANGUAGE INSTRUCTION hinzugefügt
+- [x] riskAssessmentService.ts buildRiskPrompt: vollständig auf Englisch umgeschrieben (Prompt-Text, Kategorienamen, Beispiele)
+- [x] System-Prompts in allen 4 LLM-Aufrufen: "ALL text values MUST be in English" hinzugefügt
+- [x] Tests: deutsche Prompt-Assertions auf englische aktualisiert (255 Tests, alle grün)
