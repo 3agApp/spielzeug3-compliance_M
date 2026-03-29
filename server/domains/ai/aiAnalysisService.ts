@@ -232,12 +232,39 @@ export const aiAnalysisService = {
       const content = typeof rawContent === "string" ? rawContent : JSON.stringify(rawContent);
       const parsed = JSON.parse(content);
 
+      // Derive sub-scores from findings if not explicitly provided
+      const findings = parsed.findings ?? [];
+      const positiveCount = findings.filter((f: any) => f.type === "positive").length;
+      const warningCount = findings.filter((f: any) => f.type === "warning").length;
+      const criticalCount = findings.filter((f: any) => f.type === "critical").length;
+      const totalFindings = findings.length || 1;
+
+      // Document completeness: based on missing documents
+      const missingDocs = parsed.missingDocuments ?? [];
+      const docScore = Math.max(0, 100 - missingDocs.length * 15);
+
+      // Content plausibility: based on positive vs warning/critical ratio
+      const contentScore = Math.round(((positiveCount + 1) / (totalFindings + 1)) * 100);
+
+      // Formal correctness: deduct for critical findings
+      const formalScore = Math.max(0, 100 - criticalCount * 25);
+
+      // Consistency: deduct for warnings
+      const consistencyScore = Math.max(0, 100 - warningCount * 15);
+
       await updateAiAnalysis(analysisId, {
         status: "completed",
-        analysisResult: JSON.stringify(parsed),
-        completedAt: new Date(),
         overallScore: String(parsed.overallScore ?? 0),
-      } as any);
+        documentCompletenessScore: String(docScore),
+        contentPlausibilityScore: String(contentScore),
+        formalCorrectnessScore: String(formalScore),
+        consistencyScore: String(consistencyScore),
+        summary: parsed.summary ?? null,
+        findings: parsed.findings ?? [],
+        recommendations: parsed.recommendations ?? [],
+        modelUsed: "built-in",
+        completedAt: new Date(),
+      });
 
       await createAuditLog({
         entityType: "product",

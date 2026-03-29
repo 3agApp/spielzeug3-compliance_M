@@ -652,3 +652,10 @@
 - [x] Sicherheitsbilder-Upload: Dedizierter Bereich im Safety Data Tab mit Upload-Button
 - [x] Sicherheitsbilder: Galerie mit Lightbox-Vorschau und Löschen-Button
 - [x] Score-Neuberechnung nach Safety-Data-Speichern (safetyService.upsert)
+
+## AI Plausibility Check Fix (Re-analyse)
+- [x] Bug: updateAiAnalysis schrieb "analysisResult" (nicht existentes Feld) statt korrekte Spalten
+- [x] Fix: alle Sub-Scores (documentCompletenessScore, contentPlausibilityScore, formalCorrectnessScore, consistencyScore) werden jetzt korrekt gespeichert
+- [x] Fix: summary, findings, recommendations werden in die richtigen DB-Spalten geschrieben
+- [x] Fix: modelUsed="built-in" gesetzt, completedAt korrekt gesetzt
+- [x] Retroaktiv: bestehende "pending"-Einträge auf "failed" gesetzt
