@@ -847,3 +847,13 @@
 - [x] Frontend: "🌐 Übersetzt aus dem Englischen" Badge nach erfolgreicher Übersetzung
 - [x] Frontend: Fallback auf englische Originaldaten wenn Übersetzung nicht verfügbar
 - [x] Tests für translationService und translate-Router (8 neue Tests, 263 Tests total, alle grün)
+
+## Findings: Direktzitate und E-Mail-Vorlage pro Finding
+- [x] KI-Prompt: regulatoryQuotes-Array pro Finding (article, verbatim) hinzugefügt
+- [x] KI-Prompt: JSON-Schema um regulatoryQuotes erweitert (strict: true)
+- [x] Frontend: Zitate-Sektion in FindingCard (blockquote-Stil mit Anführungszeichen-Icon)
+- [x] Frontend: "Request from Manufacturer"-Button pro Finding (Mail-Icon)
+- [x] Frontend: E-Mail-Vorlagen-Dialog mit vorausgefülltem Text (Finding + Normen + Zitate + Lösungsvorschlag)
+- [x] Frontend: Copy-to-clipboard und "Send to Manufacturer"-Button (tRPC email.sendManufacturerEmail)
+- [x] productName/articleNumber als Props an FindingCard weitergereicht
+- [x] Tests für regulatoryQuotes-Schema (3 neue Tests, 266 Tests total, alle grün)

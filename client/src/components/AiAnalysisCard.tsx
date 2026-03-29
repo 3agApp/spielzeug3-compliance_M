@@ -386,9 +386,22 @@ function DocumentAnalysisSection({ documentAnalysis }: { documentAnalysis: any[]
 
 // ─── Risk Assessment Section ──────────────────────────────────────────────────
 
-function FindingCard({ f, index }: { f: any; index: number }) {
+function FindingCard({ f, index, productName, productArticleNumber }: { f: any; index: number; productName?: string; productArticleNumber?: string }) {
   const [open, setOpen] = useState(false);
-  const hasDetail = !!(f.detail || (f.affectedRegulations?.length > 0) || f.remediation);
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [emailCopied, setEmailCopied] = useState(false);
+  const hasDetail = !!(f.detail || (f.affectedRegulations?.length > 0) || f.remediation || f.regulatoryQuotes?.length > 0);
+
+  // Build a per-finding email template
+  const buildFindingEmail = () => {
+    const today = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
+    const regList = (f.affectedRegulations as string[] ?? []).map((r: string) => `  – ${r}`).join("\n");
+    const quotesSection = (f.regulatoryQuotes as any[] ?? []).length > 0
+      ? `\nLegal basis:\n${(f.regulatoryQuotes as any[]).map((q: any) => `  ${q.source} ${q.article}:\n  "${q.quote}"`).join("\n\n")}`
+      : "";
+    const remediationSection = f.remediation ? `\nRequested action:\n${f.remediation}` : "";
+    return `Date: ${today}\n\nDear Sir or Madam,\n\nWe are writing regarding the compliance documentation for the following product:\n\nProduct: ${productName ?? "–"}\nArticle Number: ${productArticleNumber ?? "–"}\n\nDuring our compliance review, we identified the following issue that requires your attention:\n\nFinding: ${f.message}\n\n${f.detail ?? ""}\n\nAffected regulations:\n${regList}${quotesSection}${remediationSection}\n\nWe kindly request that you provide updated or corrected documentation addressing the above point at your earliest convenience.\n\nKind regards,\n\n[Your Name]\n[Your Position]\nspielezeug3 AG\n[Contact Details]`;
+  };
 
   return (
     <div
@@ -466,13 +479,93 @@ function FindingCard({ f, index }: { f: any; index: number }) {
               }`}>{f.remediation}</p>
             </div>
           )}
+
+          {/* Regulatory Quotes */}
+          {(f.regulatoryQuotes as any[] ?? []).length > 0 && (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Legal Basis</p>
+              <div className="space-y-2">
+                {(f.regulatoryQuotes as any[]).map((q: any, qi: number) => (
+                  <blockquote key={qi} className="border-l-2 border-amber-400 pl-3 py-1 bg-amber-50/50 dark:bg-amber-950/20 rounded-r-md">
+                    <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-0.5">
+                      {q.source} – {q.article}
+                    </p>
+                    <p className="text-xs text-muted-foreground italic leading-relaxed">&ldquo;{q.quote}&rdquo;</p>
+                  </blockquote>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Per-finding email request button (only for non-positive findings) */}
+          {f.type !== "positive" && (
+            <div className="pt-1">
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 text-xs h-7"
+                onClick={() => setEmailOpen(true)}
+              >
+                <Mail className="h-3.5 w-3.5" />
+                Request from Manufacturer
+              </Button>
+            </div>
+          )}
         </div>
       )}
+
+      {/* Per-finding email dialog */}
+      <Dialog open={emailOpen} onOpenChange={setEmailOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <Mail className="h-4 w-4" />
+              Email Template – {f.message}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground">Pre-filled email template for requesting corrected documentation from the manufacturer. Edit as needed before sending.</p>
+            <Textarea
+              className="font-mono text-xs min-h-[340px] resize-y"
+              value={buildFindingEmail()}
+              readOnly
+            />
+            <div className="flex gap-2 justify-end">
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5"
+                onClick={() => {
+                  navigator.clipboard.writeText(buildFindingEmail());
+                  setEmailCopied(true);
+                  setTimeout(() => setEmailCopied(false), 2000);
+                  toast.success("Email template copied to clipboard");
+                }}
+              >
+                <Copy className="h-3.5 w-3.5" />
+                {emailCopied ? "Copied!" : "Copy"}
+              </Button>
+              <Button
+                size="sm"
+                className="gap-1.5"
+                onClick={() => {
+                  const body = encodeURIComponent(buildFindingEmail());
+                  const subject = encodeURIComponent(`Compliance Documentation Request – ${productName ?? "Product"}: ${f.message}`);
+                  window.open(`mailto:?subject=${subject}&body=${body}`);
+                }}
+              >
+                <Mail className="h-3.5 w-3.5" />
+                Open in Email Client
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-function RiskAssessmentSection({ analysis }: { analysis: any }) {
+function RiskAssessmentSection({ analysis, productName, productArticleNumber }: { analysis: any; productName?: string; productArticleNumber?: string }) {
   const { lang } = useLang();
   const needsTranslation = lang !== "en" && !!analysis?.id;
 
@@ -564,7 +657,7 @@ function RiskAssessmentSection({ analysis }: { analysis: any }) {
             </div>
             <div className="space-y-2">
               {findings.map((f: any, i: number) => (
-                <FindingCard key={i} f={f} index={i} />
+                <FindingCard key={i} f={f} index={i} productName={productName} productArticleNumber={productArticleNumber} />
               ))}
             </div>
           </div>
@@ -604,9 +697,11 @@ interface AiAnalysisCardProps {
   canTrigger?: boolean;
   supplierEmail?: string;
   supplierName?: string;
+  productName?: string;
+  productArticleNumber?: string;
 }
 
-export function AiAnalysisCard({ productId, canTrigger = false, supplierEmail, supplierName }: AiAnalysisCardProps) {
+export function AiAnalysisCard({ productId, canTrigger = false, supplierEmail, supplierName, productName, productArticleNumber }: AiAnalysisCardProps) {
   const { lang } = useLang();
   const [showHistory, setShowHistory] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -821,7 +916,7 @@ export function AiAnalysisCard({ productId, canTrigger = false, supplierEmail, s
             </TabsContent>
 
             <TabsContent value="risk" className="mt-0">
-              <RiskAssessmentSection analysis={analysis} />
+              <RiskAssessmentSection analysis={analysis} productName={productName} productArticleNumber={productArticleNumber} />
             </TabsContent>
           </Tabs>
         </CardContent>

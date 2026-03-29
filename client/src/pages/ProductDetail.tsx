@@ -770,6 +770,8 @@ export default function ProductDetail() {
             canTrigger={["administrator", "compliance_manager", "internal_employee"].includes(role)}
             supplierEmail={product?.supplierEmail ?? undefined}
             supplierName={product?.supplierName ?? undefined}
+            productName={product?.productName ?? undefined}
+            productArticleNumber={product?.internalArticleNumber ?? product?.supplierArticleNumber ?? undefined}
           />
         </TabsContent>
 

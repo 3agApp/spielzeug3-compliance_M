@@ -329,12 +329,21 @@ Return ONLY valid JSON matching this exact schema – no extra text:
       "message": "<short 1-sentence headline of the finding>",
       "detail": "<2-4 sentences explaining WHY this is a finding, what the specific gap or issue is, and what the legal/regulatory consequence could be>",
       "affectedRegulations": ["<e.g. EN 71-1:2014, Toy Safety Directive 2009/48/EC Art. 11>"],
-      "remediation": "<concrete actionable step(s) to resolve this finding, e.g. which document to obtain, which information to add, which standard to reference>"
+      "remediation": "<concrete actionable step(s) to resolve this finding, e.g. which document to obtain, which information to add, which standard to reference>",
+      "regulatoryQuotes": [
+        {
+          "source": "<e.g. Toy Safety Directive 2009/48/EC>",
+          "article": "<e.g. Article 11(1)>",
+          "quote": "<verbatim or near-verbatim excerpt from the directive/standard that directly supports this finding, max 2 sentences. For positive findings, quote the requirement that is being met.>"
+        }
+      ]
     }
   ],
   "recommendations": ["<string>"],
   "missingDocuments": ["<string>"]
-}`;
+}
+
+For each finding, include 1-2 regulatoryQuotes with the most relevant verbatim text from the Toy Safety Directive 2009/48/EC, EN 71 series, REACH, GPSR 2023/988, or Swiss SR 817.023.11 that directly supports the finding. This makes the legal basis immediately clear to manufacturers.`;
 }
 
 // Legacy alias for backward compatibility with tests
@@ -547,8 +556,21 @@ export const aiAnalysisService = {
                       detail: { type: "string" },
                       affectedRegulations: { type: "array", items: { type: "string" } },
                       remediation: { type: "string" },
+                      regulatoryQuotes: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            source: { type: "string" },
+                            article: { type: "string" },
+                            quote: { type: "string" },
+                          },
+                          required: ["source", "article", "quote"],
+                          additionalProperties: false,
+                        },
+                      },
                     },
-                    required: ["type", "message", "detail", "affectedRegulations", "remediation"],
+                    required: ["type", "message", "detail", "affectedRegulations", "remediation", "regulatoryQuotes"],
                     additionalProperties: false,
                   },
                 },

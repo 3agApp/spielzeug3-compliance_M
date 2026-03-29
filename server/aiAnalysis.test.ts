@@ -224,6 +224,29 @@ describe("buildRiskAssessmentPrompt – extended finding fields", () => {
   });
 });
 
+describe("buildRiskAssessmentPrompt – regulatory quotes and email template", () => {
+  it("prompt includes regulatoryQuotes field in findings schema", async () => {
+    const { buildRiskAssessmentPrompt } = await import("./domains/ai/aiAnalysisService");
+    const product = { productName: "Test Toy", brand: "TestBrand", ageGroup: "3+", targetMarket: "EU", status: "pending" };
+    const prompt = buildRiskAssessmentPrompt(product as any, [], null);
+    expect(prompt).toContain("regulatoryQuotes");
+  });
+
+  it("prompt includes verbatim quote instruction", async () => {
+    const { buildRiskAssessmentPrompt } = await import("./domains/ai/aiAnalysisService");
+    const product = { productName: "Test Toy", brand: "TestBrand", ageGroup: "3+", targetMarket: "EU", status: "pending" };
+    const prompt = buildRiskAssessmentPrompt(product as any, [], null);
+    expect(prompt).toContain("verbatim");
+  });
+
+  it("prompt includes article field for regulatory references", async () => {
+    const { buildRiskAssessmentPrompt } = await import("./domains/ai/aiAnalysisService");
+    const product = { productName: "Test Toy", brand: "TestBrand", ageGroup: "3+", targetMarket: "EU", status: "pending" };
+    const prompt = buildRiskAssessmentPrompt(product as any, [], null);
+    expect(prompt).toContain("article");
+  });
+});
+
 describe("aiAnalysis.getLatest", () => {
   it("returns null when no analysis exists", async () => {
     const { getLatestAiAnalysisByProduct } = await import("./db");
