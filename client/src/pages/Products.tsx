@@ -9,6 +9,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -38,6 +39,7 @@ import {
   Search,
   ShieldAlert,
   Sparkles,
+  Trash2,
   XCircle,
 } from "lucide-react";
 import { useState } from "react";
@@ -213,6 +215,16 @@ export default function Products() {
 
   const utils = trpc.useUtils();
   const analyzeProductMutation = trpc.aiAnalysis.analyzeProduct.useMutation();
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+  const deleteBulkMutation = trpc.products.deleteBulk.useMutation({
+    onSuccess: (res) => {
+      toast.success(lang === "de" ? `${res.deleted} Produkt${res.deleted !== 1 ? "e" : ""} gelöscht.` : `${res.deleted} product${res.deleted !== 1 ? "s" : ""} deleted.`);
+      setSelected(new Set());
+      utils.products.list.invalidate();
+    },
+    onError: (e) => toast.error(translateError(e.message, t)),
+  });
+  const canDelete = ["administrator", "compliance_manager"].includes(role);
 
   const products = productsQuery.data ?? [];
 
@@ -389,6 +401,19 @@ export default function Products() {
                 ? (lang === "de" ? "Exportiere…" : "Exporting...")
                 : (lang === "de" ? `Etiketten exportieren (${selected.size})` : `Export labels (${selected.size})`)}
             </Button>
+
+            {/* Bulk delete */}
+            {canDelete && (
+              <Button
+                variant="outline"
+                onClick={() => setShowBulkDeleteDialog(true)}
+                disabled={deleteBulkMutation.isPending}
+                className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
+              >
+                <Trash2 className="h-4 w-4" />
+                {lang === "de" ? `Löschen (${selected.size})` : `Delete (${selected.size})`}
+              </Button>
+            )}
           </div>
         )}
       </div>
@@ -609,6 +634,38 @@ export default function Products() {
         progress={progress}
         onClose={handleCloseDialog}
       />
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <Dialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="h-5 w-5" />
+              {lang === "de" ? "Produkte löschen" : "Delete Products"}
+            </DialogTitle>
+            <DialogDescription>
+              {lang === "de"
+                ? `${selected.size} Produkt${selected.size !== 1 ? "e" : ""} und alle zugehörigen Daten werden unwiderruflich gelöscht.`
+                : `${selected.size} product${selected.size !== 1 ? "s" : ""} and all associated data will be permanently deleted.`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBulkDeleteDialog(false)}>
+              {lang === "de" ? "Abbrechen" : "Cancel"}
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={deleteBulkMutation.isPending}
+              onClick={() => deleteBulkMutation.mutate({ productIds: Array.from(selected) })}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              {deleteBulkMutation.isPending
+                ? (lang === "de" ? "Löschen..." : "Deleting...")
+                : (lang === "de" ? `${selected.size} endgültig löschen` : `Delete ${selected.size} permanently`)}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

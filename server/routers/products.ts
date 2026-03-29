@@ -12,6 +12,7 @@
  */
 
 import { TRPCError } from "@trpc/server";
+import { sql } from "drizzle-orm";
 import { z } from "zod";
 import {
   createMissingRequirement,
@@ -380,6 +381,56 @@ export const productsRouter = router({
         note: input.note,
       });
       return { success: true };
+    }),
+
+  // ─── Delete (single + bulk) ───────────────────────────────────────────────
+
+  delete: protectedProcedure
+    .input(z.object({ productId: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const role = ctx.user.complianceRole ?? "internal_employee";
+      if (!["administrator", "compliance_manager"].includes(role)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Nur Administratoren und Compliance Manager können Produkte löschen." });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const product = await getProductById(input.productId);
+      if (!product) throw new TRPCError({ code: "NOT_FOUND" });
+      const tables = [
+        "product_images", "product_risk_assessments", "ai_analyses",
+        "product_comments", "product_documents", "product_components",
+        "product_missing_requirements", "approval_history", "audit_logs",
+        "safety_data", "seal_assets",
+      ];
+      for (const table of tables) {
+        await db.execute(sql.raw(`DELETE FROM ${table} WHERE product_id = ${input.productId}`));
+      }
+      await db.execute(sql.raw(`DELETE FROM products WHERE id = ${input.productId}`));
+      return { success: true };
+    }),
+
+  deleteBulk: protectedProcedure
+    .input(z.object({ productIds: z.array(z.number().int().positive()).min(1).max(100) }))
+    .mutation(async ({ ctx, input }) => {
+      const role = ctx.user.complianceRole ?? "internal_employee";
+      if (!["administrator", "compliance_manager"].includes(role)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Nur Administratoren und Compliance Manager können Produkte löschen." });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const tables = [
+        "product_images", "product_risk_assessments", "ai_analyses",
+        "product_comments", "product_documents", "product_components",
+        "product_missing_requirements", "approval_history", "audit_logs",
+        "safety_data", "seal_assets",
+      ];
+      for (const productId of input.productIds) {
+        for (const table of tables) {
+          await db.execute(sql.raw(`DELETE FROM ${table} WHERE product_id = ${productId}`));
+        }
+        await db.execute(sql.raw(`DELETE FROM products WHERE id = ${productId}`));
+      }
+      return { success: true, deleted: input.productIds.length };
     }),
 
   // ─── Supplier Confirmation (delegated to productService) ──────────────────

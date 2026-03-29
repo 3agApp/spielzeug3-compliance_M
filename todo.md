@@ -597,3 +597,11 @@
 - [x] Backend: generateRiskReportPdf() in riskReportPdf.ts (PDFKit, Deckblatt, Score-Gauge, Risiko-Karten, Maßnahmen, fehlende Infos)
 - [x] Backend: GET /api/reports/risk-assessment/:productId in pdfRoutes.ts
 - [x] Frontend: Download-Button im RiskAssessmentTab (nur bei vorhandener Bewertung)
+
+## Tab-Leiste umbrechen + Produkt löschen
+- [x] Tab-Leiste auf Detailseite: flex-wrap statt overflow-x-scroll (zwei Zeilen)
+- [x] Backend: deleteProduct (einzeln, nur Admin/Compliance Manager)
+- [x] Backend: deleteProducts (Bulk, Array von IDs)
+- [x] Frontend: Löschen-Button im Header der Produktdetailseite (mit Bestätigungs-Dialog)
+- [x] Frontend: Mehrfachauswahl-Checkboxen in Produktliste + Bulk-Löschen-Button
+- [x] Tests: 219 Tests grün, 0 TypeScript-Fehler

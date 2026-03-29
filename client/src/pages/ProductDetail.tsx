@@ -112,6 +112,16 @@ export default function ProductDetail() {
     onError: (e) => toast.error(translateError(e.message, t)),
   });
 
+  // Delete product state
+  const [showDeleteProductDialog, setShowDeleteProductDialog] = useState(false);
+  const deleteProductMutation = trpc.products.delete.useMutation({
+    onSuccess: () => {
+      toast.success(lang === "de" ? "Produkt wurde gelöscht." : "Product deleted.");
+      setLocation("/products");
+    },
+    onError: (e) => toast.error(translateError(e.message, t)),
+  });
+
   // Delete document state
   const [deleteDocId, setDeleteDocId] = useState<number | null>(null);
   const [deleteDocName, setDeleteDocName] = useState<string>("");
@@ -248,6 +258,17 @@ export default function ProductDetail() {
             </div>
           </div>
           <div className="flex flex-col items-end gap-2">
+            {isInternalRole && ["administrator", "compliance_manager"].includes(role) && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
+                onClick={() => setShowDeleteProductDialog(true)}
+              >
+                <Trash2 className="h-4 w-4" />
+                {lang === "de" ? "Löschen" : "Delete"}
+              </Button>
+            )}
             {canSubmit && (
               <>
                 {submitBlocked && (
@@ -346,8 +367,8 @@ export default function ProductDetail() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="components" className="gap-2">
+        <TabsList className="h-auto flex-wrap gap-y-1 w-full justify-start">
+          <TabsTrigger value="components" className="gap-2 flex-none">
             <Package className="h-4 w-4" />
             {t.components.title}
           </TabsTrigger>
@@ -663,11 +684,44 @@ export default function ProductDetail() {
             />
           </TabsContent>
         )}
-      </Tabs>
+       </Tabs>
+
+      {/* Delete Product Confirmation Dialog */}
+      <Dialog open={showDeleteProductDialog} onOpenChange={setShowDeleteProductDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="h-5 w-5" />
+              {lang === "de" ? "Produkt löschen" : "Delete Product"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-3 text-sm text-muted-foreground">
+            <p className="font-medium text-foreground mb-1">{product?.productName}</p>
+            <p>{lang === "de"
+              ? "Dieses Produkt und alle zugehörigen Daten (Dokumente, Komponenten, Analysen, Siegel) werden unwiderruflich gelöscht."
+              : "This product and all associated data (documents, components, analyses, seals) will be permanently deleted."}
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteProductDialog(false)}>
+              {lang === "de" ? "Abbrechen" : "Cancel"}
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={deleteProductMutation.isPending}
+              onClick={() => deleteProductMutation.mutate({ productId })}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              {deleteProductMutation.isPending
+                ? (lang === "de" ? "Löschen..." : "Deleting...")
+                : (lang === "de" ? "Endgültig löschen" : "Delete permanently")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
-
 // ─── Signatures Tab ─────────────────────────────────────────────────────────
 function SignaturesTab({
   productId,
@@ -1711,12 +1765,11 @@ function UploadDocumentCard({ productId, role, isOperator, t, onSuccess }: any) 
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+       </Dialog>
     </>
   );
 }
-
-// ─── Safety Data Card ────────────────────────────────────────────────────────
+// ─── Safety Data Cardd ────────────────────────────────────────────────────────
 function SafetyDataCard({ productId, safety, role, t, onSuccess }: any) {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
