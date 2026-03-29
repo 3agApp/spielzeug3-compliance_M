@@ -8,6 +8,9 @@ import * as db from "./db";
 
 // Mock DB helpers
 vi.mock("./db", () => ({
+  getEmailLogById: vi.fn(),
+  createEmailLog: vi.fn().mockResolvedValue(undefined),
+  getEmailLogsByProduct: vi.fn().mockResolvedValue([]),
   getSystemSetting: vi.fn(),
   upsertSystemSetting: vi.fn().mockResolvedValue(undefined),
 }));

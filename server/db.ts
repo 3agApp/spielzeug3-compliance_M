@@ -880,3 +880,10 @@ export async function getEmailLogsByProduct(productId: number) {
     .where(eq(emailLogs.productId, productId))
     .orderBy(desc(emailLogs.sentAt));
 }
+
+export async function getEmailLogById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(emailLogs).where(eq(emailLogs.id, id)).limit(1);
+  return rows[0] ?? null;
+}

@@ -718,3 +718,16 @@
 - [x] Frontend: "Email Log" Tab in Produktdetailseite (nur für interne Rollen)
 - [x] Frontend: Tabelle mit Zeitstempel, Empfänger, Betreff, Status-Badge, Body-Vorschau (Dialog)
 - [x] productId in sendManufacturerEmail-Mutation übergeben
+
+## Resend-Funktion für fehlgeschlagene E-Mails
+- [ ] DB: updateEmailLogStatus Hilfsfunktion (status + errorMessage aktualisieren)
+- [ ] Backend: emailLogs.resend Mutation (lädt Log-Eintrag, sendet erneut, erstellt neuen Log-Eintrag)
+- [ ] Frontend: Resend-Button in EmailLogRow (nur bei status="failed")
+- [ ] Frontend: Optimistisches Update + Toast-Meldung bei Erfolg/Fehler
+
+## Resend-Funktion – Status
+- [x] DB: getEmailLogById Hilfsfunktion
+- [x] Backend: emailLogs.resend Mutation (lädt Log-Eintrag, sendet erneut via emailService, neuer Log-Eintrag)
+- [x] Frontend: Resend-Button in EmailLogRow (amber für failed, ghost für sent)
+- [x] Frontend: Toast-Meldung bei Erfolg/Fehler, automatisches Refetch der Liste
+- [x] 3 neue Tests für Resend-Szenario (231 Tests total, alle grün)

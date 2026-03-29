@@ -24,10 +24,12 @@ import {
   Eye,
   Mail,
   RefreshCw,
+  RotateCcw,
   User,
   XCircle,
 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -44,10 +46,29 @@ interface EmailLogEntry {
 
 // ─── Single log row ───────────────────────────────────────────────────────────
 
-function EmailLogRow({ entry }: { entry: EmailLogEntry }) {
+function EmailLogRow({ entry, onResent }: { entry: EmailLogEntry; onResent: () => void }) {
   const [expanded, setExpanded] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const { lang } = useLang();
+  const utils = trpc.useUtils();
+
+  const resendMutation = trpc.emailLogs.resend.useMutation({
+    onSuccess: () => {
+      toast.success(
+        lang === "de"
+          ? "E-Mail wurde erneut gesendet."
+          : "Email resent successfully."
+      );
+      onResent();
+    },
+    onError: (err) => {
+      toast.error(
+        lang === "de"
+          ? `Erneutes Senden fehlgeschlagen: ${err.message}`
+          : `Resend failed: ${err.message}`
+      );
+    },
+  });
 
   const sentDate = new Date(entry.sentAt);
 
@@ -110,7 +131,7 @@ function EmailLogRow({ entry }: { entry: EmailLogEntry }) {
         )}
 
         {/* Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {entry.htmlBody && (
             <Button
               variant="ghost"
@@ -122,6 +143,24 @@ function EmailLogRow({ entry }: { entry: EmailLogEntry }) {
               {lang === "de" ? "E-Mail anzeigen" : "View Email"}
             </Button>
           )}
+          {/* Resend button – shown for failed emails, but also available for any entry */}
+          <Button
+            variant={entry.status === "failed" ? "outline" : "ghost"}
+            size="sm"
+            className={`h-7 text-xs gap-1 ${
+              entry.status === "failed"
+                ? "border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100"
+                : "text-muted-foreground"
+            }`}
+            onClick={() => resendMutation.mutate({ logId: entry.id })}
+            disabled={resendMutation.isPending}
+            title={lang === "de" ? "Erneut senden" : "Resend email"}
+          >
+            {resendMutation.isPending
+              ? <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+              : <RotateCcw className="h-3.5 w-3.5" />}
+            {lang === "de" ? "Erneut senden" : "Resend"}
+          </Button>
           <Button
             variant="ghost"
             size="sm"
@@ -261,7 +300,7 @@ export function EmailLogTab({ productId }: EmailLogTabProps) {
           ) : (
             <div className="space-y-3">
               {logs.map((entry) => (
-                <EmailLogRow key={entry.id} entry={entry} />
+                <EmailLogRow key={entry.id} entry={entry} onResent={() => logsQuery.refetch()} />
               ))}
             </div>
           )}
