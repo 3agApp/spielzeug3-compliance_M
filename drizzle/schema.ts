@@ -1,4 +1,5 @@
 import {
+  bigint,
   boolean,
   int,
   mysqlEnum,
@@ -631,3 +632,23 @@ export const emailLogs = mysqlTable("email_logs", {
 });
 export type EmailLog = typeof emailLogs.$inferSelect;
 export type InsertEmailLog = typeof emailLogs.$inferInsert;
+
+// ─── Product Labelling Checks ─────────────────────────────────────────────────
+export const productLabellingChecks = mysqlTable("product_labelling_checks", {
+  id: int("id").autoincrement().primaryKey(),
+  productId: int("product_id").notNull(),
+  tenantId: varchar("tenant_id", { length: 64 }).notNull().default("1"),
+  checkKey: varchar("check_key", { length: 64 }).notNull(),
+  label: varchar("label", { length: 255 }).notNull(),
+  category: varchar("category", { length: 64 }).notNull().default("general"),
+  market: varchar("market", { length: 16 }).notNull().default("EU/CH"),
+  isMandatory: boolean("is_mandatory").notNull().default(true),
+  checked: boolean("checked").notNull().default(false),
+  notes: text("notes"),
+  verifiedAt: bigint("verified_at", { mode: "number" }),
+  verifiedBy: varchar("verified_by", { length: 128 }),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+  updatedAt: bigint("updated_at", { mode: "number" }).notNull(),
+});
+export type ProductLabellingCheck = typeof productLabellingChecks.$inferSelect;
+export type InsertProductLabellingCheck = typeof productLabellingChecks.$inferInsert;

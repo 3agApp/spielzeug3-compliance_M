@@ -775,3 +775,18 @@
 - [x] Prompt: Verpackungsanforderungen (CE-Marking auf Produkt, Herstelleradresse auf Verpackung) aus Dokument-Analyse entfernt
 - [x] Prompt: Fokus nur auf den Dokumentinhalt selbst (CRITICAL RULES im Prompt)
 - [x] Prompt: Klare CRITICAL RULES: nur Dokumentinhalt prüfen, keine Produktkennzeichnungsanforderungen bemfängeln
+
+## Produktkennzeichnungs-Checkliste (Safety Data-Tab)
+- [x] DB: product_labelling_checks Tabelle (id, productId, tenantId, checkKey, label, checked, notes, verifiedAt, verifiedBy, createdAt, updatedAt)
+- [x] DB: Migration anwenden (Tabelle bereits korrekt erstellt)
+- [x] Drizzle-Schema: productLabellingChecks Tabelle (Spaltenname-Mapping auf snake_case korrigiert)
+- [x] Backend: labellingChecks.getByProduct, labellingChecks.upsert (toggle + Notiz speichern)
+- [x] Backend: vordefinierte Checklisten-Einträge (EU/CH: CE-Marking, Herstelleradresse, Alterswarnung, Sicherheitshinweise, Gebrauchsanleitung, Importeuradresse, Chargennummer, GPSR)
+- [x] Frontend: LabellingChecklistCard-Komponente im Safety Data-Tab
+- [x] Frontend: Checkbox + Label + Notiz-Feld + Verifikationsdatum pro Anforderung
+- [x] Frontend: Fortschrittsbalken (x von y Anforderungen erfüllt)
+- [x] Frontend: Kategorien-Gruppierung (CE Marking, Manufacturer Info, Product Identification, Age & Safety Warnings, Instructions, GPSR)
+- [x] Frontend: Markt-Badge (EU/CH) pro Anforderung
+- [x] Frontend: Mandatory-Badge für Pflichtanforderungen
+- [x] Frontend: Optimistic Updates beim Toggle
+- [x] Tests für labellingChecks-Router (11 Tests, alle grün)

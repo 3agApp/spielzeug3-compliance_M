@@ -1,0 +1,32 @@
+{
+  "query": "SHOW CREATE TABLE product_labelling_checks;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user J1L9FvUd1r4oKv8.75a96d268c41 --database kgkV5LdecSJ3HqPv7WFR7a --execute SHOW CREATE TABLE product_labelling_checks;",
+  "rows": [
+    {
+      "Table": "product_labelling_checks",
+      "Create Table": "CREATE TABLE `product_labelling_checks` ("
+    }
+  ],
+  "messages": [
+    "  `id` int unsigned NOT NULL AUTO_INCREMENT,",
+    "  `product_id` int unsigned NOT NULL,",
+    "  `tenant_id` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,",
+    "  `check_key` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,",
+    "  `label` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,",
+    "  `category` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'general',",
+    "  `market` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'EU/CH',",
+    "  `is_mandatory` tinyint(1) NOT NULL DEFAULT '1',",
+    "  `checked` tinyint(1) NOT NULL DEFAULT '0',",
+    "  `notes` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,",
+    "  `verified_at` bigint DEFAULT NULL,",
+    "  `verified_by` varchar(128) COLLATE utf8mb4_unicode_ci DEFAULT NULL,",
+    "  `created_at` bigint NOT NULL,",
+    "  `updated_at` bigint NOT NULL,",
+    "  PRIMARY KEY (`id`) /*T![clustered_index] CLUSTERED */,",
+    "  UNIQUE KEY `uq_product_check` (`product_id`,`tenant_id`,`check_key`)",
+    ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+  ],
+  "stdout": "Table\tCreate Table\nproduct_labelling_checks\tCREATE TABLE `product_labelling_checks` (\n  `id` int unsigned NOT NULL AUTO_INCREMENT,\n  `product_id` int unsigned NOT NULL,\n  `tenant_id` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `check_key` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `label` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `category` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'general',\n  `market` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'EU/CH',\n  `is_mandatory` tinyint(1) NOT NULL DEFAULT '1',\n  `checked` tinyint(1) NOT NULL DEFAULT '0',\n  `notes` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `verified_at` bigint DEFAULT NULL,\n  `verified_by` varchar(128) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `created_at` bigint NOT NULL,\n  `updated_at` bigint NOT NULL,\n  PRIMARY KEY (`id`) /*T![clustered_index] CLUSTERED */,\n  UNIQUE KEY `uq_product_check` (`product_id`,`tenant_id`,`check_key`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}

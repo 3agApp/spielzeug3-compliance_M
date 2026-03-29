@@ -55,6 +55,7 @@ import {
   Pencil,
   Camera,
   Mail,
+  Tag,
   X,
 } from "lucide-react";
 import { useRef, useState } from "react";
@@ -2695,6 +2696,9 @@ function SafetyDataCard({ productId, safety, role, t, onSuccess }: any) {
       </CardContent>
     </Card>
 
+    {/* Labelling Checklist */}
+    <LabellingChecklistCard productId={productId} role={role} t={t} />
+
     {/* Lightbox */}
     {lightboxUrl && (
       <div
@@ -3212,5 +3216,172 @@ function InfoField({
         <p className="text-sm text-muted-foreground italic">{empty}</p>
       )}
     </div>
+  );
+}
+
+// ─── Labelling Checklist Card ─────────────────────────────────────────────────
+function LabellingChecklistCard({ productId, role, t }: { productId: number; role: string; t: any }) {
+  const utils = trpc.useUtils();
+  const { data: checks, isLoading } = trpc.labellingChecks.getByProduct.useQuery({ productId });
+
+  const upsertMutation = trpc.labellingChecks.upsert.useMutation({
+    onMutate: async (vars) => {
+      await utils.labellingChecks.getByProduct.cancel({ productId });
+      const prev = utils.labellingChecks.getByProduct.getData({ productId });
+      utils.labellingChecks.getByProduct.setData({ productId }, (old: any) =>
+        old?.map((c: any) => c.checkKey === vars.checkKey ? { ...c, checked: vars.checked } : c)
+      );
+      return { prev };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev) utils.labellingChecks.getByProduct.setData({ productId }, ctx.prev);
+    },
+    onSettled: () => utils.labellingChecks.getByProduct.invalidate({ productId }),
+  });
+
+  const updateNoteMutation = trpc.labellingChecks.updateNote.useMutation({
+    onSettled: () => utils.labellingChecks.getByProduct.invalidate({ productId }),
+  });
+
+  const [editingNote, setEditingNote] = useState<string | null>(null);
+  const [noteValue, setNoteValue] = useState("");
+
+  const canEdit = ["administrator", "compliance_manager", "internal_employee", "super_admin"].includes(role);
+
+  // Group by category
+  const grouped = (checks ?? []).reduce((acc: Record<string, any[]>, c: any) => {
+    if (!acc[c.category]) acc[c.category] = [];
+    acc[c.category].push(c);
+    return acc;
+  }, {});
+
+  const total = checks?.length ?? 0;
+  const done = checks?.filter((c: any) => c.checked).length ?? 0;
+  const mandatory = checks?.filter((c: any) => c.isMandatory).length ?? 0;
+  const mandatoryDone = checks?.filter((c: any) => c.isMandatory && c.checked).length ?? 0;
+  const progress = total > 0 ? Math.round((done / total) * 100) : 0;
+
+  return (
+    <Card className="mt-4">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Tag className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-base">Product Labelling Checklist</CardTitle>
+            <span className="text-xs text-muted-foreground">(EU/CH Requirements)</span>
+          </div>
+          <div className="flex items-center gap-3 text-sm">
+            <span className={`font-medium ${mandatoryDone === mandatory ? "text-green-600" : "text-amber-600"}`}>
+              {mandatoryDone}/{mandatory} mandatory
+            </span>
+            <span className="text-muted-foreground">{done}/{total} total</span>
+          </div>
+        </div>
+        {/* Progress bar */}
+        <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all ${progress === 100 ? "bg-green-500" : progress >= 60 ? "bg-amber-500" : "bg-red-500"}`}
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+        <p className="text-xs text-muted-foreground mt-1">
+          These are product and packaging labelling requirements separate from document compliance. Check each item once verified on the physical product/packaging.
+        </p>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Loading checklist...
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {Object.entries(grouped).map(([category, items]) => (
+              <div key={category}>
+                <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                  <span className="h-px flex-1 bg-border" />
+                  {category}
+                  <span className="h-px flex-1 bg-border" />
+                </h4>
+                <div className="space-y-2">
+                  {(items as any[]).map((check: any) => (
+                    <div key={check.checkKey} className={`rounded-lg border p-3 transition-colors ${check.checked ? "bg-green-50/50 border-green-200 dark:bg-green-950/20 dark:border-green-800" : check.isMandatory ? "bg-red-50/30 border-red-100 dark:bg-red-950/10 dark:border-red-900" : "bg-muted/30"}`}>
+                      <div className="flex items-start gap-3">
+                        <input
+                          type="checkbox"
+                          checked={check.checked}
+                          disabled={!canEdit || upsertMutation.isPending}
+                          onChange={(e) => upsertMutation.mutate({ productId, checkKey: check.checkKey, checked: e.target.checked })}
+                          className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-green-600 cursor-pointer disabled:cursor-not-allowed"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`text-sm ${check.checked ? "line-through text-muted-foreground" : ""}`}>
+                              {check.label}
+                            </span>
+                            {check.isMandatory && !check.checked && (
+                              <span className="inline-flex items-center rounded-full bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/40 dark:text-red-400">
+                                mandatory
+                              </span>
+                            )}
+                            <span className="inline-flex items-center rounded-full bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                              {check.market}
+                            </span>
+                          </div>
+                          {check.checked && check.verifiedAt && (
+                            <p className="text-xs text-green-600 mt-0.5">
+                              ✓ Verified {new Date(check.verifiedAt).toLocaleDateString()} by {check.verifiedBy ?? "unknown"}
+                            </p>
+                          )}
+                          {/* Note */}
+                          {editingNote === check.checkKey ? (
+                            <div className="mt-2 flex gap-2">
+                              <input
+                                type="text"
+                                value={noteValue}
+                                onChange={(e) => setNoteValue(e.target.value)}
+                                placeholder="Add a note..."
+                                className="flex-1 text-xs border rounded px-2 py-1 bg-background"
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    updateNoteMutation.mutate({ productId, checkKey: check.checkKey, notes: noteValue });
+                                    setEditingNote(null);
+                                  }
+                                  if (e.key === "Escape") setEditingNote(null);
+                                }}
+                                autoFocus
+                              />
+                              <Button size="sm" variant="outline" className="h-6 text-xs px-2" onClick={() => {
+                                updateNoteMutation.mutate({ productId, checkKey: check.checkKey, notes: noteValue });
+                                setEditingNote(null);
+                              }}>Save</Button>
+                              <Button size="sm" variant="ghost" className="h-6 text-xs px-2" onClick={() => setEditingNote(null)}>Cancel</Button>
+                            </div>
+                          ) : (
+                            <div className="mt-1 flex items-center gap-2">
+                              {check.notes ? (
+                                <p className="text-xs text-muted-foreground italic">"{check.notes}"</p>
+                              ) : null}
+                              {canEdit && (
+                                <button
+                                  className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
+                                  onClick={() => { setEditingNote(check.checkKey); setNoteValue(check.notes ?? ""); }}
+                                >
+                                  {check.notes ? "Edit note" : "Add note"}
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

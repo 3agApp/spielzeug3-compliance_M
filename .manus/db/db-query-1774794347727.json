@@ -1,0 +1,9 @@
+{
+  "query": "\nCREATE TABLE IF NOT EXISTS product_labelling_checks (\n  id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,\n  product_id INT UNSIGNED NOT NULL,\n  tenant_id VARCHAR(64) NOT NULL,\n  check_key VARCHAR(64) NOT NULL,\n  label VARCHAR(255) NOT NULL,\n  category VARCHAR(64) NOT NULL DEFAULT 'general',\n  market VARCHAR(16) NOT NULL DEFAULT 'EU/CH',\n  is_mandatory TINYINT(1) NOT NULL DEFAULT 1,\n  checked TINYINT(1) NOT NULL DEFAULT 0,\n  notes TEXT NULL,\n  verified_at BIGINT NULL,\n  verified_by VARCHAR(128) NULL,\n  created_at BIGINT NOT NULL,\n  updated_at BIGINT NOT NULL,\n  UNIQUE KEY uq_product_check (product_id, tenant_id, check_key)\n);\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user J1L9FvUd1r4oKv8.75a96d268c41 --database kgkV5LdecSJ3HqPv7WFR7a --execute \nCREATE TABLE IF NOT EXISTS product_labelling_checks (\n  id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,\n  product_id INT UNSIGNED NOT NULL,\n  tenant_id VARCHAR(64) NOT NULL,\n  check_key VARCHAR(64) NOT NULL,\n  label VARCHAR(255) NOT NULL,\n  category VARCHAR(64) NOT NULL DEFAULT 'general',\n  market VARCHAR(16) NOT NULL DEFAULT 'EU/CH',\n  is_mandatory TINYINT(1) NOT NULL DEFAULT 1,\n  checked TINYINT(1) NOT NULL DEFAULT 0,\n  notes TEXT NULL,\n  verified_at BIGINT NULL,\n  verified_by VARCHAR(128) NULL,\n  created_at BIGINT NOT NULL,\n  updated_at BIGINT NOT NULL,\n  UNIQUE KEY uq_product_check (product_id, tenant_id, check_key)\n);\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 234
+}

@@ -22,6 +22,7 @@ import { sealAssetsRouter } from "./routers/sealAssets";
 import { productImagesRouter } from "./routers/productImages";
 import { emailRouter } from "./routers/email";
 import { emailLogsRouter } from "./routers/emailLogs";
+import { labellingChecksRouter } from "./routers/labellingChecks";
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -53,6 +54,7 @@ export const appRouter = router({
   productImages: productImagesRouter,
   email: emailRouter,
   emailLogs: emailLogsRouter,
+  labellingChecks: labellingChecksRouter,
 });
 
 export type AppRouter = typeof appRouter;
