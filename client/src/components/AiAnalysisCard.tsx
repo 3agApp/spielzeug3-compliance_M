@@ -368,6 +368,92 @@ function DocumentAnalysisSection({ documentAnalysis }: { documentAnalysis: any[]
 
 // ─── Risk Assessment Section ──────────────────────────────────────────────────
 
+function FindingCard({ f, index }: { f: any; index: number }) {
+  const [open, setOpen] = useState(false);
+  const hasDetail = !!(f.detail || (f.affectedRegulations?.length > 0) || f.remediation);
+
+  return (
+    <div
+      className={`rounded-lg border text-sm transition-colors ${
+        f.type === "critical"
+          ? "border-red-200 bg-red-50/40 dark:border-red-900 dark:bg-red-950/20"
+          : f.type === "warning"
+          ? "border-amber-200 bg-amber-50/40 dark:border-amber-900 dark:bg-amber-950/20"
+          : f.type === "positive"
+          ? "border-emerald-200 bg-emerald-50/30 dark:border-emerald-900 dark:bg-emerald-950/10"
+          : "border-border bg-muted/30"
+      }`}
+    >
+      {/* Header row – always visible */}
+      <button
+        type="button"
+        className="w-full flex items-start gap-2.5 p-3 text-left"
+        onClick={() => hasDetail && setOpen((o) => !o)}
+        aria-expanded={open}
+      >
+        <span className="mt-0.5 shrink-0">{findingIcon(f.type)}</span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap mb-0.5">
+            <Badge variant="outline" className={`text-xs px-1.5 py-0 ${findingBadgeClass(f.type)}`}>
+              {f.type === "critical" ? "Critical" : f.type === "warning" ? "Warning" : f.type === "positive" ? "Positive" : f.type}
+            </Badge>
+          </div>
+          <p className="text-muted-foreground leading-snug">{f.message}</p>
+        </div>
+        {hasDetail && (
+          <span className="shrink-0 mt-0.5 text-muted-foreground">
+            {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </span>
+        )}
+      </button>
+
+      {/* Expanded detail panel */}
+      {open && hasDetail && (
+        <div className="border-t px-4 pb-4 pt-3 space-y-3">
+          {f.detail && (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">Details</p>
+              <p className="text-sm text-foreground leading-relaxed">{f.detail}</p>
+            </div>
+          )}
+          {f.affectedRegulations?.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">Affected Regulations</p>
+              <div className="flex flex-wrap gap-1.5">
+                {(f.affectedRegulations as string[]).map((reg: string, ri: number) => (
+                  <span
+                    key={ri}
+                    className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium bg-background text-foreground"
+                  >
+                    <Scale className="h-3 w-3 mr-1 text-muted-foreground" />
+                    {reg}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {f.remediation && (
+            <div className={`rounded-md border p-3 ${
+              f.type === "positive"
+                ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800"
+                : "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800"
+            }`}>
+              <p className={`text-xs font-semibold uppercase tracking-wide mb-1 ${
+                f.type === "positive" ? "text-emerald-700" : "text-blue-700"
+              }`}>
+                {f.type === "positive" ? "Why this is good" : "How to resolve"}
+              </p>
+              <p className={`text-sm leading-relaxed ${
+                f.type === "positive" ? "text-emerald-800 dark:text-emerald-300" : "text-blue-800 dark:text-blue-300"
+              }`}>{f.remediation}</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function RiskAssessmentSection({ analysis }: { analysis: any }) {
   const overall = Number(analysis.overallScore ?? 0);
   const docScore = Number(analysis.documentCompletenessScore ?? 0);
@@ -411,20 +497,15 @@ function RiskAssessmentSection({ analysis }: { analysis: any }) {
         <>
           <Separator />
           <div className="space-y-2">
-            <p className="text-sm font-semibold">Findings ({findings.length})</p>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold">Findings ({findings.length})</p>
+              {findings.some((f: any) => f.detail || f.affectedRegulations?.length > 0 || f.remediation) && (
+                <p className="text-xs text-muted-foreground">Click a finding to expand details</p>
+              )}
+            </div>
             <div className="space-y-2">
               {findings.map((f: any, i: number) => (
-                <div key={i} className="flex items-start gap-2.5 rounded-lg border p-3 text-sm">
-                  {findingIcon(f.type)}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                      <Badge variant="outline" className={`text-xs px-1.5 py-0 ${findingBadgeClass(f.type)}`}>
-                        {f.type === "critical" ? "Critical" : f.type === "warning" ? "Warning" : f.type === "positive" ? "Positive" : f.type}
-                      </Badge>
-                    </div>
-                    <p className="text-muted-foreground">{f.message}</p>
-                  </div>
-                </div>
+                <FindingCard key={i} f={f} index={i} />
               ))}
             </div>
           </div>

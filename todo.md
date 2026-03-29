@@ -805,3 +805,12 @@
 - [x] Frontend: Hidden file input (accept JPEG/PNG/WebP, multiple, max 5 MB)
 - [x] Frontend: Upload-Spinner während Upload läuft
 - [x] Tests für uploadImage/deleteImage (6 neue Tests, 249 Tests total, alle grün)
+
+## Aufklappbare Findings in KI-Dokumentenanalyse
+- [x] KI-Prompt: findings um detail, affectedRegulations, remediation erweitert
+- [x] JSON-Schema im LLM-Aufruf: FindingItem um detail, affectedRegulations, remediation ergänzt (strict: true)
+- [x] Frontend: FindingCard-Komponente (Accordion) mit farbigem Header je Severity
+- [x] Frontend: Aufgeklappter Bereich zeigt Details, betroffene Normen als Badges, Lösungsvorschlag-Box
+- [x] Frontend: Hinweis-Text "Click a finding to expand details" wenn Details vorhanden
+- [x] Frontend: Abwärtskompatibel – alte Findings ohne detail/remediation bleiben nicht-aufklappbar
+- [x] Tests für erweitertes Finding-Schema (3 neue Tests, 252 Tests total, alle grün)

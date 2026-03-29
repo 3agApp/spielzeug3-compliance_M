@@ -158,6 +158,36 @@ describe("aiAnalysis.analyzeProduct", () => {
   });
 });
 
+describe("buildRiskAssessmentPrompt – extended finding fields", () => {
+  it("prompt contains detail, affectedRegulations, and remediation fields", async () => {
+    const { buildRiskAssessmentPrompt } = await import("./domains/ai/aiAnalysisService");
+    const product = { productName: "Test Toy", brand: "TestBrand", ageGroup: "3+", targetMarket: "EU", status: "pending" };
+    const prompt = buildRiskAssessmentPrompt(product as any, [], null);
+    expect(prompt).toContain('"detail"');
+    expect(prompt).toContain('"affectedRegulations"');
+    expect(prompt).toContain('"remediation"');
+  });
+
+  it("prompt still contains all required base fields", async () => {
+    const { buildRiskAssessmentPrompt } = await import("./domains/ai/aiAnalysisService");
+    const product = { productName: "Test Toy", brand: "TestBrand", ageGroup: "3+", targetMarket: "EU", status: "pending" };
+    const prompt = buildRiskAssessmentPrompt(product as any, [], null);
+    expect(prompt).toContain('"overallScore"');
+    expect(prompt).toContain('"riskLevel"');
+    expect(prompt).toContain('"findings"');
+    expect(prompt).toContain('"recommendations"');
+    expect(prompt).toContain('"message"');
+  });
+
+  it("prompt instructs AI to give a short headline in message field", async () => {
+    const { buildRiskAssessmentPrompt } = await import("./domains/ai/aiAnalysisService");
+    const product = { productName: "Test Toy", brand: "TestBrand", ageGroup: "3+", targetMarket: "EU", status: "pending" };
+    const prompt = buildRiskAssessmentPrompt(product as any, [], null);
+    expect(prompt).toContain("short 1-sentence headline");
+    expect(prompt).toContain("concrete actionable step");
+  });
+});
+
 describe("aiAnalysis.getLatest", () => {
   it("returns null when no analysis exists", async () => {
     const { getLatestAiAnalysisByProduct } = await import("./db");

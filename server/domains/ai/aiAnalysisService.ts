@@ -295,7 +295,13 @@ Return ONLY valid JSON matching this exact schema – no extra text:
   "riskLevel": "low" | "medium" | "high",
   "summary": "<2-3 sentence summary in English>",
   "findings": [
-    { "type": "positive" | "warning" | "critical", "message": "<string>" }
+    {
+      "type": "positive" | "warning" | "critical",
+      "message": "<short 1-sentence headline of the finding>",
+      "detail": "<2-4 sentences explaining WHY this is a finding, what the specific gap or issue is, and what the legal/regulatory consequence could be>",
+      "affectedRegulations": ["<e.g. EN 71-1:2014, Toy Safety Directive 2009/48/EC Art. 11>"],
+      "remediation": "<concrete actionable step(s) to resolve this finding, e.g. which document to obtain, which information to add, which standard to reference>"
+    }
   ],
   "recommendations": ["<string>"],
   "missingDocuments": ["<string>"]
@@ -501,8 +507,11 @@ export const aiAnalysisService = {
                     properties: {
                       type: { type: "string" },
                       message: { type: "string" },
+                      detail: { type: "string" },
+                      affectedRegulations: { type: "array", items: { type: "string" } },
+                      remediation: { type: "string" },
                     },
-                    required: ["type", "message"],
+                    required: ["type", "message", "detail", "affectedRegulations", "remediation"],
                     additionalProperties: false,
                   },
                 },
