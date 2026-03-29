@@ -755,3 +755,16 @@
 - [x] Backend: getApiKeyStatus gibt model zurück
 - [x] Frontend: Modell-Dropdown pro Provider (OpenAI: gpt-4o, gpt-4o-mini, gpt-4-turbo; Anthropic: claude-3-5-sonnet, claude-3-haiku; Gemini: gemini-1.5-pro, gemini-1.5-flash, gemini-2.0-flash)
 - [x] Frontend: Modell-Anzeige im Status-Badge (konfigurierter Provider + Modell)
+
+## AI Document Analysis – includeInAiAnalysis Flag
+- [x] DB: include_in_ai_analysis Spalte (boolean, default true) zur documents Tabelle
+- [x] DB: Migration anwenden
+- [x] Drizzle-Schema: includeInAiAnalysis Feld hinzufügen
+- [x] Backend: Default-Logik pro Dokumenttyp (test_report/declaration_of_conformity/certificate/regulatory_document → true; product_image/manual/other → false)
+- [x] Backend: Upload-Mutation um includeInAiAnalysis erweitern
+- [x] Backend: updateDocument-Mutation um includeInAiAnalysis Toggle erweitern
+- [x] Backend: Analyse filtert nur Dokumente mit includeInAiAnalysis = true
+- [x] Frontend: Checkbox im Upload-Dialog mit intelligentem Default
+- [x] Frontend: AI-Toggle-Button in Dokumentenliste (violett = aktiv, grau = inaktiv)
+- [x] Frontend: Tab-Umbenennung "AI Analysis" → "AI Document Analysis"
+- [x] Frontend: i18n-Übersetzungen aktualisieren (DE + EN)

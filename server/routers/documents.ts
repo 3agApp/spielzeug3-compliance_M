@@ -61,6 +61,7 @@ export const documentsRouter = router({
         operatorComment: z.string().max(500).optional(),
         replacesDocumentId: z.number().optional(),
         addAsNew: z.boolean().optional(),
+        includeInAiAnalysis: z.boolean().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -304,6 +305,20 @@ export const documentsRouter = router({
           ctx.user as any,
           { force: input.force }
         );
+      } catch (err) {
+        throw toTRPCError(err);
+      }
+    }),
+
+  /** Toggle includeInAiAnalysis for a single document */
+  toggleAiAnalysis: protectedProcedure
+    .input(z.object({
+      documentId: z.number(),
+      includeInAiAnalysis: z.boolean(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        return await documentService.toggleAiAnalysis(ctx.user as any, input.documentId, input.includeInAiAnalysis);
       } catch (err) {
         throw toTRPCError(err);
       }

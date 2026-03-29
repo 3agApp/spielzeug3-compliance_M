@@ -344,7 +344,9 @@ export const aiAnalysisService = {
     const product = await getProductById(productId);
     if (!product) throw Errors.notFound("Product", productId);
 
-    const docs = await getDocumentsByProduct(productId);
+    const allDocs = await getDocumentsByProduct(productId);
+    // Only analyse documents explicitly marked for AI analysis
+    const docs = allDocs.filter((d: any) => d.includeInAiAnalysis !== false);
     const safety = await getProductSafety(productId);
     const components = await getComponentsByProduct(productId);
     const componentDocs = await getAllComponentDocumentsByProduct(productId);

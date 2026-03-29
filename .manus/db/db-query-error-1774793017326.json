@@ -1,0 +1,8 @@
+{
+  "query": "UPDATE documents SET include_in_ai_analysis = FALSE WHERE document_type IN ('product_image', 'manual', 'other', 'photo', 'image');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user J1L9FvUd1r4oKv8.75a96d268c41 --database kgkV5LdecSJ3HqPv7WFR7a --execute UPDATE documents SET include_in_ai_analysis = FALSE WHERE document_type IN ('product_image', 'manual', 'other', 'photo', 'image');",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'document_type' in 'where clause'"
+  ]
+}

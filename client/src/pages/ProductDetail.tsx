@@ -1755,6 +1755,28 @@ function DocumentRow({ doc, productId, role, isInternalRole, t, onDelete }: any)
     onSettled: () => utils.documents.listByProduct.invalidate({ productId }),
   });
 
+  const toggleAiAnalysis = trpc.documents.toggleAiAnalysis.useMutation({
+    onMutate: async ({ includeInAiAnalysis }) => {
+      await utils.documents.listByProduct.cancel({ productId });
+      const prev = utils.documents.listByProduct.getData({ productId });
+      utils.documents.listByProduct.setData({ productId }, (old: any) =>
+        old?.map((d: any) => d.id === doc.id ? { ...d, includeInAiAnalysis } : d)
+      );
+      return { prev };
+    },
+    onError: (_err, _vars, ctx: any) => {
+      utils.documents.listByProduct.setData({ productId }, ctx?.prev);
+      toast.error("Failed to update AI analysis setting");
+    },
+    onSuccess: (data) => {
+      toast.success(data.includeInAiAnalysis
+        ? (t.aiAnalysis as any).aiIncluded
+        : (t.aiAnalysis as any).aiExcluded
+      );
+    },
+    onSettled: () => utils.documents.listByProduct.invalidate({ productId }),
+  });
+
   return (
     <>
       <tr>
@@ -1825,6 +1847,26 @@ function DocumentRow({ doc, productId, role, isInternalRole, t, onDelete }: any)
               <FileText className="h-4 w-4" />
             </Button>
           </a>
+          {/* AI Analysis toggle – only for internal roles */}
+          {isInternalRole && (
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={toggleAiAnalysis.isPending}
+              title={doc.includeInAiAnalysis !== false
+                ? (t.aiAnalysis as any).excludeFromAi
+                : (t.aiAnalysis as any).includeInAi}
+              className={doc.includeInAiAnalysis !== false
+                ? "text-violet-600 hover:text-violet-800 hover:bg-violet-50"
+                : "text-gray-300 hover:text-violet-500 hover:bg-violet-50"}
+              onClick={() => toggleAiAnalysis.mutate({
+                documentId: doc.id,
+                includeInAiAnalysis: doc.includeInAiAnalysis === false,
+              })}
+            >
+              <Bot className="h-4 w-4" />
+            </Button>
+          )}
           {/* Public download toggle – only for internal roles, only on approved docs */}
           {isInternalRole && doc.reviewStatus === "approved" && (
             <Button
@@ -1925,6 +1967,10 @@ function UploadDocumentCard({ productId, role, isOperator, t, onSuccess, existin
   const [uploadMode, setUploadMode] = useState<"replace" | "add" | null>(null);
   const [replacesDocumentId, setReplacesDocumentId] = useState<string>("");
 
+  // AI-Analysis-Flag: Default je nach Dokumenttyp
+  const AI_RELEVANT_TYPES = ["test_report", "declaration_of_conformity", "certificate", "regulatory_document"];
+  const [includeInAiAnalysis, setIncludeInAiAnalysis] = useState<boolean>(true);
+
   // Vorhandene aktive Dokumente des gewählten Typs
   const docsOfType = (existingDocuments ?? []).filter(
     (d: any) => d.documentType === docType && !d.isArchived
@@ -1936,6 +1982,7 @@ function UploadDocumentCard({ productId, role, isOperator, t, onSuccess, existin
     setDocType(val);
     setUploadMode(null);
     setReplacesDocumentId("");
+    setIncludeInAiAnalysis(AI_RELEVANT_TYPES.includes(val));
   }
 
   const uploadMutation = trpc.documents.upload.useMutation({
@@ -1969,6 +2016,7 @@ function UploadDocumentCard({ productId, role, isOperator, t, onSuccess, existin
         operatorComment: isOperator && operatorComment.trim() ? operatorComment.trim() : undefined,
         replacesDocumentId: uploadMode === "replace" && replacesDocumentId ? parseInt(replacesDocumentId) : undefined,
         addAsNew: uploadMode === "add" ? true : undefined,
+        includeInAiAnalysis,
       });
     };
     reader.readAsDataURL(file);
@@ -2107,6 +2155,33 @@ function UploadDocumentCard({ productId, role, isOperator, t, onSuccess, existin
                 <p className="mt-1 text-xs text-muted-foreground text-right">{operatorComment.length}/500</p>
               </div>
             )}
+            {/* AI Analysis Toggle */}
+            <div className="flex items-center gap-2 rounded-md border p-3 bg-violet-50/50 border-violet-100">
+              <Bot className="h-4 w-4 text-violet-600 shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-medium">{(t.aiAnalysis as any).includeInAi}</p>
+                <p className="text-xs text-muted-foreground">
+                  {AI_RELEVANT_TYPES.includes(docType)
+                    ? "Recommended for this document type"
+                    : "Not recommended for this document type"}
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={includeInAiAnalysis}
+                onClick={() => setIncludeInAiAnalysis(!includeInAiAnalysis)}
+                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${
+                  includeInAiAnalysis ? "bg-violet-600" : "bg-gray-300"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                    includeInAiAnalysis ? "translate-x-4" : "translate-x-0.5"
+                  }`}
+                />
+              </button>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>

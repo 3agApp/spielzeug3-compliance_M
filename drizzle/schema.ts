@@ -173,6 +173,8 @@ export const documents = mysqlTable("documents", {
   replacedByDocumentId: int("replacedByDocumentId"),
   /** When true this document is publicly downloadable on the product landing page */
   publicDownload: boolean("publicDownload").default(false).notNull(),
+  /** When true this document is included in AI Document Analysis */
+  includeInAiAnalysis: boolean("include_in_ai_analysis").default(true).notNull(),
   expiryDate: timestamp("expiryDate"),
   uploadedByUserId: int("uploadedByUserId"),
   uploadedByRole: varchar("uploadedByRole", { length: 64 }),

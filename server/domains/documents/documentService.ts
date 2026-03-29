@@ -56,6 +56,7 @@ export interface UploadDocumentInput {
   operatorComment?: string; // optional note added by operator (admin/compliance_manager)
   replacesDocumentId?: number; // wenn gesetzt: nur dieses Dokument archivieren (statt alle)
   addAsNew?: boolean; // wenn true: kein Archivieren, neues Dokument parallel hinzufügen
+  includeInAiAnalysis?: boolean; // wenn nicht gesetzt: Default je nach Dokumenttyp
 }
 
 export interface UpdateReviewStatusInput {
@@ -142,6 +143,18 @@ export const documentService = {
       (d: any) => d.documentType === input.documentType && !d.isArchived
     );
 
+    // Determine default includeInAiAnalysis based on document type
+    const AI_RELEVANT_TYPES = [
+      "test_report",
+      "declaration_of_conformity",
+      "certificate",
+      "regulatory_document",
+    ];
+    const includeInAiAnalysis =
+      input.includeInAiAnalysis !== undefined
+        ? input.includeInAiAnalysis
+        : AI_RELEVANT_TYPES.includes(input.documentType);
+
     // Insert the new document first so we have its ID
     const insertResult = await createDocument({
       productId: input.productId,
@@ -154,6 +167,7 @@ export const documentService = {
       version,
       expiryDate: input.expiryDate ? new Date(input.expiryDate) : undefined,
       uploadedByUserId: user.id,
+      includeInAiAnalysis,
     });
 
     const newDocId = (insertResult as any).insertId as number;
@@ -286,6 +300,26 @@ export const documentService = {
       payloadSnapshot: { documentId: input.documentId, publicDownload: input.publicDownload } as any,
     });
     return { success: true, publicDownload: input.publicDownload };
+  },
+
+  /** Toggle whether a document is included in AI Document Analysis. */
+  async toggleAiAnalysis(
+    user: UserContext & { id: number },
+    documentId: number,
+    includeInAiAnalysis: boolean
+  ) {
+    requireRole(user.complianceRole, ["administrator", "compliance_manager", "internal_employee"]);
+    await updateDocument(documentId, { includeInAiAnalysis });
+    await createAuditLog({
+      entityType: "document",
+      entityId: documentId,
+      action: includeInAiAnalysis ? "document_ai_enabled" : "document_ai_disabled",
+      performedByUserId: user.id,
+      actorRole: "operator",
+      actorName: resolveActorName(user),
+      payloadSnapshot: { documentId, includeInAiAnalysis } as any,
+    });
+    return { success: true, includeInAiAnalysis };
   },
 
   /**
