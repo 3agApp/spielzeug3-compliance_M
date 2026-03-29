@@ -738,3 +738,12 @@
 - [x] aiAnalysisService: Dokumentinhalt in Per-Dokument-Prompt einbinden
 - [x] Fallback: wenn PDF nicht extrahierbar, klar im Prompt kennzeichnen (konservative Bewertung)
 - [x] Prompt anpassen: KI analysiert tatsächlichen Inhalt, nicht nur Dateiname/Metadaten
+
+## Multi-Provider AI-Key-Verwaltung
+- [ ] DB: system_settings Felder ai_provider (openai/anthropic/gemini) und ai_api_key
+- [ ] Backend: tenantLLM.ts – Key + Provider aus DB laden, kein Key = PRECONDITION_FAILED mit klarer Meldung
+- [ ] Backend: OpenAI-Adapter (api.openai.com, gpt-4o), Anthropic-Adapter (claude-3-5-sonnet), Gemini-Adapter (gemini-1.5-pro)
+- [ ] Backend: aiAnalysisService alle invokeLLM-Aufrufe auf tenantLLM umstellen
+- [ ] Frontend: Settings AI-Tab – Provider-Dropdown (OpenAI/Anthropic/Gemini), API-Key-Eingabe, Test-Button
+- [ ] Frontend: AI Analysis Tab – wenn kein Key: Hinweis-Banner mit Link zu Settings
+- [ ] Frontend: AI-Analyse-Button deaktiviert wenn kein Key konfiguriert

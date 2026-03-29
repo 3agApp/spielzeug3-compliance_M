@@ -197,24 +197,31 @@ export default function AdminSettings() {
     setSealAutoActivateLoaded(true);
   }
 
-  const [openAiKey, setOpenAiKey] = useState("");
+  const [aiKey, setAiKey] = useState("");
+  const [aiProvider, setAiProvider] = useState<"openai" | "anthropic" | "gemini">("openai");
   const [showKey, setShowKey] = useState(false);
   const [testResult, setTestResult] = useState<"idle" | "success" | "error">("idle");
   const [testMessage, setTestMessage] = useState("");
 
   const apiKeyStatusQuery = trpc.aiAnalysis.getApiKeyStatus.useQuery();
+  // Pre-select the saved provider when loaded
+  const savedProvider = (apiKeyStatusQuery.data as any)?.provider;
+  if (savedProvider && savedProvider !== aiProvider && aiKey === "") {
+    setAiProvider(savedProvider);
+  }
   const saveKeyMutation = trpc.aiAnalysis.saveApiKey.useMutation({
     onSuccess: () => {
-      toast.success(lang === "de" ? "OpenAI API-Schlüssel gespeichert" : "OpenAI API key saved");
-      setOpenAiKey("");
+      const providerNames: Record<string, string> = { openai: "OpenAI", anthropic: "Anthropic", gemini: "Google Gemini" };
+      toast.success(lang === "de" ? `${providerNames[aiProvider]} API-Schlüssel gespeichert` : `${providerNames[aiProvider]} API key saved`);
+      setAiKey("");
       apiKeyStatusQuery.refetch();
     },
     onError: (e: any) => toast.error(translateError(e.message, t)),
   });
   const testKeyMutation = trpc.aiAnalysis.testApiKey.useMutation({
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       setTestResult("success");
-      setTestMessage(`Verbindung erfolgreich · Modell: ${data.model}`);
+      setTestMessage(`Connection successful · Provider: ${data.provider} · Model: ${data.model}`);
     },
     onError: (e: any) => {
       setTestResult("error");
@@ -666,10 +673,12 @@ export default function AdminSettings() {
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <Bot className="h-4 w-4" />
-                {lang === "de" ? "KI-Plausibilitätsprüfung" : "AI Plausibility Check"}
+                {lang === "de" ? "KI-Analyse – API-Konfiguration" : "AI Analysis – API Configuration"}
               </CardTitle>
               <CardDescription>
-                {lang === "de" ? "Hinterlegen Sie Ihren OpenAI API-Schlüssel, um Produktdokumente automatisch auf Plausibilität und Vollständigkeit zu prüfen. Der Schlüssel wird verschlüsselt gespeichert und ausschließlich serverseitig verwendet." : "Enter your OpenAI API key to automatically check product documents for plausibility and completeness. The key is stored encrypted and used exclusively server-side."}
+                {lang === "de"
+                  ? "Wählen Sie Ihren KI-Anbieter und hinterlegen Sie den zugehörigen API-Schlüssel. Ohne gültigen Schlüssel stehen keine KI-Funktionen zur Verfügung. Der Schlüssel wird verschlüsselt gespeichert und ausschließlich serverseitig verwendet."
+                  : "Choose your AI provider and enter the corresponding API key. Without a valid key, no AI features are available. The key is stored encrypted and used exclusively server-side."}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
@@ -677,9 +686,7 @@ export default function AdminSettings() {
               <div className="rounded-lg border p-4 bg-muted/30">
                 <div className="flex items-center gap-3">
                   <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${
-                    apiKeyStatusQuery.data?.configured
-                      ? "bg-emerald-100"
-                      : "bg-amber-100"
+                    apiKeyStatusQuery.data?.configured ? "bg-emerald-100" : "bg-amber-100"
                   }`}>
                     <Key className={`h-4 w-4 ${
                       apiKeyStatusQuery.data?.configured ? "text-emerald-600" : "text-amber-600"
@@ -689,63 +696,85 @@ export default function AdminSettings() {
                     <p className="text-sm font-medium">
                       {apiKeyStatusQuery.data?.configured
                         ? (lang === "de" ? "API-Schlüssel konfiguriert" : "API key configured")
-                        : (lang === "de" ? "Kein API-Schlüssel hinterlegt" : "No API key stored")}
+                        : (lang === "de" ? "Kein API-Schlüssel hinterlegt – KI-Funktionen deaktiviert" : "No API key configured – AI features disabled")}
                     </p>
-                    {apiKeyStatusQuery.data?.maskedKey && (
-                      <p className="text-xs text-muted-foreground font-mono mt-0.5">
-                        {apiKeyStatusQuery.data.maskedKey}
+                    {apiKeyStatusQuery.data?.configured && (
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {lang === "de" ? "Anbieter" : "Provider"}: <span className="font-medium capitalize">{(apiKeyStatusQuery.data as any)?.provider ?? "–"}</span>
+                        {apiKeyStatusQuery.data?.maskedKey && (
+                          <span className="font-mono ml-2">{apiKeyStatusQuery.data.maskedKey}</span>
+                        )}
                       </p>
                     )}
                   </div>
                 </div>
               </div>
 
-              {/* New key input */}
-              <div className="space-y-1.5">
-                <Label htmlFor="openai-key">
-                  {apiKeyStatusQuery.data?.configured ? (lang === "de" ? "Schlüssel ersetzen" : "Replace key") : (lang === "de" ? "API-Schlüssel eingeben" : "Enter API key")}
-                </Label>
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Input
-                      id="openai-key"
-                      type={showKey ? "text" : "password"}
-                      value={openAiKey}
-                      onChange={(e) => setOpenAiKey(e.target.value)}
-                      placeholder="sk-proj-..."
-                      className="pr-10 font-mono text-sm"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowKey(!showKey)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
+              {/* Provider selection + key input */}
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label>{lang === "de" ? "KI-Anbieter" : "AI Provider"}</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(["openai", "anthropic", "gemini"] as const).map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setAiProvider(p)}
+                        className={`rounded-lg border p-3 text-sm font-medium transition-colors ${
+                          aiProvider === p
+                            ? "border-primary bg-primary/5 text-primary"
+                            : "border-border hover:border-primary/50 text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {p === "openai" && "OpenAI (GPT-4o)"}
+                        {p === "anthropic" && "Anthropic (Claude)"}
+                        {p === "gemini" && "Google (Gemini)"}
+                      </button>
+                    ))}
                   </div>
-                  <Button
-                    onClick={() => openAiKey && saveKeyMutation.mutate({ apiKey: openAiKey })}
-                    disabled={!openAiKey || saveKeyMutation.isPending}
-                  >
-                    {saveKeyMutation.isPending ? (
-                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Save className="mr-2 h-4 w-4" />
-                    )}
-                    Speichern
-                  </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {lang === "de" ? "Den Schlüssel erhalten Sie unter" : "Get your key at"}{" "}
-                  <a
-                    href="https://platform.openai.com/api-keys"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline"
-                  >
-                    platform.openai.com/api-keys
-                  </a>
-                </p>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="ai-key">
+                    {apiKeyStatusQuery.data?.configured ? (lang === "de" ? "Schlüssel ersetzen" : "Replace key") : (lang === "de" ? "API-Schlüssel eingeben" : "Enter API key")}
+                  </Label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Input
+                        id="ai-key"
+                        type={showKey ? "text" : "password"}
+                        value={aiKey}
+                        onChange={(e) => setAiKey(e.target.value)}
+                        placeholder={aiProvider === "openai" ? "sk-proj-..." : aiProvider === "anthropic" ? "sk-ant-..." : "AIza..."}
+                        className="pr-10 font-mono text-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowKey(!showKey)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    <Button
+                      onClick={() => aiKey && saveKeyMutation.mutate({ apiKey: aiKey, provider: aiProvider })}
+                      disabled={!aiKey || saveKeyMutation.isPending}
+                    >
+                      {saveKeyMutation.isPending ? (
+                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Save className="mr-2 h-4 w-4" />
+                      )}
+                      {lang === "de" ? "Speichern" : "Save"}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {lang === "de" ? "Schlüssel erhalten Sie unter" : "Get your key at"}:{" "}
+                    {aiProvider === "openai" && <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">platform.openai.com/api-keys</a>}
+                    {aiProvider === "anthropic" && <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">console.anthropic.com</a>}
+                    {aiProvider === "gemini" && <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">aistudio.google.com</a>}
+                  </p>
+                </div>
               </div>
 
               <Separator />

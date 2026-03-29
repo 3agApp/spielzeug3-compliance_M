@@ -29,10 +29,10 @@ import {
   updateAiAnalysis,
   upsertSystemSetting,
 } from "../../db";
-import { invokeLLM } from "../../_core/llm";
 import { Errors, requireRole, assertSupplierOrInternal, ADMIN_ROLES } from "../../shared";
 import type { UserContext } from "../../shared/tenantGuard";
 import { extractDocumentText } from "./documentExtractor";
+import { invokeTenantLLM, getTenantAIConfig, testTenantAIKey } from "./tenantLLM";
 
 // ─── Legal requirements per document type ─────────────────────────────────────
 
@@ -285,30 +285,23 @@ export const buildAnalysisPrompt = buildRiskAssessmentPrompt;
 // ─── Service ──────────────────────────────────────────────────────────────────
 
 export const aiAnalysisService = {
-  /** Get API key status (masked) – admin/compliance_manager only. */
+  /** Get AI config status (provider + masked key) – admin/compliance_manager only. */
   async getApiKeyStatus(user: UserContext) {
     requireRole(user.complianceRole, ["administrator", "compliance_manager"]);
-    const setting = await getSystemSetting("openai_api_key");
-    if (!setting?.settingValue) return { configured: false, maskedKey: null };
-    const key = setting.settingValue;
+    const config = await getTenantAIConfig();
+    if (!config.configured) return { configured: false, maskedKey: null, provider: null };
+    const key = config.apiKey;
     const masked =
       key.length > 8
-        ? `${key.slice(0, 7)}${"*".repeat(key.length - 11)}${key.slice(-4)}`
+        ? `${key.slice(0, 7)}${"*".repeat(Math.max(0, key.length - 11))}${key.slice(-4)}`
         : "****";
-    return { configured: true, maskedKey: masked };
+    return { configured: true, maskedKey: masked, provider: config.provider };
   },
 
-  /** Test the stored API key with a minimal request. */
+  /** Test the tenant's configured AI key with a minimal request. */
   async testApiKey(user: UserContext) {
     requireRole(user.complianceRole, ["administrator", "compliance_manager"]);
-    const result = await invokeLLM({
-      messages: [{ role: "user", content: "Reply with: OK" }],
-    });
-    return {
-      success: true,
-      model: result.model,
-      reply: result.choices?.[0]?.message?.content ?? "",
-    };
+    return testTenantAIKey();
   },
 
   /** Analyse a single product (alias for analyze). */
@@ -382,7 +375,7 @@ export const aiAnalysisService = {
         );
 
         const docPrompt = buildDocumentAnalysisPrompt(product, docs, extractedTexts);
-        const docResponse = await invokeLLM({
+        const docResponse = await invokeTenantLLM({
           messages: [
             {
               role: "system",
@@ -438,8 +431,7 @@ export const aiAnalysisService = {
           },
         });
 
-        const docRaw = docResponse.choices?.[0]?.message?.content ?? "{}";
-        const docContent = typeof docRaw === "string" ? docRaw : JSON.stringify(docRaw);
+        const docContent = docResponse.content;
         const docParsed = JSON.parse(docContent);
         documentAnalysis = docParsed.documentAnalysis ?? [];
 
@@ -457,7 +449,7 @@ export const aiAnalysisService = {
 
       // ── Step 2: Overall risk assessment ────────────────────────────────────
       const riskPrompt = buildRiskAssessmentPrompt(product, docs, safety, components, componentDocs);
-      const riskResponse = await invokeLLM({
+      const riskResponse = await invokeTenantLLM({
         messages: [
           {
             role: "system",
@@ -506,9 +498,7 @@ export const aiAnalysisService = {
         },
       });
 
-      const riskRaw = riskResponse.choices?.[0]?.message?.content ?? "{}";
-      const riskContent = typeof riskRaw === "string" ? riskRaw : JSON.stringify(riskRaw);
-      const parsed = JSON.parse(riskContent);
+      const parsed = JSON.parse(riskResponse.content);
 
       // ── Derive sub-scores ──────────────────────────────────────────────────
       const findings = parsed.findings ?? [];
@@ -537,7 +527,7 @@ export const aiAnalysisService = {
         documentAnalysis: documentAnalysis,
         emailTemplate: emailTemplate,
         analyzedDocumentIds: docs.map((d) => d.id),
-        modelUsed: "built-in",
+        modelUsed: riskResponse.model,
         completedAt: new Date(),
       } as any);
 
@@ -583,10 +573,17 @@ export const aiAnalysisService = {
   },
 
   /** Update AI analysis settings (admin only). */
-  async updateSettings(user: UserContext, settings: { apiKey?: string; enabled?: boolean }) {
+  async updateSettings(user: UserContext, settings: { apiKey?: string; provider?: string; enabled?: boolean }) {
     requireRole(user.complianceRole, ["administrator", "compliance_manager"]);
     if (settings.apiKey !== undefined) {
-      await upsertSystemSetting("openai_api_key", settings.apiKey);
+      await upsertSystemSetting("ai_api_key", settings.apiKey);
+    }
+    if (settings.provider !== undefined) {
+      const validProviders = ["openai", "anthropic", "gemini"];
+      if (!validProviders.includes(settings.provider)) {
+        throw Errors.validation(`Invalid provider. Must be one of: ${validProviders.join(", ")}`);
+      }
+      await upsertSystemSetting("ai_provider", settings.provider);
     }
     if (settings.enabled !== undefined) {
       await upsertSystemSetting("AI_ANALYSIS_ENABLED", String(settings.enabled));

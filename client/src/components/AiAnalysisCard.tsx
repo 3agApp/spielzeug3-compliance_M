@@ -517,6 +517,8 @@ export function AiAnalysisCard({ productId, canTrigger = false, supplierEmail, s
 
   const latestQuery = trpc.aiAnalysis.getLatest.useQuery({ productId });
   const historyQuery = trpc.aiAnalysis.getHistory.useQuery({ productId }, { enabled: showHistory });
+  const apiKeyStatusQuery = trpc.aiAnalysis.getApiKeyStatus.useQuery();
+  const aiConfigured = apiKeyStatusQuery.data?.configured ?? false;
   const utils = trpc.useUtils();
 
   const analyzeMutation = trpc.aiAnalysis.analyzeProduct.useMutation({
@@ -555,11 +557,17 @@ export function AiAnalysisCard({ productId, canTrigger = false, supplierEmail, s
               Checks each document against EU/Swiss legal requirements and performs an overall risk assessment.
             </p>
           </div>
+          {!aiConfigured && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 flex items-start gap-2 max-w-md text-left">
+              <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+              <span>No AI provider configured. Please add your API key under <strong>Settings → AI Analysis</strong> to enable AI features.</span>
+            </div>
+          )}
           {canTrigger && (
             <Button
               onClick={() => analyzeMutation.mutate({ productId })}
-              disabled={isRunning}
-              className="gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white"
+              disabled={isRunning || !aiConfigured}
+              className="gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white disabled:opacity-50"
             >
               {isRunning ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
               {isRunning ? "Analysing..." : "Start AI Analysis"}
@@ -631,9 +639,16 @@ export function AiAnalysisCard({ productId, canTrigger = false, supplierEmail, s
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => analyzeMutation.mutate({ productId })}
+                  onClick={() => {
+                    if (!aiConfigured) {
+                      toast.error("No AI provider configured. Please add your API key under Settings → AI Analysis.");
+                      return;
+                    }
+                    analyzeMutation.mutate({ productId });
+                  }}
                   disabled={isRunning}
-                  className="h-7 text-xs gap-1"
+                  title={!aiConfigured ? "No AI provider configured" : undefined}
+                  className={`h-7 text-xs gap-1 ${!aiConfigured ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
                   {isRunning ? <RefreshCw className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
                   {isRunning ? "Analysing..." : "Re-analyse"}

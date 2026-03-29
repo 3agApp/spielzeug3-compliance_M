@@ -62,19 +62,19 @@ function makeSupplierCtx(): TrpcContext {
 describe("aiAnalysis.saveApiKey", () => {
   it("allows administrator to save API key", async () => {
     const caller = appRouter.createCaller(makeCtx("administrator"));
-    const result = await caller.aiAnalysis.saveApiKey({ apiKey: "sk-test-1234567890" });
+    const result = await caller.aiAnalysis.saveApiKey({ apiKey: "sk-test-1234567890", provider: "openai" });
     expect(result.success).toBe(true);
   });
 
   it("allows compliance_manager to save API key", async () => {
     const caller = appRouter.createCaller(makeCtx("compliance_manager"));
-    const result = await caller.aiAnalysis.saveApiKey({ apiKey: "sk-test-1234567890" });
+    const result = await caller.aiAnalysis.saveApiKey({ apiKey: "sk-test-1234567890", provider: "anthropic" });
     expect(result.success).toBe(true);
   });
 
   it("rejects supplier from saving API key", async () => {
     const caller = appRouter.createCaller(makeSupplierCtx());
-    await expect(caller.aiAnalysis.saveApiKey({ apiKey: "sk-test-1234567890" })).rejects.toThrow();
+    await expect(caller.aiAnalysis.saveApiKey({ apiKey: "sk-test-1234567890", provider: "openai" })).rejects.toThrow();
   });
 });
 
@@ -95,14 +95,15 @@ describe("aiAnalysis.getApiKeyStatus", () => {
 
   it("returns masked key when key is stored", async () => {
     const { getSystemSetting } = await import("./db");
-    vi.mocked(getSystemSetting).mockResolvedValue({
-      id: 1,
-      settingKey: "openai_api_key",
-      settingValue: "sk-proj-abcdefghijklmnop1234",
-      isEncrypted: true,
-      updatedByUserId: 1,
-      updatedAt: new Date(),
-      createdAt: new Date(),
+    // Mock both ai_provider and ai_api_key settings
+    vi.mocked(getSystemSetting).mockImplementation(async (key: string) => {
+      if (key === "ai_provider") {
+        return { id: 1, settingKey: "ai_provider", settingValue: "openai", isEncrypted: false, updatedByUserId: 1, updatedAt: new Date(), createdAt: new Date() };
+      }
+      if (key === "ai_api_key") {
+        return { id: 2, settingKey: "ai_api_key", settingValue: "sk-proj-abcdefghijklmnop1234", isEncrypted: true, updatedByUserId: 1, updatedAt: new Date(), createdAt: new Date() };
+      }
+      return undefined;
     });
 
     const caller = appRouter.createCaller(makeCtx("administrator"));
@@ -112,6 +113,7 @@ describe("aiAnalysis.getApiKeyStatus", () => {
     // Should not expose the full key
     expect(result.maskedKey).not.toBe("sk-proj-abcdefghijklmnop1234");
     expect(result.maskedKey).toContain("*");
+    expect((result as any).provider).toBe("openai");
   });
 });
 

@@ -11,12 +11,18 @@ import { aiAnalysisService } from "../domains/ai/aiAnalysisService";
 import { toTRPCError } from "../shared";
 
 export const aiAnalysisRouter = router({
-  /** Save / update the OpenAI API key (admin only). */
+  /** Save / update the AI provider and API key (admin only). */
   saveApiKey: protectedProcedure
-    .input(z.object({ apiKey: z.string().min(10) }))
+    .input(z.object({
+      apiKey: z.string().min(10),
+      provider: z.enum(["openai", "anthropic", "gemini"]),
+    }))
     .mutation(async ({ ctx, input }) => {
       try {
-        return await aiAnalysisService.updateSettings(ctx.user as any, { apiKey: input.apiKey });
+        return await aiAnalysisService.updateSettings(ctx.user as any, {
+          apiKey: input.apiKey,
+          provider: input.provider,
+        });
       } catch (err) {
         throw toTRPCError(err);
       }
