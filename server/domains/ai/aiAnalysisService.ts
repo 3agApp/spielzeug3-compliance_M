@@ -32,6 +32,7 @@ import {
 import { invokeLLM } from "../../_core/llm";
 import { Errors, requireRole, assertSupplierOrInternal, ADMIN_ROLES } from "../../shared";
 import type { UserContext } from "../../shared/tenantGuard";
+import { extractDocumentText } from "./documentExtractor";
 
 // ─── Legal requirements per document type ─────────────────────────────────────
 
@@ -127,7 +128,7 @@ function getLegalRequirements(documentType: string): string {
  * is legally valid. Do NOT penalise a document for having "pending" review status.
  * Focus only on the document type, file name, standard references, and content.
  */
-export function buildDocumentAnalysisPrompt(product: any, docs: any[]): string {
+export function buildDocumentAnalysisPrompt(product: any, docs: any[], extractedTexts?: Map<number, string>): string {
   if (docs.length === 0) {
     return `You are a toy industry compliance expert (EN 71, CE, CPSIA, REACH, GPSR).
 No documents have been uploaded for product "${product.productName}".
@@ -140,6 +141,10 @@ Return a JSON analysis indicating that no documents are available.`;
       const expiryInfo = d.expiresAt
         ? `Expiry date on file: ${new Date(d.expiresAt).toISOString().slice(0, 10)}`
         : "No expiry date recorded";
+      const extractedText = extractedTexts?.get(d.id);
+      const contentSection = extractedText
+        ? `\nEXTRACTED DOCUMENT CONTENT (use this to evaluate the actual document):\n${extractedText}`
+        : `\nDOCUMENT CONTENT: (not available – evaluate based on file name and metadata only; be conservative and avoid assuming missing elements)`;
       return `
 --- DOCUMENT ${i + 1} ---
 ID: ${d.id}
@@ -148,6 +153,7 @@ File name: ${d.fileName ?? "–"}
 Standard referenced: ${d.standard ?? "not specified"}
 ${expiryInfo}
 Internal review status: ${d.reviewStatus} [NOTE: This is our internal workflow status, NOT a legal validity indicator. Do NOT penalise for "pending" status.]
+${contentSection}
 
 LEGAL REQUIREMENTS FOR THIS DOCUMENT TYPE:
 ${legalReqs}`;
@@ -364,7 +370,18 @@ export const aiAnalysisService = {
       let emailTemplate: any = null;
 
       if (docs.length > 0) {
-        const docPrompt = buildDocumentAnalysisPrompt(product, docs);
+        // Extract text from each document (PDF) in parallel
+        const extractedTexts = new Map<number, string>();
+        await Promise.all(
+          docs.map(async (doc) => {
+            const extracted = await extractDocumentText(doc.fileUrl, doc.fileName ?? "");
+            if (extracted.extractionStatus === "success" && extracted.text.trim().length > 50) {
+              extractedTexts.set(doc.id, extracted.text);
+            }
+          })
+        );
+
+        const docPrompt = buildDocumentAnalysisPrompt(product, docs, extractedTexts);
         const docResponse = await invokeLLM({
           messages: [
             {

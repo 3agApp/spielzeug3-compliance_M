@@ -731,3 +731,10 @@
 - [x] Frontend: Resend-Button in EmailLogRow (amber für failed, ghost für sent)
 - [x] Frontend: Toast-Meldung bei Erfolg/Fehler, automatisches Refetch der Liste
 - [x] 3 neue Tests für Resend-Szenario (231 Tests total, alle grün)
+
+## PDF-Inhalt in Document Analysis
+- [x] pdf-parse installieren für serverseitige Text-Extraktion
+- [x] documentExtractor.ts: PDF von S3-URL herunterladen, Text extrahieren (max. 12000 Zeichen) via pdftotext
+- [x] aiAnalysisService: Dokumentinhalt in Per-Dokument-Prompt einbinden
+- [x] Fallback: wenn PDF nicht extrahierbar, klar im Prompt kennzeichnen (konservative Bewertung)
+- [x] Prompt anpassen: KI analysiert tatsächlichen Inhalt, nicht nur Dateiname/Metadaten
