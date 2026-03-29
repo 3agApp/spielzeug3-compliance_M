@@ -462,13 +462,27 @@ function RiskAssessmentSection({ analysis }: { analysis: any }) {
 interface AiAnalysisCardProps {
   productId: number;
   canTrigger?: boolean;
+  supplierEmail?: string;
+  supplierName?: string;
 }
 
-export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCardProps) {
+export function AiAnalysisCard({ productId, canTrigger = false, supplierEmail, supplierName }: AiAnalysisCardProps) {
   const { lang } = useLang();
   const [showHistory, setShowHistory] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [combinedEmailOpen, setCombinedEmailOpen] = useState(false);
+  const [sendDialogOpen, setSendDialogOpen] = useState(false);
+  const [sendTo, setSendTo] = useState("");
+  const [sendSubject, setSendSubject] = useState("");
+  const [sendBody, setSendBody] = useState("");
+
+  const sendEmailMutation = trpc.email.sendManufacturerEmail.useMutation({
+    onSuccess: () => {
+      toast.success("Email sent successfully to manufacturer");
+      setSendDialogOpen(false);
+    },
+    onError: (e: any) => toast.error(e.message ?? "Failed to send email"),
+  });
 
   async function downloadPdf(analysisId?: number) {
     setIsDownloading(true);
@@ -578,15 +592,30 @@ export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCard
                 {analysis.modelUsed ?? "built-in"}
               </Badge>
               {hasEmailTemplate && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCombinedEmailOpen(true)}
-                  className="h-7 text-xs gap-1 border-blue-200 text-blue-700 hover:bg-blue-50"
-                >
-                  <Mail className="h-3 w-3" />
-                  Email to Manufacturer
-                </Button>
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCombinedEmailOpen(true)}
+                    className="h-7 text-xs gap-1 border-blue-200 text-blue-700 hover:bg-blue-50"
+                  >
+                    <Mail className="h-3 w-3" />
+                    Preview Email
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setSendTo(supplierEmail ?? "");
+                      setSendSubject(emailTemplate!.subject);
+                      setSendBody(emailTemplate!.body);
+                      setSendDialogOpen(true);
+                    }}
+                    className="h-7 text-xs gap-1 bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <Mail className="h-3 w-3" />
+                    Send to Manufacturer
+                  </Button>
+                </>
               )}
               <Button
                 variant="outline"
@@ -653,6 +682,77 @@ export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCard
           title="Email Template – All Issues"
         />
       )}
+
+      {/* Send Email Dialog */}
+      <Dialog open={sendDialogOpen} onOpenChange={setSendDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="h-4 w-4 text-blue-600" />
+              Send Email to Manufacturer
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            {/* Recipient */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Recipient</label>
+              <input
+                type="email"
+                value={sendTo}
+                onChange={(e) => setSendTo(e.target.value)}
+                placeholder="manufacturer@example.com"
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+              {supplierEmail && sendTo !== supplierEmail && (
+                <button
+                  type="button"
+                  onClick={() => setSendTo(supplierEmail)}
+                  className="text-xs text-blue-600 hover:underline"
+                >
+                  Use supplier email: {supplierEmail}
+                </button>
+              )}
+              {!supplierEmail && (
+                <p className="text-xs text-amber-600">
+                  No supplier email on file. Please enter the recipient address manually.
+                </p>
+              )}
+            </div>
+            {/* Subject */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Subject</label>
+              <input
+                type="text"
+                value={sendSubject}
+                onChange={(e) => setSendSubject(e.target.value)}
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            {/* Body preview */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Email Body (HTML)</label>
+              <div className="rounded-md border bg-white p-3 text-sm max-h-64 overflow-y-auto" dangerouslySetInnerHTML={{ __html: sendBody }} />
+            </div>
+            {/* Actions */}
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setSendDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  if (!sendTo) { toast.error("Please enter a recipient email address."); return; }
+                  sendEmailMutation.mutate({ to: sendTo, subject: sendSubject, htmlBody: sendBody });
+                }}
+                disabled={sendEmailMutation.isPending}
+                className="gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                {sendEmailMutation.isPending ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                Send Email
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* History */}
       <div>

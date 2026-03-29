@@ -677,3 +677,28 @@
 - [x] Frontend: E-Mail-Vorlage-Button pro Dokument (Clipboard-Copy + Vorschau-Dialog)
 - [x] Frontend: Gesamte E-Mail-Vorlage für alle Mängel kombiniert (ein Button für alle Dokumente)
 - [x] Frontend: Klarstellung "pending = interner Review-Status" in der Analyse-Anzeige
+
+## Emailit-Integration – E-Mail-Versand aus Document Analysis
+- [ ] Emailit API recherchieren (Endpunkt, Auth, HTML-Body-Format)
+- [ ] Backend: emailService.ts mit sendEmail(to, subject, htmlBody, apiKey, from)
+- [ ] Backend: Signatur aus DB laden und an HTML-Body anhängen
+- [ ] DB: system_settings Einträge für emailit_api_key, email_from_name, email_from_address, email_html_signature
+- [ ] tRPC: email.sendManufacturerEmail Mutation (productId, to, subject, body)
+- [ ] tRPC: email.getSettings / email.updateSettings (admin only)
+- [ ] tRPC: email.testConnection (sendet Test-E-Mail)
+- [ ] Frontend: Settings → neuer Tab "Email" mit API-Key, Absender, HTML-Signatur-Editor (Textarea für HTML-Code)
+- [ ] Frontend: "Send Email" Button in Document Analysis (pro Dokument + kombiniert)
+- [ ] Frontend: Send-Dialog mit Empfänger (aus Lieferant vorausgefüllt), Betreff, Vorschau, Senden-Button
+- [ ] Frontend: Versand-Bestätigung und Fehlerbehandlung
+
+## Emailit-Integration – E-Mail-Versand direkt aus Document Analysis
+- [x] Emailit API recherchiert (POST /emails, Bearer Auth, from/to/subject/html)
+- [x] emailService.ts: sendEmail, getSettings, updateSettings, sendTestEmail, sendManufacturerEmail
+- [x] emailRouter.ts: getSettings, updateSettings, testConnection, sendManufacturerEmail
+- [x] HTML-Signatur wird automatisch an alle ausgehenden E-Mails angehängt
+- [x] Settings → Email Tab: API-Key, Absender-Name, Absender-E-Mail, HTML-Signatur-Editor mit Vorschau
+- [x] Test-E-Mail-Funktion in Settings
+- [x] AiAnalysisCard: "Send to Manufacturer" Button öffnet Send-Dialog
+- [x] Send-Dialog: Empfänger (vorausgefüllt mit Lieferanten-E-Mail), Betreff, HTML-Vorschau, Senden
+- [x] supplierEmail aus getProductById zurückgeben und an AiAnalysisCard übergeben
+- [x] 9 neue Tests für emailService (228 Tests total, alle grün)

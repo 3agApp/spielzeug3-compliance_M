@@ -759,6 +759,8 @@ export default function ProductDetail() {
           <AiAnalysisCard
             productId={productId}
             canTrigger={["administrator", "compliance_manager", "internal_employee"].includes(role)}
+            supplierEmail={product?.supplierEmail ?? undefined}
+            supplierName={product?.supplierName ?? undefined}
           />
         </TabsContent>
 

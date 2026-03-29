@@ -26,8 +26,10 @@ import {
   ExternalLink,
   Info,
   Key,
+  Mail,
   RefreshCw,
   Save,
+  Send,
   Settings,
   Shield,
   Sparkles,
@@ -246,7 +248,7 @@ export default function AdminSettings() {
       </div>
 
       <Tabs defaultValue="kontor">
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="kontor" className="gap-1.5">
             <Database className="h-3.5 w-3.5" />
             Kontor ERP
@@ -274,6 +276,10 @@ export default function AdminSettings() {
           <TabsTrigger value="seal" className="gap-1.5">
             <Shield className="h-3.5 w-3.5" />
             {lang === "de" ? "Siegel" : "Seal"}
+          </TabsTrigger>
+          <TabsTrigger value="email" className="gap-1.5">
+            <Mail className="h-3.5 w-3.5" />
+            Email
           </TabsTrigger>
         </TabsList>
 
@@ -1180,6 +1186,11 @@ export default function AdminSettings() {
             </CardContent>
           </Card>
         </TabsContent>
+        {/* ── Email ── */}
+        <TabsContent value="email" className="space-y-4 mt-4">
+          <EmailSettingsTab />
+        </TabsContent>
+
       </Tabs>
     </div>
   );
@@ -1315,5 +1326,273 @@ function BunnyDocSettingsTab() {
         </CardContent>
       </Card>
     </TabsContent>
+  );
+}
+
+// ─── Email Settings Tab ───────────────────────────────────────────────────────
+
+function EmailSettingsTab() {
+  const { lang } = useLang();
+  const utils = trpc.useUtils();
+
+  const settingsQuery = trpc.email.getSettings.useQuery();
+
+  const [apiKey, setApiKey] = useState("");
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [fromName, setFromName] = useState("");
+  const [fromAddress, setFromAddress] = useState("");
+  const [htmlSignature, setHtmlSignature] = useState("");
+  const [testAddress, setTestAddress] = useState("");
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+
+  // Load existing settings once
+  const data = settingsQuery.data;
+  if (!settingsLoaded && data) {
+    setFromName(data.fromName ?? "");
+    setFromAddress(data.fromAddress ?? "");
+    setHtmlSignature(data.htmlSignature ?? "");
+    setSettingsLoaded(true);
+  }
+
+  const updateMutation = trpc.email.updateSettings.useMutation({
+    onSuccess: () => {
+      toast.success(lang === "de" ? "E-Mail-Einstellungen gespeichert" : "Email settings saved");
+      setApiKey("");
+      utils.email.getSettings.invalidate();
+    },
+    onError: (e: any) => toast.error(translateError(e.message, lang)),
+  });
+
+  const testMutation = trpc.email.testConnection.useMutation({
+    onSuccess: () => toast.success(lang === "de" ? "Test-E-Mail erfolgreich gesendet!" : "Test email sent successfully!"),
+    onError: (e: any) => toast.error(translateError(e.message, lang)),
+  });
+
+  function handleSave() {
+    const updates: Record<string, string> = {};
+    if (apiKey) updates.apiKey = apiKey;
+    if (fromName !== (data?.fromName ?? "")) updates.fromName = fromName;
+    if (fromAddress !== (data?.fromAddress ?? "")) updates.fromAddress = fromAddress;
+    if (htmlSignature !== (data?.htmlSignature ?? "")) updates.htmlSignature = htmlSignature;
+    if (Object.keys(updates).length === 0) {
+      toast.info(lang === "de" ? "Keine Änderungen erkannt." : "No changes detected.");
+      return;
+    }
+    updateMutation.mutate(updates);
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Status banner */}
+      <div className={`flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm ${data?.configured ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-800"}`}>
+        {data?.configured ? (
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
+        ) : (
+          <Info className="h-4 w-4 shrink-0" />
+        )}
+        {data?.configured
+          ? (lang === "de" ? "Emailit ist konfiguriert und bereit." : "Emailit is configured and ready.")
+          : (lang === "de" ? "Emailit ist noch nicht konfiguriert. Bitte API-Schlüssel und Absender-Adresse eingeben." : "Emailit is not yet configured. Please enter an API key and sender address.")}
+      </div>
+
+      {/* API Key */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Key className="h-4 w-4" />
+            {lang === "de" ? "Emailit API-Schlüssel" : "Emailit API Key"}
+          </CardTitle>
+          <CardDescription>
+            {lang === "de"
+              ? "Den API-Schlüssel finden Sie in Ihrem Emailit-Dashboard unter API Keys."
+              : "Find your API key in your Emailit dashboard under API Keys."}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {data?.maskedApiKey && (
+            <div className="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-2 text-sm font-mono text-muted-foreground">
+              <Key className="h-3.5 w-3.5 shrink-0" />
+              {data.maskedApiKey}
+              <Badge variant="outline" className="ml-auto text-xs text-emerald-700 bg-emerald-50 border-emerald-200">
+                {lang === "de" ? "Gespeichert" : "Saved"}
+              </Badge>
+            </div>
+          )}
+          <div className="space-y-1.5">
+            <Label htmlFor="emailit-key">
+              {data?.maskedApiKey
+                ? (lang === "de" ? "API-Schlüssel ersetzen" : "Replace API key")
+                : (lang === "de" ? "API-Schlüssel eingeben" : "Enter API key")}
+            </Label>
+            <div className="relative">
+              <Input
+                id="emailit-key"
+                type={showApiKey ? "text" : "password"}
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="em_live_..."
+                className="pr-10 font-mono text-sm"
+              />
+              <button
+                type="button"
+                onClick={() => setShowApiKey(!showApiKey)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {lang === "de" ? "Erhältlich unter" : "Available at"}{" "}
+              <a href="https://emailit.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                emailit.com
+              </a>{" "}
+              → {lang === "de" ? "Dashboard → API Keys" : "Dashboard → API Keys"}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Sender settings */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Mail className="h-4 w-4" />
+            {lang === "de" ? "Absender-Einstellungen" : "Sender Settings"}
+          </CardTitle>
+          <CardDescription>
+            {lang === "de"
+              ? "Die Absender-Adresse muss in Ihrem Emailit-Konto als verifizierte Domain hinterlegt sein."
+              : "The sender address must be registered as a verified domain in your Emailit account."}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="from-name">{lang === "de" ? "Absender-Name" : "Sender Name"}</Label>
+              <Input
+                id="from-name"
+                value={fromName}
+                onChange={(e) => setFromName(e.target.value)}
+                placeholder="spielzeug3 AG Compliance"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="from-address">{lang === "de" ? "Absender-E-Mail" : "Sender Email"}</Label>
+              <Input
+                id="from-address"
+                type="email"
+                value={fromAddress}
+                onChange={(e) => setFromAddress(e.target.value)}
+                placeholder="compliance@spielzeug3.ch"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* HTML Signature */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <FileSignature className="h-4 w-4" />
+            {lang === "de" ? "HTML-Signatur" : "HTML Signature"}
+          </CardTitle>
+          <CardDescription>
+            {lang === "de"
+              ? "Diese HTML-Signatur wird automatisch an alle ausgehenden E-Mails angehängt. HTML-Code direkt einfügen."
+              : "This HTML signature is automatically appended to all outgoing emails. Paste HTML code directly."}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="html-signature">
+              {lang === "de" ? "HTML-Code der Signatur" : "Signature HTML Code"}
+            </Label>
+            <textarea
+              id="html-signature"
+              value={htmlSignature}
+              onChange={(e) => setHtmlSignature(e.target.value)}
+              placeholder={`<table style="font-family:sans-serif;font-size:13px;color:#374151;">\n  <tr>\n    <td>\n      <strong>Max Mustermann</strong><br>\n      Compliance Manager<br>\n      spielzeug3 AG<br>\n      <a href="mailto:compliance@spielzeug3.ch">compliance@spielzeug3.ch</a>\n    </td>\n  </tr>\n</table>`}
+              rows={10}
+              className="w-full rounded-md border bg-background px-3 py-2 text-xs font-mono resize-y focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+            <p className="text-xs text-muted-foreground">
+              {lang === "de"
+                ? "Tipp: Verwenden Sie Inline-Styles für maximale E-Mail-Client-Kompatibilität."
+                : "Tip: Use inline styles for maximum email client compatibility."}
+            </p>
+          </div>
+
+          {/* Signature preview */}
+          {htmlSignature && (
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">
+                {lang === "de" ? "Vorschau" : "Preview"}
+              </Label>
+              <div
+                className="rounded-md border bg-white p-3 text-sm min-h-[60px]"
+                dangerouslySetInnerHTML={{ __html: htmlSignature }}
+              />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Test connection */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Send className="h-4 w-4" />
+            {lang === "de" ? "Verbindung testen" : "Test Connection"}
+          </CardTitle>
+          <CardDescription>
+            {lang === "de"
+              ? "Senden Sie eine Test-E-Mail, um die Konfiguration zu überprüfen."
+              : "Send a test email to verify the configuration."}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex gap-2">
+            <Input
+              type="email"
+              value={testAddress}
+              onChange={(e) => setTestAddress(e.target.value)}
+              placeholder={lang === "de" ? "test@beispiel.ch" : "test@example.com"}
+              className="flex-1"
+            />
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (!testAddress) {
+                  toast.error(lang === "de" ? "Bitte eine E-Mail-Adresse eingeben." : "Please enter an email address.");
+                  return;
+                }
+                testMutation.mutate({ toAddress: testAddress });
+              }}
+              disabled={testMutation.isPending || !data?.configured}
+              className="gap-2 shrink-0"
+            >
+              {testMutation.isPending ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              {lang === "de" ? "Test senden" : "Send Test"}
+            </Button>
+          </div>
+          {!data?.configured && (
+            <p className="text-xs text-amber-600">
+              {lang === "de"
+                ? "Bitte zuerst API-Schlüssel und Absender-Adresse speichern."
+                : "Please save API key and sender address first."}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Save button */}
+      <div className="flex justify-end">
+        <Button onClick={handleSave} disabled={updateMutation.isPending} className="gap-2">
+          {updateMutation.isPending ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+          {lang === "de" ? "Einstellungen speichern" : "Save Settings"}
+        </Button>
+      </div>
+    </div>
   );
 }

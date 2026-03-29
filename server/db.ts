@@ -235,7 +235,7 @@ export async function getProductById(id: number) {
     .limit(1);
   if (!rows[0]) return null;
   const { product: p, supplier: s } = rows[0];
-  return { ...p, supplierName: s?.name ?? null };
+  return { ...p, supplierName: s?.name ?? null, supplierEmail: s?.email ?? null };
 }
 
 export async function createProduct(data: typeof products.$inferInsert) {
