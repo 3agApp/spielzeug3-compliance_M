@@ -21,6 +21,7 @@ import { tenantRouter } from "./routers/tenant";
 import { sealAssetsRouter } from "./routers/sealAssets";
 import { productImagesRouter } from "./routers/productImages";
 import { emailRouter } from "./routers/email";
+import { emailLogsRouter } from "./routers/emailLogs";
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -51,6 +52,7 @@ export const appRouter = router({
   sealAssets: sealAssetsRouter,
   productImages: productImagesRouter,
   email: emailRouter,
+  emailLogs: emailLogsRouter,
 });
 
 export type AppRouter = typeof appRouter;

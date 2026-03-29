@@ -612,3 +612,20 @@ export const productRiskAssessments = mysqlTable("product_risk_assessments", {
 
 export type ProductRiskAssessment = typeof productRiskAssessments.$inferSelect;
 export type InsertProductRiskAssessment = typeof productRiskAssessments.$inferInsert;
+
+// ─── Email Logs ───────────────────────────────────────────────────────────────
+export const emailLogs = mysqlTable("email_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  productId: int("productId").notNull(),
+  to: varchar("to", { length: 320 }).notNull(),
+  subject: varchar("subject", { length: 500 }).notNull(),
+  htmlBody: text("htmlBody"),
+  sentAt: timestamp("sentAt").defaultNow().notNull(),
+  sentBy: varchar("sentBy", { length: 255 }),       // display name of the user who sent it
+  sentByUserId: int("sentByUserId"),
+  status: mysqlEnum("status", ["sent", "failed"]).default("sent").notNull(),
+  errorMessage: text("errorMessage"),
+  tenantId: int("tenantId").default(1).notNull(),
+});
+export type EmailLog = typeof emailLogs.$inferSelect;
+export type InsertEmailLog = typeof emailLogs.$inferInsert;

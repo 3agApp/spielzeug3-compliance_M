@@ -8,9 +8,14 @@
  * All outgoing emails automatically append the configured HTML signature.
  */
 
-import { getSystemSetting, upsertSystemSetting } from "../../db";
+import { getSystemSetting, upsertSystemSetting, createEmailLog } from "../../db";
 import { Errors, requireRole, ADMIN_ROLES } from "../../shared";
-import type { UserContext } from "../../shared/tenantGuard";
+import type { UserContext as BaseUserContext } from "../../shared/tenantGuard";
+
+type UserContext = BaseUserContext & {
+  name?: string | null;
+  email?: string | null;
+};
 
 const EMAILIT_API_URL = "https://api.emailit.com/v2/emails";
 
@@ -201,10 +206,12 @@ export const emailService = {
 
   /**
    * Send manufacturer email from Document Analysis.
+   * Logs the send attempt to email_logs for audit trail.
    */
   async sendManufacturerEmail(
     user: UserContext,
     params: {
+      productId: number;
       to: string;
       subject: string;
       htmlBody: string;
@@ -212,11 +219,38 @@ export const emailService = {
     }
   ): Promise<{ success: boolean; emailId?: string }> {
     requireRole(user.complianceRole, ADMIN_ROLES);
-    return this.sendEmail({
-      to: params.to,
-      subject: params.subject,
-      htmlBody: params.htmlBody,
-      replyTo: params.replyTo,
-    });
+    let status: "sent" | "failed" = "sent";
+    let errorMessage: string | undefined;
+    let result: { success: boolean; emailId?: string } | undefined;
+    try {
+      result = await this.sendEmail({
+        to: params.to,
+        subject: params.subject,
+        htmlBody: params.htmlBody,
+        replyTo: params.replyTo,
+      });
+    } catch (err) {
+      status = "failed";
+      errorMessage = err instanceof Error ? err.message : String(err);
+    }
+    // Always log the attempt (success or failure)
+    try {
+      await createEmailLog({
+        productId: params.productId,
+        to: params.to,
+        subject: params.subject,
+        htmlBody: params.htmlBody,
+        sentBy: user.name ?? user.email ?? "Unknown",
+        sentByUserId: typeof user.id === "number" ? user.id : undefined,
+        status,
+        errorMessage: errorMessage ?? null,
+        tenantId: typeof user.tenantId === "number" ? user.tenantId : 1,
+      });
+    } catch (logErr) {
+      // Non-critical – don't fail the send if logging fails
+      console.warn("[EmailLog] Failed to write email log:", logErr);
+    }
+    if (status === "failed") throw new Error(errorMessage);
+    return result!;
   },
 };

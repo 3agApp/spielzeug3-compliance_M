@@ -13,6 +13,7 @@ import { useLang} from "@/lib/i18n";
 import { translateError } from "@/lib/translateError";
 import { trpc } from "@/lib/trpc";
 import { AiAnalysisCard } from "@/components/AiAnalysisCard";
+import { EmailLogTab } from "@/components/EmailLogTab";
 import RiskAssessmentTab from "@/components/RiskAssessmentTab";
 import ComponentsTab from "@/components/ComponentsTab";
 import ProductImagesGallery from "@/components/ProductImagesGallery";
@@ -53,6 +54,7 @@ import {
   ImageIcon,
   Pencil,
   Camera,
+  Mail,
   X,
 } from "lucide-react";
 import { useRef, useState } from "react";
@@ -513,6 +515,12 @@ export default function ProductDetail() {
               {t.seal.title}
             </TabsTrigger>
           )}
+          {isInternalRole && (
+            <TabsTrigger value="email-log" className="gap-2">
+              <Mail className="h-4 w-4" />
+              {lang === "de" ? "E-Mail-Protokoll" : "Email Log"}
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* Images Tab */}
@@ -796,6 +804,12 @@ export default function ProductDetail() {
               isSupplier={role === "supplier"}
               onSealActivated={() => sealInfoQuery.refetch()}
             />
+          </TabsContent>
+        )}
+        {/* Email Log Tab */}
+        {isInternalRole && (
+          <TabsContent value="email-log" className="mt-4">
+            <EmailLogTab productId={productId} />
           </TabsContent>
         )}
        </Tabs>

@@ -702,3 +702,19 @@
 - [x] Send-Dialog: Empfänger (vorausgefüllt mit Lieferanten-E-Mail), Betreff, HTML-Vorschau, Senden
 - [x] supplierEmail aus getProductById zurückgeben und an AiAnalysisCard übergeben
 - [x] 9 neue Tests für emailService (228 Tests total, alle grün)
+
+## E-Mail-Versandprotokoll
+- [ ] DB: email_logs Tabelle (id, productId, to, subject, htmlBody, sentAt, sentBy, status, errorMessage)
+- [ ] Backend: E-Mail-Log beim Versand in emailService.sendManufacturerEmail speichern
+- [ ] Backend: emailLogs-Router mit getByProduct-Query
+- [ ] Frontend: "Email Log" Tab in Produktdetailseite
+- [ ] Frontend: Tabelle mit Zeitstempel, Empfänger, Betreff, Status-Badge, Body-Vorschau (aufklappbar)
+- [ ] Tests für emailLogs-Router
+
+## E-Mail-Versandprotokoll – Status
+- [x] DB: email_logs Tabelle (id, productId, to, subject, htmlBody, sentAt, sentBy, status, errorMessage)
+- [x] Backend: E-Mail-Log beim Versand in emailService.sendManufacturerEmail speichern
+- [x] Backend: emailLogs-Router mit getByProduct-Query
+- [x] Frontend: "Email Log" Tab in Produktdetailseite (nur für interne Rollen)
+- [x] Frontend: Tabelle mit Zeitstempel, Empfänger, Betreff, Status-Badge, Body-Vorschau (Dialog)
+- [x] productId in sendManufacturerEmail-Mutation übergeben

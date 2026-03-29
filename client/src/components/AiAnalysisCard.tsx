@@ -741,7 +741,7 @@ export function AiAnalysisCard({ productId, canTrigger = false, supplierEmail, s
               <Button
                 onClick={() => {
                   if (!sendTo) { toast.error("Please enter a recipient email address."); return; }
-                  sendEmailMutation.mutate({ to: sendTo, subject: sendSubject, htmlBody: sendBody });
+                  sendEmailMutation.mutate({ productId, to: sendTo, subject: sendSubject, htmlBody: sendBody });
                 }}
                 disabled={sendEmailMutation.isPending}
                 className="gap-2 bg-blue-600 hover:bg-blue-700 text-white"

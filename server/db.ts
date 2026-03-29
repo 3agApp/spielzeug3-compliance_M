@@ -22,6 +22,8 @@ import {
   suppliers,
   systemSettings,
   users,
+  emailLogs,
+  type InsertEmailLog,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -858,4 +860,23 @@ export async function cancelSignatureRequest(id: number) {
     .update(signatureRequests)
     .set({ status: "cancelled", updatedAt: new Date() })
     .where(eq(signatureRequests.id, id));
+}
+
+// ─── Email Logs ───────────────────────────────────────────────────────────────
+
+export async function createEmailLog(data: InsertEmailLog) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const result = await db.insert(emailLogs).values(data);
+  return result;
+}
+
+export async function getEmailLogsByProduct(productId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(emailLogs)
+    .where(eq(emailLogs.productId, productId))
+    .orderBy(desc(emailLogs.sentAt));
 }

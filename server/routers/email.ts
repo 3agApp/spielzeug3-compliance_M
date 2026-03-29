@@ -39,6 +39,7 @@ export const emailRouter = router({
   sendManufacturerEmail: protectedProcedure
     .input(
       z.object({
+        productId: z.number(),
         to: z.string().email(),
         subject: z.string().min(1),
         htmlBody: z.string().min(1),
