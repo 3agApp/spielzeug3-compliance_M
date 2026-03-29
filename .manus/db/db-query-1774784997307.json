@@ -1,0 +1,13 @@
+{
+  "query": "-- documentAnalysis already exists, only apply emailTemplate if not already added\nSELECT COUNT(*) as col_exists FROM information_schema.columns \nWHERE table_name = 'ai_analysis_results' AND column_name = 'emailTemplate';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user J1L9FvUd1r4oKv8.75a96d268c41 --database kgkV5LdecSJ3HqPv7WFR7a --execute -- documentAnalysis already exists, only apply emailTemplate if not already added\nSELECT COUNT(*) as col_exists FROM information_schema.columns \nWHERE table_name = 'ai_analysis_results' AND column_name = 'emailTemplate';",
+  "rows": [
+    {
+      "col_exists": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "col_exists\n1\n",
+  "stderr": "",
+  "execution_time_ms": 62
+}

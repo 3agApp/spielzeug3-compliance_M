@@ -668,3 +668,12 @@
 - [x] Frontend: Document Analysis zeigt jedes Dokument einzeln mit Score und Findings
 - [x] Frontend: Risk Assessment zeigt Gesamtrisiko, Summary, Recommendations
 - [x] Sprache: alle KI-Ausgaben auf Englisch (unabhängig von UI-Sprache)
+
+## Document Analysis – EU/CH Rechtskonformität & E-Mail-Vorlage
+- [x] Backend: Prompt mit konkreten EU/CH-Rechtsanforderungen pro Dokumenttyp (DoC: 2009/48/EC, EN 71; Test Report: akkreditiertes Labor, Normenabdeckung; Zertifikat: Aussteller, Gültigkeit)
+- [x] Backend: Dokument-Status "pending/approved/rejected" als internen Review-Status erklären (nicht als Compliance-Mangel werten)
+- [x] Backend: E-Mail-Vorlage pro Analyse generieren (kopierbarer Text mit konkreten Mängeln und Anforderungen an Hersteller)
+- [x] Backend: neues JSON-Feld emailTemplate in documentAnalysis-Ergebnis
+- [x] Frontend: E-Mail-Vorlage-Button pro Dokument (Clipboard-Copy + Vorschau-Dialog)
+- [x] Frontend: Gesamte E-Mail-Vorlage für alle Mängel kombiniert (ein Button für alle Dokumente)
+- [x] Frontend: Klarstellung "pending = interner Review-Status" in der Analyse-Anzeige

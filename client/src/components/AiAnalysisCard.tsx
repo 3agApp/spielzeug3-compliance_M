@@ -2,14 +2,21 @@
  * AiAnalysisCard.tsx
  * ─────────────────────────────────────────────────────────────────────────────
  * Two-section AI analysis view:
- *  1. Document Analysis  – per-document scores and issues
+ *  1. Document Analysis  – per-document EU/CH legal compliance check
  *  2. Risk Assessment    – overall product risk with findings and recommendations
  */
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
 import {
   AlertTriangle,
@@ -18,11 +25,14 @@ import {
   ChevronDown,
   ChevronUp,
   Clock,
+  Copy,
   Download,
   FileSearch,
   FileText,
   Info,
+  Mail,
   RefreshCw,
+  Scale,
   ShieldAlert,
   Sparkles,
   XCircle,
@@ -68,18 +78,11 @@ function ScoreRing({ score }: { score: number }) {
   return (
     <div className="relative inline-flex items-center justify-center">
       <svg width="100" height="100" className="-rotate-90">
+        <circle cx="50" cy="50" r={radius} fill="none" stroke="currentColor" strokeWidth="8" className="text-muted/30" />
         <circle
-          cx="50" cy="50" r={radius}
-          fill="none" stroke="currentColor" strokeWidth="8"
-          className="text-muted/30"
-        />
-        <circle
-          cx="50" cy="50" r={radius}
-          fill="none" strokeWidth="8"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-          className={c.stroke}
+          cx="50" cy="50" r={radius} fill="none" strokeWidth="8"
+          strokeDasharray={circumference} strokeDashoffset={offset}
+          strokeLinecap="round" className={c.stroke}
           style={{ transition: "stroke-dashoffset 0.8s ease" }}
         />
       </svg>
@@ -91,15 +94,7 @@ function ScoreRing({ score }: { score: number }) {
   );
 }
 
-function CategoryBar({
-  label,
-  score,
-  icon: Icon,
-}: {
-  label: string;
-  score: number;
-  icon: any;
-}) {
+function CategoryBar({ label, score, icon: Icon }: { label: string; score: number; icon: any }) {
   const c = scoreColor(score);
   return (
     <div className="space-y-1">
@@ -111,10 +106,7 @@ function CategoryBar({
         <span className={`font-semibold text-xs ${c.text}`}>{score}%</span>
       </div>
       <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all duration-700 ${c.bar}`}
-          style={{ width: `${score}%` }}
-        />
+        <div className={`h-full rounded-full transition-all duration-700 ${c.bar}`} style={{ width: `${score}%` }} />
       </div>
     </div>
   );
@@ -122,27 +114,19 @@ function CategoryBar({
 
 function findingIcon(type: string) {
   switch (type) {
-    case "critical":
-      return <XCircle className="h-4 w-4 text-red-500 shrink-0" />;
-    case "warning":
-      return <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />;
-    case "positive":
-      return <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />;
-    default:
-      return <Info className="h-4 w-4 text-blue-500 shrink-0" />;
+    case "critical": return <XCircle className="h-4 w-4 text-red-500 shrink-0" />;
+    case "warning": return <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />;
+    case "positive": return <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />;
+    default: return <Info className="h-4 w-4 text-blue-500 shrink-0" />;
   }
 }
 
 function findingBadgeClass(type: string) {
   switch (type) {
-    case "critical":
-      return "text-red-700 bg-red-50 border-red-200";
-    case "warning":
-      return "text-amber-700 bg-amber-50 border-amber-200";
-    case "positive":
-      return "text-emerald-700 bg-emerald-50 border-emerald-200";
-    default:
-      return "text-blue-700 bg-blue-50 border-blue-200";
+    case "critical": return "text-red-700 bg-red-50 border-red-200";
+    case "warning": return "text-amber-700 bg-amber-50 border-amber-200";
+    case "positive": return "text-emerald-700 bg-emerald-50 border-emerald-200";
+    default: return "text-blue-700 bg-blue-50 border-blue-200";
   }
 }
 
@@ -151,19 +135,19 @@ function docStatusBadge(status: string) {
     case "ok":
       return (
         <Badge variant="outline" className="text-xs text-emerald-700 bg-emerald-50 border-emerald-200">
-          <CheckCircle2 className="h-3 w-3 mr-1" /> OK
+          <CheckCircle2 className="h-3 w-3 mr-1" /> Compliant
         </Badge>
       );
     case "warning":
       return (
         <Badge variant="outline" className="text-xs text-amber-700 bg-amber-50 border-amber-200">
-          <AlertTriangle className="h-3 w-3 mr-1" /> Warning
+          <AlertTriangle className="h-3 w-3 mr-1" /> Incomplete
         </Badge>
       );
     case "critical":
       return (
         <Badge variant="outline" className="text-xs text-red-700 bg-red-50 border-red-200">
-          <XCircle className="h-3 w-3 mr-1" /> Critical
+          <XCircle className="h-3 w-3 mr-1" /> Non-Compliant
         </Badge>
       );
     default:
@@ -171,9 +155,73 @@ function docStatusBadge(status: string) {
   }
 }
 
+// ─── Email Template Dialog ────────────────────────────────────────────────────
+
+function EmailTemplateDialog({
+  open,
+  onClose,
+  subject,
+  body,
+  title,
+}: {
+  open: boolean;
+  onClose: () => void;
+  subject: string;
+  body: string;
+  title: string;
+}) {
+  const fullText = `Subject: ${subject}\n\n${body}`;
+
+  function copyToClipboard() {
+    navigator.clipboard.writeText(fullText).then(() => {
+      toast.success("Email template copied to clipboard");
+    });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Mail className="h-4 w-4 text-primary" />
+            {title}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="flex-1 overflow-hidden flex flex-col gap-3 min-h-0">
+          <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm">
+            <span className="font-medium text-muted-foreground">Subject: </span>
+            <span>{subject}</span>
+          </div>
+          <Textarea
+            className="flex-1 min-h-[300px] font-mono text-xs resize-none"
+            value={body}
+            readOnly
+          />
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" size="sm" onClick={onClose}>
+              Close
+            </Button>
+            <Button size="sm" onClick={copyToClipboard} className="gap-2">
+              <Copy className="h-3.5 w-3.5" />
+              Copy to Clipboard
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ─── Document Analysis Section ────────────────────────────────────────────────
 
 function DocumentAnalysisSection({ documentAnalysis }: { documentAnalysis: any[] }) {
+  const [emailDialog, setEmailDialog] = useState<{
+    open: boolean;
+    subject: string;
+    body: string;
+    docName: string;
+  }>({ open: false, subject: "", body: "", docName: "" });
+
   if (!documentAnalysis || documentAnalysis.length === 0) {
     return (
       <div className="py-8 flex flex-col items-center gap-3 text-center text-muted-foreground">
@@ -186,59 +234,135 @@ function DocumentAnalysisSection({ documentAnalysis }: { documentAnalysis: any[]
   }
 
   return (
-    <div className="space-y-3">
-      {documentAnalysis.map((doc: any, i: number) => {
-        const c = scoreColor(doc.score ?? 0);
-        return (
-          <Card key={i} className={`border ${c.border}`}>
-            <CardContent className="pt-4 pb-4">
-              <div className="flex items-start justify-between gap-3 flex-wrap">
-                <div className="flex items-start gap-3 flex-1 min-w-0">
-                  <FileText className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
-                  <div className="min-w-0">
-                    <p className="font-medium text-sm truncate">{doc.fileName || "–"}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{doc.documentType}</p>
+    <>
+      {/* Info banner about review status */}
+      <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs text-blue-800">
+        <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+        <span>
+          <strong>Note:</strong> The document status shown here (e.g. "pending") is our{" "}
+          <strong>internal review workflow status</strong> – it does not reflect the legal validity
+          of the document. The AI analysis below evaluates each document against EU/Swiss legal
+          requirements independently of the review status.
+        </span>
+      </div>
+
+      <div className="space-y-4">
+        {documentAnalysis.map((doc: any, i: number) => {
+          const c = scoreColor(doc.score ?? 0);
+          const hasEmail = !!doc.emailTemplate;
+          const hasIssues = (doc.issues?.length ?? 0) > 0;
+          const hasMissing = (doc.missingElements?.length ?? 0) > 0;
+
+          return (
+            <Card key={i} className={`border ${c.border}`}>
+              <CardContent className="pt-4 pb-4">
+                {/* Header row */}
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    <FileText className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm truncate">{doc.fileName || "–"}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {doc.documentType?.replace(/_/g, " ")}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                    {docStatusBadge(doc.status)}
+                    <span className={`text-sm font-bold ${c.text}`}>{doc.score ?? 0}/100</span>
+                    {hasEmail && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs gap-1 border-blue-200 text-blue-700 hover:bg-blue-50"
+                        onClick={() =>
+                          setEmailDialog({
+                            open: true,
+                            subject: `Compliance Documentation Request – ${doc.fileName}`,
+                            body: doc.emailTemplate,
+                            docName: doc.fileName,
+                          })
+                        }
+                      >
+                        <Mail className="h-3 w-3" />
+                        Email Template
+                      </Button>
+                    )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {docStatusBadge(doc.status)}
-                  <span className={`text-sm font-bold ${c.text}`}>{doc.score ?? 0}/100</span>
+
+                {/* Score bar */}
+                <div className="mt-3 h-1.5 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-700 ${c.bar}`}
+                    style={{ width: `${doc.score ?? 0}%` }}
+                  />
                 </div>
-              </div>
 
-              <div className="mt-3 h-1.5 rounded-full bg-muted overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-700 ${c.bar}`}
-                  style={{ width: `${doc.score ?? 0}%` }}
-                />
-              </div>
+                {/* Legal basis */}
+                {doc.legalBasis && (
+                  <div className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Scale className="h-3.5 w-3.5 shrink-0" />
+                    <span className="italic">{doc.legalBasis}</span>
+                  </div>
+                )}
 
-              {doc.positives && doc.positives.length > 0 && (
-                <ul className="mt-3 space-y-1">
-                  {doc.positives.map((p: string, j: number) => (
-                    <li key={j} className="flex items-start gap-2 text-xs text-emerald-700">
-                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                      {p}
-                    </li>
-                  ))}
-                </ul>
-              )}
+                {/* Positives */}
+                {doc.positives && doc.positives.length > 0 && (
+                  <ul className="mt-3 space-y-1">
+                    {doc.positives.map((p: string, j: number) => (
+                      <li key={j} className="flex items-start gap-2 text-xs text-emerald-700">
+                        <CheckCircle2 className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                        {p}
+                      </li>
+                    ))}
+                  </ul>
+                )}
 
-              {doc.issues && doc.issues.length > 0 && (
-                <ul className="mt-2 space-y-1">
-                  {doc.issues.map((issue: string, j: number) => (
-                    <li key={j} className="flex items-start gap-2 text-xs text-red-700">
-                      <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                      {issue}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-        );
-      })}
-    </div>
+                {/* Missing mandatory elements */}
+                {hasMissing && (
+                  <div className="mt-3">
+                    <p className="text-xs font-semibold text-red-700 mb-1.5 flex items-center gap-1">
+                      <XCircle className="h-3.5 w-3.5" />
+                      Missing mandatory elements:
+                    </p>
+                    <ul className="space-y-1">
+                      {doc.missingElements.map((el: string, j: number) => (
+                        <li key={j} className="flex items-start gap-2 text-xs text-red-700 bg-red-50 rounded px-2 py-1">
+                          <span className="shrink-0 font-bold">–</span>
+                          {el}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Issues */}
+                {hasIssues && (
+                  <ul className="mt-2 space-y-1">
+                    {doc.issues.map((issue: string, j: number) => (
+                      <li key={j} className="flex items-start gap-2 text-xs text-amber-700">
+                        <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                        {issue}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Email template dialog (per-document) */}
+      <EmailTemplateDialog
+        open={emailDialog.open}
+        onClose={() => setEmailDialog((s) => ({ ...s, open: false }))}
+        subject={emailDialog.subject}
+        body={emailDialog.body}
+        title={`Email Template – ${emailDialog.docName}`}
+      />
+    </>
   );
 }
 
@@ -290,24 +414,12 @@ function RiskAssessmentSection({ analysis }: { analysis: any }) {
             <p className="text-sm font-semibold">Findings ({findings.length})</p>
             <div className="space-y-2">
               {findings.map((f: any, i: number) => (
-                <div
-                  key={i}
-                  className="flex items-start gap-2.5 rounded-lg border p-3 text-sm"
-                >
+                <div key={i} className="flex items-start gap-2.5 rounded-lg border p-3 text-sm">
                   {findingIcon(f.type)}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                      <Badge
-                        variant="outline"
-                        className={`text-xs px-1.5 py-0 ${findingBadgeClass(f.type)}`}
-                      >
-                        {f.type === "critical"
-                          ? "Critical"
-                          : f.type === "warning"
-                          ? "Warning"
-                          : f.type === "positive"
-                          ? "Positive"
-                          : f.type}
+                      <Badge variant="outline" className={`text-xs px-1.5 py-0 ${findingBadgeClass(f.type)}`}>
+                        {f.type === "critical" ? "Critical" : f.type === "warning" ? "Warning" : f.type === "positive" ? "Positive" : f.type}
                       </Badge>
                     </div>
                     <p className="text-muted-foreground">{f.message}</p>
@@ -356,6 +468,7 @@ export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCard
   const { lang } = useLang();
   const [showHistory, setShowHistory] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [combinedEmailOpen, setCombinedEmailOpen] = useState(false);
 
   async function downloadPdf(analysisId?: number) {
     setIsDownloading(true);
@@ -389,10 +502,7 @@ export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCard
   }
 
   const latestQuery = trpc.aiAnalysis.getLatest.useQuery({ productId });
-  const historyQuery = trpc.aiAnalysis.getHistory.useQuery(
-    { productId },
-    { enabled: showHistory }
-  );
+  const historyQuery = trpc.aiAnalysis.getHistory.useQuery({ productId }, { enabled: showHistory });
   const utils = trpc.useUtils();
 
   const analyzeMutation = trpc.aiAnalysis.analyzeProduct.useMutation({
@@ -428,7 +538,7 @@ export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCard
           <div>
             <p className="font-medium">No analysis available yet</p>
             <p className="text-sm text-muted-foreground mt-1">
-              Analyzes each uploaded document individually and performs an overall risk assessment.
+              Checks each document against EU/Swiss legal requirements and performs an overall risk assessment.
             </p>
           </div>
           {canTrigger && (
@@ -437,11 +547,7 @@ export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCard
               disabled={isRunning}
               className="gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white"
             >
-              {isRunning ? (
-                <RefreshCw className="h-4 w-4 animate-spin" />
-              ) : (
-                <Sparkles className="h-4 w-4" />
-              )}
+              {isRunning ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
               {isRunning ? "Analysing..." : "Start AI Analysis"}
             </Button>
           )}
@@ -451,6 +557,8 @@ export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCard
   }
 
   const documentAnalysis = (analysis.documentAnalysis as any[] | null) ?? [];
+  const emailTemplate = analysis.emailTemplate as { subject: string; body: string } | null;
+  const hasEmailTemplate = !!emailTemplate?.body;
 
   return (
     <div className="space-y-4">
@@ -469,6 +577,17 @@ export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCard
               <Badge variant="outline" className="text-xs">
                 {analysis.modelUsed ?? "built-in"}
               </Badge>
+              {hasEmailTemplate && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCombinedEmailOpen(true)}
+                  className="h-7 text-xs gap-1 border-blue-200 text-blue-700 hover:bg-blue-50"
+                >
+                  <Mail className="h-3 w-3" />
+                  Email to Manufacturer
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -476,11 +595,7 @@ export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCard
                 disabled={isDownloading}
                 className="h-7 text-xs gap-1"
               >
-                {isDownloading ? (
-                  <RefreshCw className="h-3 w-3 animate-spin" />
-                ) : (
-                  <Download className="h-3 w-3" />
-                )}
+                {isDownloading ? <RefreshCw className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
                 Export PDF
               </Button>
               {canTrigger && (
@@ -491,11 +606,7 @@ export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCard
                   disabled={isRunning}
                   className="h-7 text-xs gap-1"
                 >
-                  {isRunning ? (
-                    <RefreshCw className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <RefreshCw className="h-3 w-3" />
-                  )}
+                  {isRunning ? <RefreshCw className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
                   {isRunning ? "Analysing..." : "Re-analyse"}
                 </Button>
               )}
@@ -532,6 +643,17 @@ export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCard
         </CardContent>
       </Card>
 
+      {/* Combined email template dialog */}
+      {hasEmailTemplate && (
+        <EmailTemplateDialog
+          open={combinedEmailOpen}
+          onClose={() => setCombinedEmailOpen(false)}
+          subject={emailTemplate!.subject}
+          body={emailTemplate!.body}
+          title="Email Template – All Issues"
+        />
+      )}
+
       {/* History */}
       <div>
         <Button
@@ -540,11 +662,7 @@ export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCard
           className="text-xs gap-1 text-muted-foreground"
           onClick={() => setShowHistory(!showHistory)}
         >
-          {showHistory ? (
-            <ChevronUp className="h-3.5 w-3.5" />
-          ) : (
-            <ChevronDown className="h-3.5 w-3.5" />
-          )}
+          {showHistory ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
           Analysis history ({showHistory ? "hide" : "show"})
         </Button>
 
@@ -553,27 +671,20 @@ export function AiAnalysisCard({ productId, canTrigger = false }: AiAnalysisCard
             {historyQuery.isLoading ? (
               <p className="text-xs text-muted-foreground px-2">Loading history...</p>
             ) : (historyQuery.data?.length ?? 0) <= 1 ? (
-              <p className="text-xs text-muted-foreground px-2">
-                No previous analyses available.
-              </p>
+              <p className="text-xs text-muted-foreground px-2">No previous analyses available.</p>
             ) : (
               historyQuery.data?.slice(1).map((h: any) => {
                 const s = Number(h.overallScore ?? 0);
                 const c = scoreColor(s);
                 return (
-                  <div
-                    key={h.id}
-                    className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm"
-                  >
+                  <div key={h.id} className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm">
                     <span className="text-muted-foreground flex items-center gap-1.5">
                       <Clock className="h-3.5 w-3.5" />
                       {new Date(h.createdAt).toLocaleString("en-GB")}
                     </span>
                     <div className="flex items-center gap-2">
                       <span className={`font-semibold text-xs ${c.text}`}>{s}%</span>
-                      <Badge variant="outline" className="text-xs">
-                        {h.modelUsed ?? "built-in"}
-                      </Badge>
+                      <Badge variant="outline" className="text-xs">{h.modelUsed ?? "built-in"}</Badge>
                     </div>
                   </div>
                 );
