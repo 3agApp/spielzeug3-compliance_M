@@ -1,0 +1,16 @@
+{
+  "query": "SELECT id, name, country, kontorId FROM suppliers WHERE name LIKE '%Magna%' OR name LIKE '%magna%' LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user J1L9FvUd1r4oKv8.75a96d268c41 --database kgkV5LdecSJ3HqPv7WFR7a --execute SELECT id, name, country, kontorId FROM suppliers WHERE name LIKE '%Magna%' OR name LIKE '%magna%' LIMIT 5;",
+  "rows": [
+    {
+      "id": "30001",
+      "name": "MAGNA-TILES",
+      "country": "US",
+      "kontorId": "101"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tcountry\tkontorId\n30001\tMAGNA-TILES\tUS\t101\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}

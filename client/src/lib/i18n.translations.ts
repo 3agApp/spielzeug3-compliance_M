@@ -176,6 +176,12 @@ export const translations: Record<Language, any> = {
       confirmData: "Daten bestätigen",
       submitForReview: "Zur Prüfung einreichen",
       notFound: "Produkt nicht gefunden.",
+      template: "Vorlage",
+      selectSupplier: "Lieferant auswählen",
+      selectCategory: "Kategorie auswählen",
+      selectTemplate: "Vorlage auswählen",
+      noTemplate: "Keine Vorlage",
+      noCategory: "Keine Kategorie",
     },
     // Safety form
     safety: {
@@ -1122,6 +1128,12 @@ export const translations: Record<Language, any> = {
       confirmData: "Confirm data",
       submitForReview: "Submit for Review",
       notFound: "Product not found.",
+      template: "Template",
+      selectSupplier: "Select Supplier",
+      selectCategory: "Select Category",
+      selectTemplate: "Select Template",
+      noTemplate: "No Template",
+      noCategory: "No Category",
     },
     // Seal
     safety: {

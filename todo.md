@@ -620,3 +620,9 @@
 - [x] Optionale Dokumente: Bedienungsanleitung, Produktbild, Regulatorisches Dokument
 - [x] Pflichtfelder: Sicherheitshinweis, Warnhinweis, Altersfreigabe, Materialinfos, Verwendungsbeschränkungen
 - [x] Vorlage in Portal unter /admin/templates → Kategorie "Magnetspielzeug" sichtbar
+
+## Produkt-Bearbeiten-Dialog & Lieferant-Zuweisung
+- [x] Lieferant Magna-Tiles (supplierId) für Produkt MT4300 in der DB gesetzt (supplierId=30001)
+- [x] Bearbeiten-Dialog in Produktdetailseite: alle Stammdaten editierbar (Name, interne Artikelnummer, Lieferanten-Artikelnummer, Bestellnummer, EAN, Marke, Lieferant-Dropdown, Kategorie, Vorlage)
+- [x] Backend: products.update Mutation um supplierId, categoryId, templateId, kontorId erweitert
+- [x] Frontend: "Bearbeiten"-Button im Produkt-Header öffnet Dialog mit allen Feldern

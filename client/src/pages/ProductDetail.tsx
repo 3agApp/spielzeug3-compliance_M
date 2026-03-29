@@ -49,6 +49,7 @@ import {
   Globe,
   GlobeLock,
   ImageIcon,
+  Pencil,
 } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
@@ -121,6 +122,87 @@ export default function ProductDetail() {
     },
     onError: (e) => toast.error(translateError(e.message, t)),
   });
+
+  // ─── Edit Product Dialog ────────────────────────────────────────────────────
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editForm, setEditForm] = useState<{
+    productName: string;
+    internalArticleNumber: string;
+    supplierArticleNumber: string;
+    orderNumber: string;
+    ean: string;
+    brand: string;
+    supplierId: string;
+    categoryId: string;
+    templateId: string;
+    kontorId: string;
+  }>({
+    productName: "",
+    internalArticleNumber: "",
+    supplierArticleNumber: "",
+    orderNumber: "",
+    ean: "",
+    brand: "",
+    supplierId: "",
+    categoryId: "",
+    templateId: "",
+    kontorId: "",
+  });
+
+  const suppliersQuery = trpc.suppliers.list.useQuery(
+    undefined,
+    { enabled: showEditDialog }
+  );
+  const categoriesQuery = trpc.templates.listCategories.useQuery(
+    undefined,
+    { enabled: showEditDialog }
+  );
+  const templatesQuery = trpc.templates.listTemplates.useQuery(
+    { categoryId: editForm.categoryId ? parseInt(editForm.categoryId) : undefined },
+    { enabled: showEditDialog }
+  );
+
+  const updateProductMutation = trpc.products.update.useMutation({
+    onSuccess: () => {
+      toast.success(lang === "de" ? "Produkt gespeichert." : "Product saved.");
+      setShowEditDialog(false);
+      utils.products.getById.invalidate({ id: productId });
+    },
+    onError: (e) => toast.error(translateError(e.message, t)),
+  });
+
+  function openEditDialog() {
+    if (!product) return;
+    setEditForm({
+      productName: product.productName ?? "",
+      internalArticleNumber: product.internalArticleNumber ?? "",
+      supplierArticleNumber: product.supplierArticleNumber ?? "",
+      orderNumber: product.orderNumber ?? "",
+      ean: product.ean ?? "",
+      brand: product.brand ?? "",
+      supplierId: product.supplierId ? String(product.supplierId) : "",
+      categoryId: product.categoryId ? String(product.categoryId) : "",
+      templateId: product.templateId ? String(product.templateId) : "",
+      kontorId: product.kontorId ?? "",
+    });
+    setShowEditDialog(true);
+  }
+
+  function handleEditSave() {
+    updateProductMutation.mutate({
+      id: productId,
+      productName: editForm.productName || undefined,
+      internalArticleNumber: editForm.internalArticleNumber || undefined,
+      supplierArticleNumber: editForm.supplierArticleNumber || undefined,
+      orderNumber: editForm.orderNumber || undefined,
+      ean: editForm.ean || undefined,
+      brand: editForm.brand || undefined,
+      supplierId: editForm.supplierId ? parseInt(editForm.supplierId) : undefined,
+      categoryId: editForm.categoryId ? parseInt(editForm.categoryId) : null,
+      templateId: editForm.templateId ? parseInt(editForm.templateId) : null,
+      kontorId: editForm.kontorId || undefined,
+    });
+  }
 
   // Delete document state
   const [deleteDocId, setDeleteDocId] = useState<number | null>(null);
@@ -259,15 +341,26 @@ export default function ProductDetail() {
           </div>
           <div className="flex flex-col items-end gap-2">
             {isInternalRole && ["administrator", "compliance_manager"].includes(role) && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
-                onClick={() => setShowDeleteProductDialog(true)}
-              >
-                <Trash2 className="h-4 w-4" />
-                {lang === "de" ? "Löschen" : "Delete"}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={openEditDialog}
+                >
+                  <Pencil className="h-4 w-4" />
+                  {t.product.editProduct}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
+                  onClick={() => setShowDeleteProductDialog(true)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  {lang === "de" ? "Löschen" : "Delete"}
+                </Button>
+              </div>
             )}
             {canSubmit && (
               <>
@@ -685,6 +778,155 @@ export default function ProductDetail() {
           </TabsContent>
         )}
        </Tabs>
+
+      {/* Edit Product Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="h-5 w-5" />
+              {t.product.editProduct}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2">
+            {/* Produktname */}
+            <div className="sm:col-span-2">
+              <Label>{t.product.productName}</Label>
+              <Input
+                className="mt-1"
+                value={editForm.productName}
+                onChange={(e) => setEditForm((f) => ({ ...f, productName: e.target.value }))}
+              />
+            </div>
+            {/* Interne Artikelnummer */}
+            <div>
+              <Label>{t.product.internalArticleNumber}</Label>
+              <Input
+                className="mt-1"
+                value={editForm.internalArticleNumber}
+                onChange={(e) => setEditForm((f) => ({ ...f, internalArticleNumber: e.target.value }))}
+              />
+            </div>
+            {/* Lieferanten-Artikelnummer */}
+            <div>
+              <Label>{t.product.supplierArticleNumber}</Label>
+              <Input
+                className="mt-1"
+                value={editForm.supplierArticleNumber}
+                onChange={(e) => setEditForm((f) => ({ ...f, supplierArticleNumber: e.target.value }))}
+              />
+            </div>
+            {/* Bestellnummer */}
+            <div>
+              <Label>{t.product.orderNumber}</Label>
+              <Input
+                className="mt-1"
+                value={editForm.orderNumber}
+                onChange={(e) => setEditForm((f) => ({ ...f, orderNumber: e.target.value }))}
+              />
+            </div>
+            {/* EAN */}
+            <div>
+              <Label>EAN</Label>
+              <Input
+                className="mt-1"
+                value={editForm.ean}
+                onChange={(e) => setEditForm((f) => ({ ...f, ean: e.target.value }))}
+              />
+            </div>
+            {/* Marke */}
+            <div>
+              <Label>{t.product.brand}</Label>
+              <Input
+                className="mt-1"
+                value={editForm.brand}
+                onChange={(e) => setEditForm((f) => ({ ...f, brand: e.target.value }))}
+              />
+            </div>
+            {/* Kontor-ID */}
+            <div>
+              <Label>{lang === "de" ? "Kontor-ID" : "Kontor ID"}</Label>
+              <Input
+                className="mt-1"
+                value={editForm.kontorId}
+                onChange={(e) => setEditForm((f) => ({ ...f, kontorId: e.target.value }))}
+              />
+            </div>
+            {/* Lieferant */}
+            <div className="sm:col-span-2">
+              <Label>{t.product.supplier}</Label>
+              <Select
+                value={editForm.supplierId}
+                onValueChange={(v) => setEditForm((f) => ({ ...f, supplierId: v }))}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder={t.product.selectSupplier} />
+                </SelectTrigger>
+                <SelectContent>
+                  {suppliersQuery.data?.map((s: any) => (
+                    <SelectItem key={s.id} value={String(s.id)}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {/* Kategorie */}
+            <div>
+              <Label>{t.product.category}</Label>
+              <Select
+                value={editForm.categoryId}
+                onValueChange={(v) => setEditForm((f) => ({ ...f, categoryId: v, templateId: "" }))}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder={t.product.selectCategory} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">{t.product.noCategory}</SelectItem>
+                  {categoriesQuery.data?.map((c: any) => (
+                    <SelectItem key={c.id} value={String(c.id)}>
+                      {lang === "de" ? c.labelDe : c.labelEn}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {/* Vorlage */}
+            <div>
+              <Label>{t.product.template}</Label>
+              <Select
+                value={editForm.templateId}
+                onValueChange={(v) => setEditForm((f) => ({ ...f, templateId: v }))}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder={t.product.selectTemplate} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">{t.product.noTemplate}</SelectItem>
+                  {templatesQuery.data?.map((tpl: any) => (
+                    <SelectItem key={tpl.id} value={String(tpl.id)}>
+                      {tpl.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter className="mt-2">
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+              {t.action.cancel}
+            </Button>
+            <Button
+              onClick={handleEditSave}
+              disabled={updateProductMutation.isPending}
+            >
+              {updateProductMutation.isPending
+                ? (lang === "de" ? "Speichern..." : "Saving...")
+                : t.action.saveChanges}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Product Confirmation Dialog */}
       <Dialog open={showDeleteProductDialog} onOpenChange={setShowDeleteProductDialog}>

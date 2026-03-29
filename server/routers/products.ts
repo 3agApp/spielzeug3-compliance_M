@@ -228,6 +228,10 @@ export const productsRouter = router({
         imageUrl: z.string().optional(),
         assignedInternalUserId: z.number().optional(),
         assignedSupplierUserId: z.number().optional(),
+        supplierId: z.number().optional(),
+        categoryId: z.number().nullable().optional(),
+        templateId: z.number().nullable().optional(),
+        kontorId: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {

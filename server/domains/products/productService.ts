@@ -71,6 +71,10 @@ export interface UpdateProductInput {
   targetMarket?: string;
   ageGroup?: string;
   sealStatusOverride?: string | null;
+  supplierId?: number;
+  categoryId?: number | null;
+  templateId?: number | null;
+  kontorId?: string;
 }
 
 export interface WorkflowActionInput {
