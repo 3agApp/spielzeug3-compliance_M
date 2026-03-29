@@ -473,20 +473,44 @@ function FindingCard({ f, index }: { f: any; index: number }) {
 }
 
 function RiskAssessmentSection({ analysis }: { analysis: any }) {
+  const { lang } = useLang();
+  const needsTranslation = lang !== "en" && !!analysis?.id;
+
+  const translationQuery = trpc.translate.aiAnalysis.useQuery(
+    { analysisId: analysis?.id ?? 0, targetLang: lang as any },
+    { enabled: needsTranslation }
+  );
+
+  // Use translated data if available, otherwise fall back to original
+  const translated = needsTranslation ? translationQuery.data : null;
+  const isTranslating = needsTranslation && translationQuery.isLoading;
+
   const overall = Number(analysis.overallScore ?? 0);
   const docScore = Number(analysis.documentCompletenessScore ?? 0);
   const contentScore = Number(analysis.contentPlausibilityScore ?? 0);
   const formalScore = Number(analysis.formalCorrectnessScore ?? 0);
   const consistencyScore = Number(analysis.consistencyScore ?? 0);
-  const findings = (analysis.findings as any[] | null) ?? [];
-  const recommendations = (analysis.recommendations as string[] | null) ?? [];
+  const findings = (translated?.findings ?? analysis.findings as any[] | null) ?? [];
+  const recommendations = (translated?.recommendations ?? analysis.recommendations as string[] | null) ?? [];
+  const summary = translated?.summary ?? analysis.summary;
   const overallColor = scoreColor(overall);
-  const scoreReasons = (analysis as any).scoreReasons as {
+  const rawScoreReasons = (translated?.scoreReasons ?? (analysis as any).scoreReasons) as {
+    documentCompletenessReason?: string | null;
+    contentPlausibilityReason?: string | null;
+    formalCorrectnessReason?: string | null;
+    consistencyReason?: string | null;
+    // legacy field names
     documentCompleteness?: string | null;
     contentPlausibility?: string | null;
     formalCorrectness?: string | null;
     consistency?: string | null;
   } | null;
+  const scoreReasons = rawScoreReasons ? {
+    documentCompleteness: rawScoreReasons.documentCompletenessReason ?? rawScoreReasons.documentCompleteness,
+    contentPlausibility: rawScoreReasons.contentPlausibilityReason ?? rawScoreReasons.contentPlausibility,
+    formalCorrectness: rawScoreReasons.formalCorrectnessReason ?? rawScoreReasons.formalCorrectness,
+    consistency: rawScoreReasons.consistencyReason ?? rawScoreReasons.consistency,
+  } : null;
 
   return (
     <div className="space-y-5">
@@ -502,9 +526,20 @@ function RiskAssessmentSection({ analysis }: { analysis: any }) {
         </div>
 
         <div className="flex-1 space-y-4">
-          {analysis.summary && (
+          {isTranslating && (
+            <div className="rounded-lg p-3 text-sm bg-muted/50 border border-border flex items-center gap-2 text-muted-foreground">
+              <RefreshCw className="h-3.5 w-3.5 animate-spin shrink-0" />
+              <span>Translating analysis to German…</span>
+            </div>
+          )}
+          {summary && !isTranslating && (
             <div className={`rounded-lg p-3 text-sm ${overallColor.bg} ${overallColor.border} border`}>
-              <p className={overallColor.text}>{analysis.summary}</p>
+              <p className={overallColor.text}>{summary}</p>
+              {translated && (
+                <p className="text-xs mt-1.5 opacity-60 flex items-center gap-1">
+                  🌐 Translated from English
+                </p>
+              )}
             </div>
           )}
 

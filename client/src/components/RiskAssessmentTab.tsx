@@ -203,8 +203,23 @@ export default function RiskAssessmentTab({ productId, isInternalRole }: Props) 
   });
 
   const latest = latestQuery.data;
-  const risks: RiskItem[] = Array.isArray(latest?.risks) ? (latest.risks as RiskItem[]) : [];
-  const missingInfo: string[] = Array.isArray(latest?.missingInfo) ? (latest.missingInfo as string[]) : [];
+
+  // On-the-fly translation when UI is set to German (or other non-English language)
+  const needsTranslation = lang !== "en" && !!latest?.id;
+  const translationQuery = trpc.translate.riskAssessment.useQuery(
+    { assessmentId: latest?.id ?? 0, targetLang: lang as any },
+    { enabled: needsTranslation }
+  );
+  const translated = needsTranslation ? translationQuery.data : null;
+  const isTranslating = needsTranslation && translationQuery.isLoading;
+
+  const risks: RiskItem[] = Array.isArray(translated?.risks ?? latest?.risks)
+    ? ((translated?.risks ?? latest?.risks) as RiskItem[])
+    : [];
+  const missingInfo: string[] = Array.isArray(translated?.missingInfo ?? latest?.missingInfo)
+    ? ((translated?.missingInfo ?? latest?.missingInfo) as string[])
+    : [];
+  const displaySummary = translated?.summary ?? latest?.summary;
 
   const t = {
     title:          lang === "de" ? "KI-Risikobewertung" : "AI Risk Assessment",
@@ -345,7 +360,19 @@ export default function RiskAssessmentTab({ productId, isInternalRole }: Props) 
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm leading-relaxed">{latest.summary}</p>
+                {isTranslating ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <span>{lang === "de" ? "Übersetzung wird geladen…" : "Loading translation…"}</span>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm leading-relaxed">{displaySummary}</p>
+                    {translated && (
+                      <p className="text-xs text-muted-foreground mt-1 opacity-70">🌐 {lang === "de" ? "Übersetzt aus dem Englischen" : "Translated from English"}</p>
+                    )}
+                  </>
+                )}
                 <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">
                   <Clock className="h-3 w-3" />
                   {t.createdAt}: {new Date(latest.createdAt).toLocaleString()}

@@ -832,3 +832,18 @@
 - [x] riskAssessmentService.ts buildRiskPrompt: vollständig auf Englisch umgeschrieben (Prompt-Text, Kategorienamen, Beispiele)
 - [x] System-Prompts in allen 4 LLM-Aufrufen: "ALL text values MUST be in English" hinzugefügt
 - [x] Tests: deutsche Prompt-Assertions auf englische aktualisiert (255 Tests, alle grün)
+
+## KI-Analyse Übersetzung (Option A: on-the-fly mit Cache)
+- [x] DB: ai_analysis_translations Tabelle (analysisId, targetLang, translatedData JSON, createdAt) + Index
+- [x] DB: risk_assessment_translations Tabelle (assessmentId, targetLang, translatedData JSON, createdAt) + Index
+- [x] DB: Migration ausgeführt (CREATE TABLE IF NOT EXISTS)
+- [x] Backend: translationService.ts – LLM-basierte Übersetzung mit Cache-Check (DB-first)
+- [x] Backend: tRPC translate.aiAnalysis Query (analysisId, targetLang) mit Cache-Check
+- [x] Backend: tRPC translate.riskAssessment Query (assessmentId, targetLang) mit Cache-Check
+- [x] Backend: Unterstützte Sprachen: de, fr, it, es (Englisch bleibt Quelle)
+- [x] Frontend: AiAnalysisCard RiskAssessmentSection – bei Sprache != "en" automatisch Übersetzung laden
+- [x] Frontend: RiskAssessmentTab – Summary, Risks und missingInfo werden übersetzt angezeigt
+- [x] Frontend: Lade-Spinner während Übersetzung läuft ("Translating analysis to German…")
+- [x] Frontend: "🌐 Übersetzt aus dem Englischen" Badge nach erfolgreicher Übersetzung
+- [x] Frontend: Fallback auf englische Originaldaten wenn Übersetzung nicht verfügbar
+- [x] Tests für translationService und translate-Router (8 neue Tests, 263 Tests total, alle grün)

@@ -668,3 +668,25 @@ export const labellingCheckImages = mysqlTable("labelling_check_images", {
 });
 export type LabellingCheckImage = typeof labellingCheckImages.$inferSelect;
 export type InsertLabellingCheckImage = typeof labellingCheckImages.$inferInsert;
+
+// ─── AI Analysis Translations (cache) ────────────────────────────────────────────────
+export const aiAnalysisTranslations = mysqlTable("ai_analysis_translations", {
+  id: int("id").autoincrement().primaryKey(),
+  analysisId: int("analysis_id").notNull(),
+  targetLang: varchar("target_lang", { length: 8 }).notNull(),
+  translatedData: json("translated_data").notNull(),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+});
+export type AiAnalysisTranslation = typeof aiAnalysisTranslations.$inferSelect;
+export type InsertAiAnalysisTranslation = typeof aiAnalysisTranslations.$inferInsert;
+
+// ─── Risk Assessment Translations (cache) ──────────────────────────────────────────
+export const riskAssessmentTranslations = mysqlTable("risk_assessment_translations", {
+  id: int("id").autoincrement().primaryKey(),
+  assessmentId: int("assessment_id").notNull(),
+  targetLang: varchar("target_lang", { length: 8 }).notNull(),
+  translatedData: json("translated_data").notNull(),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+});
+export type RiskAssessmentTranslation = typeof riskAssessmentTranslations.$inferSelect;
+export type InsertRiskAssessmentTranslation = typeof riskAssessmentTranslations.$inferInsert;
