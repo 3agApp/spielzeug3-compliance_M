@@ -52,6 +52,8 @@ import {
   GlobeLock,
   ImageIcon,
   Pencil,
+  Camera,
+  X,
 } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
@@ -2404,6 +2406,46 @@ function BatchUploadCard({ productId, product, role, isOperator, t, existingDocu
 
 // ─── Safety Data Cardd ────────────────────────────────────────────────────────
 function SafetyDataCard({ productId, safety, role, t, onSuccess }: any) {
+  const utils = trpc.useUtils();
+  const safetyImgRef = useRef<HTMLInputElement>(null);
+  const [imgUploading, setImgUploading] = useState(false);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+
+  const uploadSafetyImageMutation = trpc.safety.uploadSafetyImage.useMutation({
+    onSuccess: () => {
+      utils.safety.getByProduct.invalidate({ productId });
+      toast.success("Sicherheitsbild hochgeladen.");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const deleteSafetyImageMutation = trpc.safety.deleteSafetyImage.useMutation({
+    onSuccess: () => {
+      utils.safety.getByProduct.invalidate({ productId });
+      toast.success("Sicherheitsbild entfernt.");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const handleSafetyImageUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setImgUploading(true);
+    for (const file of Array.from(files)) {
+      if (!file.type.startsWith("image/")) { toast.error("Nur Bilddateien erlaubt."); continue; }
+      if (file.size > 8 * 1024 * 1024) { toast.error("Datei zu groß (max. 8 MB)."); continue; }
+      const reader = new FileReader();
+      await new Promise<void>((resolve) => {
+        reader.onload = async () => {
+          const base64 = (reader.result as string).replace(/^data:[^;]+;base64,/, "");
+          await uploadSafetyImageMutation.mutateAsync({ productId, fileName: file.name, mimeType: file.type, base64 });
+          resolve();
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+    setImgUploading(false);
+  };
+
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
     safetyText: safety?.safetyText ?? "",
@@ -2426,6 +2468,7 @@ function SafetyDataCard({ productId, safety, role, t, onSuccess }: any) {
    const isOperator = ["administrator", "compliance_manager", "internal_employee", "super_admin"].includes(role);
   const canEdit = role === "supplier" || isOperator;
   return (
+    <>
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-3">
         <div className="flex items-center gap-2">
@@ -2470,24 +2513,115 @@ function SafetyDataCard({ productId, safety, role, t, onSuccess }: any) {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-            {Object.entries({
-              safetyText: safety?.safetyText,
-              warningText: safety?.warningText,
-              ageGrading: safety?.ageGrading,
-              materialInformation: safety?.materialInformation,
-              usageRestrictions: safety?.usageRestrictions,
-              safetyNotes: safety?.safetyNotes,
-            }).map(([key, value]) => (
-              <div key={key}>
-                <p className="text-xs text-muted-foreground">{(t.safety as any)[key] ?? key}</p>
-                <p className="mt-0.5">{(value as string) || "–"}</p>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+              {Object.entries({
+                safetyText: safety?.safetyText,
+                warningText: safety?.warningText,
+                ageGrading: safety?.ageGrading,
+                materialInformation: safety?.materialInformation,
+                usageRestrictions: safety?.usageRestrictions,
+                safetyNotes: safety?.safetyNotes,
+              }).map(([key, value]) => (
+                <div key={key}>
+                  <p className="text-xs text-muted-foreground">{(t.safety as any)[key] ?? key}</p>
+                  <p className="mt-0.5">{(value as string) || "\u2013"}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* ── Sicherheitsbilder (Verpackungsfotos / Warnhinweise) ── */}
+            <div className="border-t pt-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Camera className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">
+                    Sicherheitsbilder / Verpackungs-Warnhinweise
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    ({Array.isArray(safety?.safetyImages) ? safety.safetyImages.length : 0} Fotos)
+                  </span>
+                </div>
+                {canEdit && (
+                  <>
+                    <input
+                      ref={safetyImgRef}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => handleSafetyImageUpload(e.target.files)}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => safetyImgRef.current?.click()}
+                      disabled={imgUploading}
+                    >
+                      {imgUploading ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
+                      ) : (
+                        <Upload className="h-3.5 w-3.5 mr-1" />
+                      )}
+                      Foto hochladen
+                    </Button>
+                  </>
+                )}
               </div>
-            ))}
+
+              {Array.isArray(safety?.safetyImages) && safety.safetyImages.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {(safety.safetyImages as string[]).map((url: string, idx: number) => (
+                    <div key={idx} className="relative group rounded-lg overflow-hidden border bg-muted aspect-square">
+                      <img
+                        src={url}
+                        alt={`Sicherheitsbild ${idx + 1}`}
+                        className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                        onClick={() => setLightboxUrl(url)}
+                      />
+                      {canEdit && (
+                        <button
+                          className="absolute top-1 right-1 bg-black/60 hover:bg-red-600 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => deleteSafetyImageMutation.mutate({ productId, imageUrl: url })}
+                          title="Bild entfernen"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-6 border-2 border-dashed rounded-lg text-muted-foreground text-sm gap-2">
+                  <Camera className="h-8 w-8 opacity-30" />
+                  <span>Noch keine Sicherheitsbilder hochgeladen</span>
+                  <span className="text-xs">Fotos von Verpackungs-Warnhinweisen, CE-Kennzeichnung, Altersangaben</span>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </CardContent>
     </Card>
+
+    {/* Lightbox */}
+    {lightboxUrl && (
+      <div
+        className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+        onClick={() => setLightboxUrl(null)}
+      >
+        <div className="relative max-w-3xl max-h-full">
+          <img src={lightboxUrl} alt="Sicherheitsbild" className="max-w-full max-h-[85vh] rounded-lg object-contain" />
+          <button
+            className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1 hover:bg-black"
+            onClick={() => setLightboxUrl(null)}
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
 

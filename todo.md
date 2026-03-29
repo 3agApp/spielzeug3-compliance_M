@@ -641,3 +641,14 @@
 - [x] Frontend: Vorschau mit KI-Vorschlag, Konfidenz-Badge (Hoch/Mittel/Niedrig) und editierbarem Typ-Dropdown
 - [x] Frontend: Upload-Modus (Ersetzen/Neu) pro Datei wenn Typ bereits vorhanden
 - [x] Frontend: Lade-Spinner während Upload
+
+## Completeness Score, Risk & AI Fixes
+- [x] Completeness Score: Safety Data (safetyText, warningText, ageGrading) als eigene Kategorie einberechnen (25% Gewichtung)
+- [x] Completeness Score: Testberichte + Konformitätserklärungen = höchste Priorität (Gewichtung 3x)
+- [x] Completeness Score: Bedienungsanleitung als optional (required=0, kein Abzug)
+- [x] Risk-Bewertung: Safety Data und Age Grading im Prompt als risikomindernde Faktoren
+- [x] AI Plausibility Check: Safety Data, Age Grading, alle Dokumente als Kontext übergeben
+- [x] AI Plausibility Check: auf eingebauten invokeLLM umgestellt (kein externer API-Key nötig)
+- [x] Sicherheitsbilder-Upload: Dedizierter Bereich im Safety Data Tab mit Upload-Button
+- [x] Sicherheitsbilder: Galerie mit Lightbox-Vorschau und Löschen-Button
+- [x] Score-Neuberechnung nach Safety-Data-Speichern (safetyService.upsert)

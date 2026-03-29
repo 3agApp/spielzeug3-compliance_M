@@ -13,10 +13,12 @@ import {
   getDocumentsByProduct,
   getLatestAiAnalysisByProduct,
   getProductById,
+  getProductSafety,
   getSystemSetting,
   updateAiAnalysis,
   upsertSystemSetting,
 } from "../../db";
+import { invokeLLM } from "../../_core/llm";
 import { Errors, requireRole, assertSupplierOrInternal, ADMIN_ROLES } from "../../shared";
 import type { UserContext } from "../../shared/tenantGuard";
 
@@ -43,55 +45,64 @@ async function callOpenAI(apiKey: string, payload: object): Promise<any> {
 export function buildAnalysisPrompt(
   product: any,
   docs: any[],
+  safety: any | null,
   components?: any[],
   componentDocs?: any[]
 ): string {
-  const docList = docs
-    .map(
-      (d, i) =>
-        `${i + 1}. Typ: ${d.documentType}, Dateiname: ${d.fileName}, URL: ${d.fileUrl}, Status: ${d.reviewStatus}`
-    )
-    .join("\n");
+  const docList = docs.length > 0
+    ? docs.map((d, i) =>
+        `${i + 1}. Typ: ${d.documentType}, Dateiname: ${d.fileName ?? "–"}, Status: ${d.reviewStatus}` +
+        (d.standard ? `, Norm: ${d.standard}` : "") +
+        (d.expiresAt ? `, Ablauf: ${new Date(d.expiresAt).toISOString().slice(0, 10)}` : "")
+      ).join("\n")
+    : "(Keine Dokumente vorhanden)";
+
+  const safetySection = safety
+    ? `\nSICHERHEITSDATEN:\n  Sicherheitstext: ${safety.safetyText ?? "–"}\n  Warnhinweis: ${safety.warningText ?? "–"}\n  Altersfreigabe: ${safety.ageGrading ?? "–"}\n  Materialinformation: ${safety.materialInformation ?? "–"}\n  Verwendungsbeschränkungen: ${safety.usageRestrictions ?? "–"}\n  Sicherheitshinweise: ${safety.safetyNotes ?? "–"}`
+    : "\nSICHERHEITSDATEN: (Keine Sicherheitsdaten hinterlegt)";
 
   let componentSection = "";
   if (components && components.length > 0) {
     const compLines = components
       .map((c) => {
         const cDocs = (componentDocs ?? []).filter((d: any) => d.componentId === c.id);
-        const cDocList =
-          cDocs.length > 0
-            ? cDocs
-                .map(
-                  (d: any, i: number) =>
-                    `     ${i + 1}. Typ: ${d.documentType}, Norm: ${d.standard ?? "–"}, Datei: ${d.fileName}, Status: ${d.reviewStatus}`
-                )
-                .join("\n")
-            : "     (Keine Dokumente)";
+        const cDocList = cDocs.length > 0
+          ? cDocs.map((d: any, i: number) =>
+              `     ${i + 1}. Typ: ${d.documentType}, Norm: ${d.standard ?? "–"}, Datei: ${d.fileName}, Status: ${d.reviewStatus}`
+            ).join("\n")
+          : "     (Keine Dokumente)";
         return `  - ${c.name} (Material: ${c.materialType ?? "unbekannt"}, Teilenr.: ${c.partNumber ?? "–"}):\n${cDocList}`;
-      })
-      .join("\n");
+      }).join("\n");
     componentSection = `\n\nPRODUKTKOMPONENTEN (${components.length} Stück):\n${compLines}`;
   }
 
-  return `Du bist ein Compliance-Experte für Produktsicherheit und Spielzeugrichtlinien (EN 71, CE, REACH, etc.).
+  return `Du bist ein Compliance-Experte für Produktsicherheit und Spielzeugrichtlinien (EN 71, CE, REACH, GPSR etc.).
 Analysiere die folgende Produktdokumentation auf Plausibilität und Vollständigkeit.
 
 PRODUKT: ${product.productName}
 MARKE: ${product.brand ?? "–"}
 ALTERSGRUPPE: ${product.ageGroup ?? "–"}
 ZIELMARKT: ${product.targetMarket ?? "–"}
-STATUS: ${product.status}${componentSection}
+STATUS: ${product.status}${safetySection}${componentSection}
 
 DOKUMENTE (${docs.length} Stück):
-${docList || "(Keine Dokumente vorhanden)"}
+${docList}
 
-Gib deine Analyse als JSON zurück mit folgenden Feldern:
-- overallScore: Zahl 0-100
-- riskLevel: "low" | "medium" | "high"
-- summary: Kurze Zusammenfassung (2-3 Sätze)
-- findings: Array von { type: "positive"|"warning"|"critical", message: string }
-- recommendations: Array von strings
-- missingDocuments: Array von strings (fehlende Dokumenttypen)`;
+BEWERTE:
+1. Vollständigkeit der Dokumentation (Testberichte, Konformitätserklärungen, Zertifikate haben höchste Priorität)
+2. Plausibilität der Sicherheitsdaten (Altersfreigabe, Warnhinweise, Materialangaben)
+3. Formale Korrektheit (Normenreferenzen, Ablaufdaten, Statusangaben)
+4. Konsistenz zwischen Sicherheitsdaten und Dokumenten
+
+Gib deine Analyse als JSON zurück:
+{
+  "overallScore": <0-100>,
+  "riskLevel": "low" | "medium" | "high",
+  "summary": "<2-3 Sätze Zusammenfassung auf Deutsch>",
+  "findings": [{"type": "positive"|"warning"|"critical", "message": "<string>"}],
+  "recommendations": ["<string>"],
+  "missingDocuments": ["<string>"]
+}`;
 }
 
 // ─── Service ──────────────────────────────────────────────────────────────────
@@ -150,17 +161,9 @@ export const aiAnalysisService = {
     return { results };
   },
 
-   /** Run a new AI analysis for a product. */
+   /** Run a new AI analysis for a product using the built-in LLM (no external API key needed). */
   async analyze(user: UserContext & { id: number }, productId: number) {
     requireRole(user.complianceRole, ADMIN_ROLES);
-    // Check API key first (BAD_REQUEST if missing)
-    const apiKeySetting = await getSystemSetting("openai_api_key");
-    const apiKey = apiKeySetting?.settingValue;
-    if (!apiKey) {
-      throw Errors.validation(
-        "OpenAI API-Schlüssel ist nicht konfiguriert. Bitte in den Systemeinstellungen hinterlegen."
-      );
-    }
     const enabledSetting = await getSystemSetting("AI_ANALYSIS_ENABLED");
     if (enabledSetting?.settingValue === "false") {
       throw Errors.precondition("AI-Analyse ist deaktiviert.");
@@ -169,9 +172,10 @@ export const aiAnalysisService = {
     if (!product) throw Errors.notFound("Product", productId);
 
     const docs = await getDocumentsByProduct(productId);
+    const safety = await getProductSafety(productId);
     const components = await getComponentsByProduct(productId);
     const componentDocs = await getAllComponentDocumentsByProduct(productId);
-    const prompt = buildAnalysisPrompt(product, docs, components, componentDocs);
+    const prompt = buildAnalysisPrompt(product, docs, safety, components, componentDocs);
 
     const analysisRecord = await createAiAnalysis({
       productId,
@@ -183,20 +187,49 @@ export const aiAnalysisService = {
       typeof analysisRecord === "number" ? analysisRecord : (analysisRecord as any)?.id ?? 0;
 
     try {
-      const response = await callOpenAI(apiKey, {
-        model: "gpt-4o",
+      const response = await invokeLLM({
         messages: [
           {
             role: "system",
-            content: "You are a compliance expert. Always respond with valid JSON.",
+            content: "Du bist ein Compliance-Experte für Produktsicherheit. Antworte ausschließlich mit validem JSON.",
           },
           { role: "user", content: prompt },
         ],
-        response_format: { type: "json_object" },
-        temperature: 0.2,
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "compliance_analysis",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                overallScore: { type: "number" },
+                riskLevel: { type: "string" },
+                summary: { type: "string" },
+                findings: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      type: { type: "string" },
+                      message: { type: "string" },
+                    },
+                    required: ["type", "message"],
+                    additionalProperties: false,
+                  },
+                },
+                recommendations: { type: "array", items: { type: "string" } },
+                missingDocuments: { type: "array", items: { type: "string" } },
+              },
+              required: ["overallScore", "riskLevel", "summary", "findings", "recommendations", "missingDocuments"],
+              additionalProperties: false,
+            },
+          },
+        },
       });
 
-      const content = response.choices?.[0]?.message?.content ?? "{}";
+      const rawContent = response.choices?.[0]?.message?.content ?? "{}";
+      const content = typeof rawContent === "string" ? rawContent : JSON.stringify(rawContent);
       const parsed = JSON.parse(content);
 
       await updateAiAnalysis(analysisId, {

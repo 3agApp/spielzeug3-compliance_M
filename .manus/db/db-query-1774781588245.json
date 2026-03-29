@@ -1,0 +1,90 @@
+{
+  "query": "DESCRIBE missing_requirements;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user J1L9FvUd1r4oKv8.75a96d268c41 --database kgkV5LdecSJ3HqPv7WFR7a --execute DESCRIBE missing_requirements;",
+  "rows": [
+    {
+      "Field": "id",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "PRI",
+      "Default": "NULL",
+      "Extra": "auto_increment"
+    },
+    {
+      "Field": "productId",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "requirementType",
+      "Type": "enum('test_report','declaration_of_conformity','manual','certificate','product_image','safety_image','regulatory_document','safety_text','warning_text','age_grading','material_information','usage_restrictions','safety_instructions','additional_notes')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "required",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "1",
+      "Extra": ""
+    },
+    {
+      "Field": "isMissing",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "1",
+      "Extra": ""
+    },
+    {
+      "Field": "sourceSystem",
+      "Type": "varchar(64)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "manual",
+      "Extra": ""
+    },
+    {
+      "Field": "note",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "status",
+      "Type": "enum('missing','provided','under_review','approved','rejected')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "missing",
+      "Extra": ""
+    },
+    {
+      "Field": "createdAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": ""
+    },
+    {
+      "Field": "updatedAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP"
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nid\tint\tNO\tPRI\tNULL\tauto_increment\nproductId\tint\tNO\t\tNULL\t\nrequirementType\tenum('test_report','declaration_of_conformity','manual','certificate','product_image','safety_image','regulatory_document','safety_text','warning_text','age_grading','material_information','usage_restrictions','safety_instructions','additional_notes')\tNO\t\tNULL\t\nrequired\ttinyint(1)\tNO\t\t1\t\nisMissing\ttinyint(1)\tNO\t\t1\t\nsourceSystem\tvarchar(64)\tYES\t\tmanual\t\nnote\ttext\tYES\t\tNULL\t\nstatus\tenum('missing','provided','under_review','approved','rejected')\tNO\t\tmissing\t\ncreatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t\nupdatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\tDEFAULT_GENERATED on update CURRENT_TIMESTAMP\n",
+  "stderr": "",
+  "execution_time_ms": 147
+}

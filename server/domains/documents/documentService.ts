@@ -186,13 +186,14 @@ export const documentService = {
       }
     }
 
-    // Mark requirement as provided
+    // Mark requirement as provided (status = "provided", isMissing = false)
     const requirements = await getMissingRequirementsByProduct(input.productId);
-    const matching = requirements.find(
-      (r: any) => r.requirementType === input.documentType && r.isMissing
+    // Update ALL requirements of this type (not just isMissing ones) to "provided"
+    const matchingReqs = requirements.filter(
+      (r: any) => r.requirementType === input.documentType
     );
-    if (matching) {
-      await updateMissingRequirement(matching.id, { isMissing: false });
+    for (const req of matchingReqs) {
+      await updateMissingRequirement(req.id, { isMissing: false, status: "provided" } as any);
     }
 
     // Reset supplier confirmation only when the uploader is a supplier

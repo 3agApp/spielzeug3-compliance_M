@@ -1,0 +1,52 @@
+{
+  "query": "\nSELECT mr.requirementType, mr.status, mr.isMissing, mr.required\nFROM missing_requirements mr\nWHERE mr.productId = 60001\nORDER BY mr.requirementType;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user J1L9FvUd1r4oKv8.75a96d268c41 --database kgkV5LdecSJ3HqPv7WFR7a --execute \nSELECT mr.requirementType, mr.status, mr.isMissing, mr.required\nFROM missing_requirements mr\nWHERE mr.productId = 60001\nORDER BY mr.requirementType;\n",
+  "rows": [
+    {
+      "requirementType": "test_report",
+      "status": "provided",
+      "isMissing": "0",
+      "required": "1"
+    },
+    {
+      "requirementType": "declaration_of_conformity",
+      "status": "provided",
+      "isMissing": "0",
+      "required": "1"
+    },
+    {
+      "requirementType": "manual",
+      "status": "missing",
+      "isMissing": "1",
+      "required": "0"
+    },
+    {
+      "requirementType": "certificate",
+      "status": "missing",
+      "isMissing": "1",
+      "required": "1"
+    },
+    {
+      "requirementType": "product_image",
+      "status": "missing",
+      "isMissing": "1",
+      "required": "0"
+    },
+    {
+      "requirementType": "safety_image",
+      "status": "missing",
+      "isMissing": "1",
+      "required": "1"
+    },
+    {
+      "requirementType": "regulatory_document",
+      "status": "missing",
+      "isMissing": "1",
+      "required": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "requirementType\tstatus\tisMissing\trequired\ntest_report\tprovided\t0\t1\ndeclaration_of_conformity\tprovided\t0\t1\nmanual\tmissing\t1\t0\ncertificate\tmissing\t1\t1\nproduct_image\tmissing\t1\t0\nsafety_image\tmissing\t1\t1\nregulatory_document\tmissing\t1\t0\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}

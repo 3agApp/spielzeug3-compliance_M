@@ -8,7 +8,8 @@
  * Every audit-log entry carries actorRole ('supplier' | 'operator') and actorName.
  */
 
-import { createAuditLog, getProductById, getProductSafety, upsertProductSafety } from "../../db";
+import { computeCompletenessScore, createAuditLog, getProductById, getProductSafety, upsertProductSafety } from "../../db";
+import { updateProduct } from "../../db";
 import { Errors, assertSupplierOrInternal } from "../../shared";
 import type { UserContext } from "../../shared/tenantGuard";
 
@@ -52,6 +53,12 @@ export const safetyService = {
     const actorName = resolveActorName(user);
 
     await upsertProductSafety({ ...input, submittedByUserId: user.id });
+
+    // Recalculate completeness score after safety data update
+    try {
+      const newScore = await computeCompletenessScore(input.productId);
+      await updateProduct(input.productId, { completenessScore: String(newScore) });
+    } catch (_) { /* non-critical */ }
 
     const auditAction =
       actorRole === "operator" ? "operator_safety_updated" : "safety_updated";

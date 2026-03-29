@@ -423,6 +423,7 @@ export async function upsertProductSafety(data: typeof productSafetyEntries.$inf
         materialInformation: data.materialInformation,
         usageRestrictions: data.usageRestrictions,
         safetyNotes: data.safetyNotes,
+        safetyImages: data.safetyImages,
         submittedByUserId: data.submittedByUserId,
       },
     });
@@ -591,14 +592,51 @@ export async function computeCompletenessScore(productId: number): Promise<numbe
   const db = await getDb();
   if (!db) return 0;
 
+  // ── 1. Document requirements (weighted by priority) ──────────────────────
+  // High-priority docs: test_report, declaration_of_conformity → weight 3
+  // Medium-priority docs: certificate, safety_image → weight 2
+  // Other required docs → weight 1
+  const HIGH_PRIORITY = ["test_report", "declaration_of_conformity"];
+  const MEDIUM_PRIORITY = ["certificate", "safety_image"];
+
   const reqs = await db
     .select()
     .from(missingRequirements)
     .where(and(eq(missingRequirements.productId, productId), eq(missingRequirements.required, true)));
 
-  if (reqs.length === 0) return 100;
-  const fulfilled = reqs.filter((r) => r.status === "approved" || r.status === "provided").length;
-  return Math.round((fulfilled / reqs.length) * 100);
+  let docPoints = 0;
+  let docMax = 0;
+  for (const r of reqs) {
+    const w = HIGH_PRIORITY.includes(r.requirementType) ? 3
+            : MEDIUM_PRIORITY.includes(r.requirementType) ? 2 : 1;
+    docMax += w;
+    if (r.status === "approved" || r.status === "provided") docPoints += w;
+  }
+
+  // ── 2. Safety data completeness (weight 20% of total) ────────────────────
+  const safetyRows = await db
+    .select()
+    .from(productSafetyEntries)
+    .where(eq(productSafetyEntries.productId, productId))
+    .limit(1);
+  const safety = safetyRows[0];
+
+  // Core safety fields that must be filled
+  const SAFETY_FIELDS = ["safetyText", "warningText", "ageGrading"] as const;
+  let safetyFilled = 0;
+  for (const f of SAFETY_FIELDS) {
+    if (safety && safety[f] && String(safety[f]).trim().length > 0) safetyFilled++;
+  }
+  // Safety data contributes up to 20% of the total score
+  // We model it as safetyFilled/SAFETY_FIELDS.length * safetyWeight points
+  const safetyWeight = docMax > 0 ? Math.round(docMax * 0.25) : 3; // ~20% of doc weight
+  const safetyPoints = Math.round((safetyFilled / SAFETY_FIELDS.length) * safetyWeight);
+
+  const totalMax = docMax + safetyWeight;
+  const totalPoints = docPoints + safetyPoints;
+
+  if (totalMax === 0) return 100;
+  return Math.round((totalPoints / totalMax) * 100);
 }
 
 // ─── System Settings ─────────────────────────────────────────────────────────
