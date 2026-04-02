@@ -104,7 +104,7 @@ interface RiskItem {
   mitigations: string[];
 }
 
-function RiskCard({ risk, lang, t }: { risk: RiskItem; lang: "de" | "en"; t: (key: string) => string }) {
+function RiskCard({ risk, lang, t }: { risk: RiskItem; lang: "de" | "en"; t: any }) {
   const [open, setOpen] = useState(false);
   return (
     <Collapsible open={open} onOpenChange={setOpen}>

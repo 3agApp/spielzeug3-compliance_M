@@ -38,7 +38,7 @@ interface ValidationError {
  * Returns null if valid, or a ValidationError object.
  * SVG files skip the pixel-dimension check (they are resolution-independent).
  */
-async function validateImageFile(file: File, lang: string, t: (key: string) => string): Promise<ValidationError | null> {
+async function validateImageFile(file: File, lang: string, t: any): Promise<ValidationError | null> {
   // 1. MIME type
   if (!(ALLOWED_TYPES as readonly string[]).includes(file.type)) {
     return {
