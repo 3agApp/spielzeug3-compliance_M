@@ -40,15 +40,16 @@ import { useLocation } from "wouter";
 
 // ─── Status badge helper ──────────────────────────────────────────────────────
 function StatusBadge({ status }: { status: string }) {
+  const { lang } = useLang();
   const map: Record<string, { label: string; className: string }> = {
-    submitted:           { label: "Eingereicht",  className: "bg-blue-100 text-blue-800 border-blue-300" },
-    under_review:        { label: "In Prüfung",   className: "bg-purple-100 text-purple-800 border-purple-300" },
-    clarification_needed:{ label: "Rückfrage",    className: "bg-amber-100 text-amber-800 border-amber-300" },
-    approved:            { label: "Genehmigt",    className: "bg-emerald-100 text-emerald-800 border-emerald-300" },
-    rejected:            { label: "Abgelehnt",    className: "bg-red-100 text-red-800 border-red-300" },
-    completed:           { label: "Vollständig",  className: "bg-teal-100 text-teal-800 border-teal-300" },
-    open:                { label: "Offen",         className: "bg-slate-100 text-slate-700 border-slate-300" },
-    in_progress:         { label: "In Bearbeitung",className: "bg-orange-100 text-orange-800 border-orange-300" },
+    submitted:           { label: lang === "de" ? "Eingereicht" : "Submitted",  className: "bg-blue-100 text-blue-800 border-blue-300" },
+    under_review:        { label: lang === "de" ? "In Prüfung" : "Under Review",   className: "bg-purple-100 text-purple-800 border-purple-300" },
+    clarification_needed:{ label: lang === "de" ? "Rückfrage" : "Clarification",    className: "bg-amber-100 text-amber-800 border-amber-300" },
+    approved:            { label: lang === "de" ? "Genehmigt" : "Approved",    className: "bg-emerald-100 text-emerald-800 border-emerald-300" },
+    rejected:            { label: lang === "de" ? "Abgelehnt" : "Rejected",    className: "bg-red-100 text-red-800 border-red-300" },
+    completed:           { label: lang === "de" ? "Vollständig" : "Completed",  className: "bg-teal-100 text-teal-800 border-teal-300" },
+    open:                { label: lang === "de" ? "Offen" : "Open",         className: "bg-slate-100 text-slate-700 border-slate-300" },
+    in_progress:         { label: lang === "de" ? "In Bearbeitung" : "In Progress",className: "bg-orange-100 text-orange-800 border-orange-300" },
   };
   const cfg = map[status] ?? { label: status, className: "bg-slate-100 text-slate-700 border-slate-300" };
   return (
@@ -95,10 +96,10 @@ function ActionDialog({ action, product, onClose, onSuccess }: ActionDialogProps
     utils.products.list.invalidate();
     utils.products.getDashboardStats.invalidate();
     toast.success(
-      action === "approve"       ? "Produkt genehmigt"
-      : action === "reject"      ? "Produkt abgelehnt"
-      : action === "clarification" ? "Rückfrage gestellt"
-      : "Produkt als vollständig markiert"
+      action === "approve"       ? (lang === "de" ? "Produkt genehmigt" : "Product approved")
+      : action === "reject"      ? (lang === "de" ? "Produkt abgelehnt" : "Product rejected")
+      : action === "clarification" ? (lang === "de" ? "Rückfrage gestellt" : "Clarification requested")
+      : (lang === "de" ? "Produkt als vollständig markiert" : "Product marked as complete")
     );
     onSuccess();
     onClose();
@@ -114,17 +115,17 @@ function ActionDialog({ action, product, onClose, onSuccess }: ActionDialogProps
   const needsNote = action === "reject" || action === "clarification";
 
   const cfg: Record<NonNullable<ActionType>, { title: string; desc: string; btnLabel: string; btnClass: string }> = {
-    approve:       { title: "Produkt genehmigen",         desc: "Das Produkt wird als compliance-konform genehmigt. Der Lieferant wird benachrichtigt.",                btnLabel: "Genehmigen",       btnClass: "bg-emerald-600 hover:bg-emerald-700 text-white" },
-    reject:        { title: "Produkt ablehnen",           desc: "Das Produkt wird abgelehnt. Bitte geben Sie einen Ablehnungsgrund an, der an den Lieferanten übermittelt wird.", btnLabel: "Ablehnen",         btnClass: "bg-red-600 hover:bg-red-700 text-white" },
-    clarification: { title: "Rückfrage stellen",          desc: "Der Lieferant wird aufgefordert, fehlende oder unklare Informationen zu ergänzen.",                    btnLabel: "Rückfrage senden", btnClass: "bg-amber-600 hover:bg-amber-700 text-white" },
-    complete:      { title: "Als vollständig markieren",  desc: "Das Produkt wird als vollständig und abgeschlossen markiert.",                                         btnLabel: "Abschließen",      btnClass: "bg-teal-600 hover:bg-teal-700 text-white" },
+    approve:       { title: lang === "de" ? "Produkt genehmigen" : "Approve Product",         desc: lang === "de" ? "Das Produkt wird als compliance-konform genehmigt. Der Lieferant wird benachrichtigt." : "The product will be approved as compliant. The supplier will be notified.",                btnLabel: lang === "de" ? "Genehmigen" : "Approve",       btnClass: "bg-emerald-600 hover:bg-emerald-700 text-white" },
+    reject:        { title: lang === "de" ? "Produkt ablehnen" : "Reject Product",           desc: lang === "de" ? "Das Produkt wird abgelehnt. Bitte geben Sie einen Ablehnungsgrund an, der an den Lieferanten übermittelt wird." : "The product will be rejected. Please provide a reason that will be sent to the supplier.", btnLabel: lang === "de" ? "Ablehnen" : "Reject",         btnClass: "bg-red-600 hover:bg-red-700 text-white" },
+    clarification: { title: lang === "de" ? "Rückfrage stellen" : "Request Clarification",          desc: lang === "de" ? "Der Lieferant wird aufgefordert, fehlende oder unklare Informationen zu ergänzen." : "The supplier will be asked to provide missing or unclear information.",                    btnLabel: lang === "de" ? "Rückfrage senden" : "Send Request", btnClass: "bg-amber-600 hover:bg-amber-700 text-white" },
+    complete:      { title: lang === "de" ? "Als vollständig markieren" : "Mark as Complete",  desc: lang === "de" ? "Das Produkt wird als vollständig und abgeschlossen markiert." : "The product will be marked as complete and closed.",                                         btnLabel: lang === "de" ? "Abschließen" : "Complete",      btnClass: "bg-teal-600 hover:bg-teal-700 text-white" },
   };
 
   if (!action) return null;
   const c = cfg[action];
 
   function handleSubmit() {
-    if (needsNote && !note.trim()) { toast.error("Bitte geben Sie eine Begründung ein."); return; }
+    if (needsNote && !note.trim()) { toast.error(lang === "de" ? "Bitte geben Sie eine Begründung ein." : "Please provide a reason."); return; }
     const pid = product.id;
     if (action === "approve")       approveMutation.mutate({ productId: pid, note: note || undefined });
     if (action === "reject")        rejectMutation.mutate({ productId: pid, note });
@@ -146,21 +147,21 @@ function ActionDialog({ action, product, onClose, onSuccess }: ActionDialogProps
             <p className="text-sm font-medium">{product.productName}</p>
             <p className="text-xs text-muted-foreground">
               {product.internalArticleNumber && `${product.internalArticleNumber} · `}
-              Vollständigkeit: {Number(product.completenessScore ?? 0).toFixed(0)}%
+              {lang === "de" ? "Vollständigkeit" : "Completeness"}: {Number(product.completenessScore ?? 0).toFixed(0)}%
             </p>
           </div>
 
           {/* Note field */}
           <div className="space-y-1.5">
             <Label htmlFor="action-note">
-              {needsNote ? "Begründung *" : "Anmerkung (optional)"}
+              {needsNote ? (lang === "de" ? "Begründung *" : "Reason *") : (lang === "de" ? "Anmerkung (optional)" : "Note (optional)")}
             </Label>
             <Textarea
               id="action-note"
               placeholder={
-                action === "reject"        ? "Bitte geben Sie den Ablehnungsgrund an…"
-                : action === "clarification" ? "Welche Informationen werden benötigt?"
-                : "Optionale Anmerkung…"
+                action === "reject"        ? (lang === "de" ? "Bitte geben Sie den Ablehnungsgrund an…" : "Please provide the reason for rejection…")
+                : action === "clarification" ? (lang === "de" ? "Welche Informationen werden benötigt?" : "What information is needed?")
+                : (lang === "de" ? "Optionale Anmerkung…" : "Optional note…")
               }
               value={note}
               onChange={(e) => setNote(e.target.value)}
@@ -171,7 +172,7 @@ function ActionDialog({ action, product, onClose, onSuccess }: ActionDialogProps
 
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={onClose} disabled={isPending}>
-            Abbrechen
+            {lang === "de" ? "Abbrechen" : "Cancel"}
           </Button>
           <Button className={c.btnClass} onClick={handleSubmit} disabled={isPending}>
             {isPending ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : null}
@@ -192,6 +193,7 @@ function ProductPanel({
   onAction: (a: ActionType) => void;
 }) {
   const [, setLocation] = useLocation();
+  const { lang } = useLang();
   const docsQuery     = trpc.documents.listByProduct.useQuery({ productId: product.id });
   const reqsQuery     = trpc.products.getMissingRequirements.useQuery({ productId: product.id });
   const timelineQuery = trpc.products.getTimeline.useQuery({ productId: product.id });
@@ -228,7 +230,7 @@ function ProductPanel({
               onClick={() => onAction("approve")}
             >
               <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
-              Genehmigen
+              {lang === "de" ? "Genehmigen" : "Approve"}
             </Button>
             <Button
               size="sm"
@@ -237,7 +239,7 @@ function ProductPanel({
               onClick={() => onAction("clarification")}
             >
               <MessageSquare className="mr-1 h-3.5 w-3.5" />
-              Rückfrage
+              {lang === "de" ? "Rückfrage" : "Clarify"}
             </Button>
             <Button
               size="sm"
@@ -246,7 +248,7 @@ function ProductPanel({
               onClick={() => onAction("reject")}
             >
               <XCircle className="mr-1 h-3.5 w-3.5" />
-              Ablehnen
+              {lang === "de" ? "Ablehnen" : "Reject"}
             </Button>
           </div>
         )}
@@ -257,8 +259,8 @@ function ProductPanel({
             onClick={() => onAction("complete")}
           >
             <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
-            Als vollständig abschließen
-          </Button>
+              {lang === "de" ? "Als vollständig abschließen" : "Mark as Complete"}
+            </Button>
         )}
 
         <Button
@@ -268,7 +270,7 @@ function ProductPanel({
           onClick={() => setLocation(`/products/${product.id}`)}
         >
           <ExternalLink className="mr-1 h-3.5 w-3.5" />
-          Vollständige Produktdetails öffnen
+          {lang === "de" ? "Vollständige Produktdetails öffnen" : "Open full product details"}
         </Button>
       </div>
 
@@ -276,10 +278,10 @@ function ProductPanel({
       <Tabs defaultValue="docs" className="flex-1 flex flex-col min-h-0">
         <TabsList className="mx-4 mt-3 grid grid-cols-3 h-8">
           <TabsTrigger value="docs" className="text-xs">
-            Dokumente ({docs.length})
+            {lang === "de" ? "Dokumente" : "Documents"} ({docs.length})
           </TabsTrigger>
           <TabsTrigger value="reqs" className="text-xs">
-            Anforderungen ({reqs.length})
+            {lang === "de" ? "Anforderungen" : "Requirements"} ({reqs.length})
           </TabsTrigger>
           <TabsTrigger value="timeline" className="text-xs">
             Timeline
@@ -292,7 +294,7 @@ function ProductPanel({
             {docs.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 text-muted-foreground gap-2">
                 <FileText className="h-8 w-8 opacity-30" />
-                <p className="text-xs">Keine Dokumente hochgeladen</p>
+                <p className="text-xs">{lang === "de" ? "Keine Dokumente hochgeladen" : "No documents uploaded"}</p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -323,12 +325,12 @@ function ProductPanel({
                       )}
                       {doc.expiryDate && (
                         <span className="text-xs text-muted-foreground">
-                          Ablauf: {new Date(doc.expiryDate).toLocaleDateString()}
+                          {lang === "de" ? "Ablauf" : "Expires"}: {new Date(doc.expiryDate).toLocaleDateString()}
                         </span>
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Hochgeladen: {new Date(doc.uploadedAt ?? doc.createdAt).toLocaleDateString()}
+                      {lang === "de" ? "Hochgeladen" : "Uploaded"}: {new Date(doc.uploadedAt ?? doc.createdAt).toLocaleDateString()}
                     </p>
                   </div>
                 ))}
@@ -343,7 +345,7 @@ function ProductPanel({
             {reqs.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 text-muted-foreground gap-2">
                 <CheckCircle2 className="h-8 w-8 opacity-30" />
-                <p className="text-xs">Alle Anforderungen erfüllt</p>
+                <p className="text-xs">{lang === "de" ? "Alle Anforderungen erfüllt" : "All requirements met"}</p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -387,7 +389,7 @@ function ProductPanel({
             {(timeline.history?.length ?? 0) === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 text-muted-foreground gap-2">
                 <Clock className="h-8 w-8 opacity-30" />
-                <p className="text-xs">Noch keine Aktivitäten</p>
+                <p className="text-xs">{lang === "de" ? "Noch keine Aktivitäten" : "No activities yet"}</p>
               </div>
             ) : (
               <div className="relative space-y-0">
@@ -427,7 +429,7 @@ function ProductPanel({
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function Approvals() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [search, setSearch]           = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("pending");
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
@@ -459,12 +461,12 @@ export default function Approvals() {
   const approved    = allProducts.filter((p: any) => p.status === "approved").length;
 
   const FILTER_TABS = [
-    { key: "pending",              label: "Ausstehend",    count: submitted + underReview + clarNeeded },
-    { key: "submitted",            label: "Eingereicht",   count: submitted },
-    { key: "under_review",         label: "In Prüfung",    count: underReview },
-    { key: "clarification_needed", label: "Rückfrage",     count: clarNeeded },
-    { key: "approved",             label: "Genehmigt",     count: approved },
-    { key: "all",                  label: "Alle",          count: allProducts.length },
+    { key: "pending",              label: lang === "de" ? "Ausstehend" : "Pending",    count: submitted + underReview + clarNeeded },
+    { key: "submitted",            label: lang === "de" ? "Eingereicht" : "Submitted",   count: submitted },
+    { key: "under_review",         label: lang === "de" ? "In Prüfung" : "Under Review",    count: underReview },
+    { key: "clarification_needed", label: lang === "de" ? "Rückfrage" : "Clarification",     count: clarNeeded },
+    { key: "approved",             label: lang === "de" ? "Genehmigt" : "Approved",     count: approved },
+    { key: "all",                  label: lang === "de" ? "Alle" : "All",          count: allProducts.length },
   ];
 
   return (
@@ -472,22 +474,22 @@ export default function Approvals() {
       {/* Page header */}
       <div className="px-6 pt-6 pb-4 border-b space-y-4">
         <div>
-          <h1 className="text-2xl font-semibold flex items-center gap-2">
+            <h1 className="text-2xl font-semibold flex items-center gap-2">
             <CheckCircle2 className="h-6 w-6" />
-            Genehmigungen
+            {lang === "de" ? "Genehmigungen" : "Approvals"}
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Compliance-Prüfung und Freigabe von Lieferanten-Produkten
+            {lang === "de" ? "Compliance-Prüfung und Freigabe von Lieferanten-Produkten" : "Compliance review and approval of supplier products"}
           </p>
         </div>
 
         {/* KPI cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: "Eingereicht",  value: submitted,   icon: Clock,         color: "text-blue-600" },
-            { label: "In Prüfung",   value: underReview, icon: RefreshCw,     color: "text-purple-600" },
-            { label: "Rückfragen",   value: clarNeeded,  icon: AlertTriangle, color: "text-amber-600" },
-            { label: "Genehmigt",    value: approved,    icon: CheckCircle2,  color: "text-emerald-600" },
+            { label: lang === "de" ? "Eingereicht" : "Submitted",  value: submitted,   icon: Clock,         color: "text-blue-600" },
+            { label: lang === "de" ? "In Prüfung" : "Under Review",   value: underReview, icon: RefreshCw,     color: "text-purple-600" },
+            { label: lang === "de" ? "Rückfragen" : "Clarifications",   value: clarNeeded,  icon: AlertTriangle, color: "text-amber-600" },
+            { label: lang === "de" ? "Genehmigt" : "Approved",    value: approved,    icon: CheckCircle2,  color: "text-emerald-600" },
           ].map(({ label, value, icon: Icon, color }) => (
             <Card key={label} className="py-3">
               <CardContent className="px-4 py-0 flex items-center gap-3">
@@ -511,7 +513,7 @@ export default function Approvals() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Produkt suchen…"
+                placeholder={lang === "de" ? "Produkt suchen…" : "Search product…"}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9 h-8 text-sm"
@@ -550,7 +552,7 @@ export default function Approvals() {
             ) : filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">
                 <Package className="h-10 w-10 opacity-30" />
-                <p className="text-sm">Keine Produkte gefunden</p>
+                <p className="text-sm">{lang === "de" ? "Keine Produkte gefunden" : "No products found"}</p>
               </div>
             ) : (
               <div className="divide-y">
@@ -598,9 +600,9 @@ export default function Approvals() {
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
               <CheckCircle2 className="h-14 w-14 opacity-20" />
-              <p className="text-sm">Produkt aus der Liste auswählen</p>
+              <p className="text-sm">{lang === "de" ? "Produkt aus der Liste auswählen" : "Select a product from the list"}</p>
               <p className="text-xs max-w-xs text-center">
-                Klicken Sie auf ein Produkt, um Dokumente, Anforderungen und die Timeline zu prüfen.
+                {lang === "de" ? "Klicken Sie auf ein Produkt, um Dokumente, Anforderungen und die Timeline zu prüfen." : "Click on a product to review documents, requirements and the timeline."}
               </p>
             </div>
           )}

@@ -20,7 +20,7 @@ import { useState } from "react";
 const ENTITY_TYPES = ["all", "product", "document", "supplier", "user", "sync"] as const;
 
 export default function AuditLog() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [search, setSearch] = useState("");
   const [entityType, setEntityType] = useState("all");
 
@@ -60,7 +60,7 @@ export default function AuditLog() {
       <div>
         <h1 className="text-2xl font-semibold">{t.nav.auditLog}</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Vollständige Aufzeichnung aller Systemaktionen
+          {lang === "de" ? "Vollständige Aufzeichnung aller Systemaktionen" : "Complete record of all system actions"}
         </p>
       </div>
 
@@ -70,7 +70,7 @@ export default function AuditLog() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Suchen..."
+                placeholder={lang === "de" ? "Suchen..." : "Search..."}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9"
@@ -83,7 +83,7 @@ export default function AuditLog() {
               <SelectContent>
                 {ENTITY_TYPES.map((et) => (
                   <SelectItem key={et} value={et}>
-                    {et === "all" ? "Alle Typen" : et}
+                    {et === "all" ? (lang === "de" ? "Alle Typen" : "All Types") : et}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -97,18 +97,18 @@ export default function AuditLog() {
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">
               <Shield className="h-10 w-10 opacity-30" />
-              <p className="text-sm">Keine Einträge gefunden</p>
+              <p className="text-sm">{lang === "de" ? "Keine Einträge gefunden" : "No entries found"}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full data-table">
                 <thead>
                   <tr>
-                    <th>Zeitpunkt</th>
-                    <th>Entität</th>
-                    <th>Aktion</th>
-                    <th>Benutzer</th>
-                    <th>Details</th>
+                    <th>{lang === "de" ? "Zeitpunkt" : "Timestamp"}</th>
+                    <th>{lang === "de" ? "Entität" : "Entity"}</th>
+                    <th>{lang === "de" ? "Aktion" : "Action"}</th>
+                    <th>{lang === "de" ? "Benutzer" : "User"}</th>
+                    <th>{lang === "de" ? "Details" : "Details"}</th>
                   </tr>
                 </thead>
                 <tbody>

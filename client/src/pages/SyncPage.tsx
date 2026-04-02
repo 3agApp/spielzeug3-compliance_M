@@ -9,7 +9,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 export default function SyncPage() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [syncing, setSyncing] = useState<string | null>(null);
 
   const logsQuery = trpc.sync.getLogs.useQuery({ limit: 20 });
@@ -18,7 +18,7 @@ export default function SyncPage() {
   const importMutation = trpc.sync.importProducts.useMutation({
     onMutate: () => setSyncing("import"),
     onSuccess: (data: any) => {
-      toast.success(`Import abgeschlossen: ${data.created ?? 0} erstellt, ${data.updated ?? 0} aktualisiert`);
+      toast.success(lang === "de" ? `Import abgeschlossen: ${data.created ?? 0} erstellt, ${data.updated ?? 0} aktualisiert` : `Import completed: ${data.created ?? 0} created, ${data.updated ?? 0} updated`);
       logsQuery.refetch();
     },
     onError: (e: any) => toast.error(translateError(e.message, t)),
@@ -28,7 +28,7 @@ export default function SyncPage() {
   const exportMutation = trpc.sync.exportApproved.useMutation({
     onMutate: () => setSyncing("export"),
     onSuccess: (data: any) => {
-      toast.success(`Export abgeschlossen: ${data.data?.length ?? 0} Datensätze exportiert`);
+      toast.success(lang === "de" ? `Export abgeschlossen: ${data.data?.length ?? 0} Datensätze exportiert` : `Export completed: ${data.data?.length ?? 0} records exported`);
       logsQuery.refetch();
     },
     onError: (e: any) => toast.error(translateError(e.message, t)),
@@ -46,7 +46,7 @@ export default function SyncPage() {
       <div>
         <h1 className="text-2xl font-semibold">{t.nav.sync}</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Bidirektionale Datensynchronisation mit Kontor ERP
+          {lang === "de" ? "Bidirektionale Datensynchronisation mit Kontor ERP" : "Bidirectional data synchronization with Kontor ERP"}
         </p>
       </div>
 
@@ -56,12 +56,12 @@ export default function SyncPage() {
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <RefreshCw className="h-4 w-4" />
-              Import aus Kontor
+              {lang === "de" ? "Import aus Kontor" : "Import from Kontor"}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              Importiert Lieferanten, Produkte und Bestellungen aus Kontor ERP
+              {lang === "de" ? "Importiert Lieferanten, Produkte und Bestellungen aus Kontor ERP" : "Imports suppliers, products and orders from Kontor ERP"}
             </p>
             <div className="space-y-2">
               <Button
@@ -74,11 +74,11 @@ export default function SyncPage() {
                 ) : (
                   <RefreshCw className="mr-2 h-4 w-4" />
                 )}
-                Produkte importieren (Demo)
+                {lang === "de" ? "Produkte importieren (Demo)" : "Import Products (Demo)"}
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              In der Produktionsumgebung werden Daten direkt über die Kontor-API abgerufen.
+              {lang === "de" ? "In der Produktionsumgebung werden Daten direkt über die Kontor-API abgerufen." : "In the production environment, data is fetched directly via the Kontor API."}
             </p>
           </CardContent>
         </Card>
@@ -87,12 +87,12 @@ export default function SyncPage() {
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <RefreshCw className="h-4 w-4" />
-              Export nach Kontor
+              {lang === "de" ? "Export nach Kontor" : "Export to Kontor"}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              Exportiert Compliance-Status, genehmigte Daten und Vollständigkeits-Flags nach Kontor ERP
+              {lang === "de" ? "Exportiert Compliance-Status, genehmigte Daten und Vollständigkeits-Flags nach Kontor ERP" : "Exports compliance status, approved data and completeness flags to Kontor ERP"}
             </p>
             <div className="space-y-2">
               <Button
@@ -105,11 +105,11 @@ export default function SyncPage() {
                 ) : (
                   <RefreshCw className="mr-2 h-4 w-4" />
                 )}
-                Genehmigte Daten exportieren
+                {lang === "de" ? "Genehmigte Daten exportieren" : "Export Approved Data"}
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Exportiert alle Produkte mit Status "approved" nach Kontor ERP.
+              {lang === "de" ? "Exportiert alle Produkte mit Status \"approved\" nach Kontor ERP." : "Exports all products with status \"approved\" to Kontor ERP."}
             </p>
           </CardContent>
         </Card>
@@ -118,21 +118,21 @@ export default function SyncPage() {
       {/* Sync Logs */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Sync-Protokoll</CardTitle>
+          <CardTitle className="text-base">{lang === "de" ? "Sync-Protokoll" : "Sync Log"}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {logs.length === 0 ? (
             <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">
-              Noch keine Sync-Vorgänge
+              {lang === "de" ? "Noch keine Sync-Vorgänge" : "No sync operations yet"}
             </div>
           ) : (
             <table className="w-full data-table">
               <thead>
                 <tr>
                   <th>Status</th>
-                  <th>Richtung</th>
-                  <th>Zeitpunkt</th>
-                  <th>Fehler</th>
+                  <th>{lang === "de" ? "Richtung" : "Direction"}</th>
+                  <th>{lang === "de" ? "Zeitpunkt" : "Timestamp"}</th>
+                  <th>{lang === "de" ? "Fehler" : "Error"}</th>
                 </tr>
               </thead>
               <tbody>

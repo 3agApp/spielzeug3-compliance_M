@@ -256,7 +256,7 @@ function PublicDocCard({ doc, t, lang }: { doc: any; t: Record<string, string>; 
 }
 
 // ─── Public Image Gallery ───────────────────────────────────────────────────
-function PublicImageGallery({ images, productName }: { images: Array<{ id: number; url: string; originalName?: string | null }>; productName: string }) {
+function PublicImageGallery({ images, productName, lang }: { images: Array<{ id: number; url: string; originalName?: string | null }>; productName: string; lang: Lang }) {
   const [active, setActive] = useState(0);
   if (images.length === 0) return null;
   return (
@@ -279,7 +279,7 @@ function PublicImageGallery({ images, productName }: { images: Array<{ id: numbe
             <button
               onClick={() => setActive((p) => (p + 1) % images.length)}
               className="absolute right-3 top-1/2 -translate-y-1/2 bg-white hover:bg-gray-50 rounded-full p-2 shadow-md transition-all hover:scale-105"
-              aria-label="Nächstes Bild"
+              aria-label={lang === "de" ? "Nächstes Bild" : "Next image"}
             >
               <ChevronRight size={16} className="text-gray-700" />
             </button>
@@ -291,7 +291,7 @@ function PublicImageGallery({ images, productName }: { images: Array<{ id: numbe
                   className={`rounded-full transition-all ${
                     i === active ? "w-4 h-1.5 bg-gray-700" : "w-1.5 h-1.5 bg-gray-300 hover:bg-gray-500"
                   }`}
-                  aria-label={`Bild ${i + 1}`}
+                  aria-label={lang === "de" ? `Bild ${i + 1}` : `Image ${i + 1}`}
                 />
               ))}
             </div>
@@ -579,7 +579,7 @@ export default function PublicProductPage() {
           <div className="rounded-2xl overflow-hidden bg-white shadow-sm border border-gray-100/80">
             {/* Product images */}
             {productImages.length > 0 && (
-              <PublicImageGallery images={productImages} productName={product.productName} />
+              <PublicImageGallery images={productImages} productName={product.productName} lang={lang} />
             )}
 
             <div className="p-5">

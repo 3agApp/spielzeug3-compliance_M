@@ -5,7 +5,7 @@ import { translateError } from "@/lib/translateError";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,7 +23,6 @@ import {
   CheckCircle2,
   Clock,
   XCircle,
-  ChevronDown,
   Package,
   ExternalLink,
   AlertTriangle,
@@ -58,11 +57,138 @@ const DOC_TYPE_LABELS: Record<DocType, { de: string; en: string }> = {
 
 const COMMON_STANDARDS = ["EN 71-1", "EN 71-2", "EN 71-3", "EN 71-7", "EN 62115", "REACH", "RoHS", "CE", "FSC", "PEFC", "ISO 8124", "ASTM F963"];
 
+// ─── i18n strings ─────────────────────────────────────────────────────────────
+const UI: Record<"de" | "en", Record<string, string>> = {
+  de: {
+    components: "Komponenten",
+    totalDocs: "Dokumente gesamt",
+    approved: "Genehmigt",
+    pending: "Ausstehend",
+    addComponent: "Komponente hinzufügen",
+    noComponents: "Keine Komponenten definiert",
+    noComponentsDesc: "Fügen Sie die einzelnen Bestandteile dieses Produkts hinzu und hinterlegen Sie die zugehörigen Testberichte und Zertifikate pro Komponente.",
+    addFirstComponent: "Erste Komponente hinzufügen",
+    newComponent: "Neue Komponente hinzufügen",
+    editComponent: "Komponente bearbeiten",
+    uploadDocument: "Dokument hochladen",
+    cancel: "Abbrechen",
+    create: "Erstellen",
+    save: "Speichern",
+    creating: "Wird erstellt…",
+    saving: "Wird gespeichert…",
+    uploading: "Wird hochgeladen…",
+    upload: "Hochladen",
+    name: "Name",
+    description: "Beschreibung",
+    materialType: "Materialtyp",
+    partNumber: "Teilenummer",
+    componentSupplier: "Komponenten-Lieferant",
+    namePlaceholder: "z.B. Holzrad 60mm",
+    descPlaceholder: "Kurze Beschreibung der Komponente…",
+    partNumberPlaceholder: "z.B. HW-60-OAK",
+    supplierPlaceholder: "z.B. Holzwerk Müller GmbH",
+    selectMaterial: "Auswählen…",
+    noMaterial: "– Kein –",
+    docType: "Dokumenttyp",
+    standard: "Norm/Standard",
+    expiryDate: "Ablaufdatum (optional)",
+    file: "Datei",
+    clickToSelect: "Klicken zum Auswählen (PDF, max. 16 MB)",
+    noStandard: "– Keine –",
+    noDocs: "Noch keine Dokumente für diese Komponente",
+    dok: "Dok.",
+    approvedCount: "genehmigt",
+    expiry: "Ablauf",
+    expired: "Abgelaufen",
+    approve: "Genehmigen",
+    reject: "Ablehnen",
+    edit: "Bearbeiten",
+    remove: "Entfernen",
+    rejectPrompt: "Ablehnungsgrund (optional):",
+    deleteDocConfirm: "Dokument wirklich löschen?",
+    deleteComponentConfirm: "wirklich entfernen?",
+    loading: "Lade Komponenten…",
+    nameRequired: "Name ist erforderlich",
+    selectFile: "Bitte eine Datei auswählen",
+    created: "Komponente erstellt",
+    updated: "Komponente aktualisiert",
+    deleted: "Komponente entfernt",
+    docUploaded: "Dokument hochgeladen",
+    docDeleted: "Dokument gelöscht",
+    reviewSaved: "Bewertung gespeichert",
+    statusApproved: "Genehmigt",
+    statusRejected: "Abgelehnt",
+    statusPending: "Ausstehend",
+  },
+  en: {
+    components: "Components",
+    totalDocs: "Total Documents",
+    approved: "Approved",
+    pending: "Pending",
+    addComponent: "Add Component",
+    noComponents: "No components defined",
+    noComponentsDesc: "Add the individual parts of this product and attach the relevant test reports and certificates per component.",
+    addFirstComponent: "Add First Component",
+    newComponent: "Add New Component",
+    editComponent: "Edit Component",
+    uploadDocument: "Upload Document",
+    cancel: "Cancel",
+    create: "Create",
+    save: "Save",
+    creating: "Creating…",
+    saving: "Saving…",
+    uploading: "Uploading…",
+    upload: "Upload",
+    name: "Name",
+    description: "Description",
+    materialType: "Material Type",
+    partNumber: "Part Number",
+    componentSupplier: "Component Supplier",
+    namePlaceholder: "e.g. Wooden Wheel 60mm",
+    descPlaceholder: "Brief description of the component…",
+    partNumberPlaceholder: "e.g. HW-60-OAK",
+    supplierPlaceholder: "e.g. Müller Woodworks GmbH",
+    selectMaterial: "Select…",
+    noMaterial: "– None –",
+    docType: "Document Type",
+    standard: "Standard / Norm",
+    expiryDate: "Expiry Date (optional)",
+    file: "File",
+    clickToSelect: "Click to select (PDF, max. 16 MB)",
+    noStandard: "– None –",
+    noDocs: "No documents for this component yet",
+    dok: "Doc.",
+    approvedCount: "approved",
+    expiry: "Expires",
+    expired: "Expired",
+    approve: "Approve",
+    reject: "Reject",
+    edit: "Edit",
+    remove: "Remove",
+    rejectPrompt: "Rejection reason (optional):",
+    deleteDocConfirm: "Delete this document?",
+    deleteComponentConfirm: "really remove?",
+    loading: "Loading components…",
+    nameRequired: "Name is required",
+    selectFile: "Please select a file",
+    created: "Component created",
+    updated: "Component updated",
+    deleted: "Component removed",
+    docUploaded: "Document uploaded",
+    docDeleted: "Document deleted",
+    reviewSaved: "Review saved",
+    statusApproved: "Approved",
+    statusRejected: "Rejected",
+    statusPending: "Pending",
+  },
+};
+
 // ─── Review status badge ──────────────────────────────────────────────────────
-function ReviewBadge({ status }: { status: string }) {
-  if (status === "approved") return <Badge className="bg-green-100 text-green-700 border-green-200"><CheckCircle2 className="w-3 h-3 mr-1" />Genehmigt</Badge>;
-  if (status === "rejected") return <Badge className="bg-red-100 text-red-700 border-red-200"><XCircle className="w-3 h-3 mr-1" />Abgelehnt</Badge>;
-  return <Badge className="bg-amber-100 text-amber-700 border-amber-200"><Clock className="w-3 h-3 mr-1" />Ausstehend</Badge>;
+function ReviewBadge({ status, lang }: { status: string; lang: "de" | "en" }) {
+  const u = UI[lang];
+  if (status === "approved") return <Badge className="bg-green-100 text-green-700 border-green-200"><CheckCircle2 className="w-3 h-3 mr-1" />{u.statusApproved}</Badge>;
+  if (status === "rejected") return <Badge className="bg-red-100 text-red-700 border-red-200"><XCircle className="w-3 h-3 mr-1" />{u.statusRejected}</Badge>;
+  return <Badge className="bg-amber-100 text-amber-700 border-amber-200"><Clock className="w-3 h-3 mr-1" />{u.statusPending}</Badge>;
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -73,6 +199,8 @@ interface ComponentsTabProps {
 
 export default function ComponentsTab({ productId, readOnly = false }: ComponentsTabProps) {
   const { lang: language } = useLang();
+  const lang = (language as "de" | "en") === "en" ? "en" : "de";
+  const u = UI[lang];
   const { user } = useAuth();
   const role = (user as any)?.complianceRole ?? "internal_employee";
   const canEdit = !readOnly && ["supplier", "internal_employee", "compliance_manager", "administrator"].includes(role);
@@ -85,27 +213,27 @@ export default function ComponentsTab({ productId, readOnly = false }: Component
 
   // ── Mutations ────────────────────────────────────────────────────────────────
   const createMutation = trpc.components.create.useMutation({
-    onSuccess: () => { utils.components.listByProduct.invalidate({ productId }); toast.success("Komponente erstellt"); setShowCreateDialog(false); resetForm(); },
+    onSuccess: () => { utils.components.listByProduct.invalidate({ productId }); toast.success(u.created); setShowCreateDialog(false); resetForm(); },
     onError: (e) => toast.error(translateError(e.message, language)),
   });
   const updateMutation = trpc.components.update.useMutation({
-    onSuccess: () => { utils.components.listByProduct.invalidate({ productId }); toast.success("Komponente aktualisiert"); setEditingComponent(null); },
+    onSuccess: () => { utils.components.listByProduct.invalidate({ productId }); toast.success(u.updated); setEditingComponent(null); },
     onError: (e) => toast.error(translateError(e.message, language)),
   });
   const deleteMutation = trpc.components.delete.useMutation({
-    onSuccess: () => { utils.components.listByProduct.invalidate({ productId }); toast.success("Komponente entfernt"); },
+    onSuccess: () => { utils.components.listByProduct.invalidate({ productId }); toast.success(u.deleted); },
     onError: (e) => toast.error(translateError(e.message, language)),
   });
   const uploadDocMutation = trpc.components.uploadDocument.useMutation({
-    onSuccess: () => { utils.components.listByProduct.invalidate({ productId }); toast.success("Dokument hochgeladen"); setUploadingForComponent(null); resetDocForm(); },
+    onSuccess: () => { utils.components.listByProduct.invalidate({ productId }); toast.success(u.docUploaded); setUploadingForComponent(null); resetDocForm(); },
     onError: (e) => toast.error(translateError(e.message, language)),
   });
   const deleteDocMutation = trpc.components.deleteDocument.useMutation({
-    onSuccess: () => { utils.components.listByProduct.invalidate({ productId }); toast.success("Dokument gelöscht"); },
+    onSuccess: () => { utils.components.listByProduct.invalidate({ productId }); toast.success(u.docDeleted); },
     onError: (e) => toast.error(translateError(e.message, language)),
   });
   const reviewDocMutation = trpc.components.reviewDocument.useMutation({
-    onSuccess: () => { utils.components.listByProduct.invalidate({ productId }); toast.success("Bewertung gespeichert"); },
+    onSuccess: () => { utils.components.listByProduct.invalidate({ productId }); toast.success(u.reviewSaved); },
     onError: (e) => toast.error(translateError(e.message, language)),
   });
 
@@ -113,7 +241,6 @@ export default function ComponentsTab({ productId, readOnly = false }: Component
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingComponent, setEditingComponent] = useState<any>(null);
   const [uploadingForComponent, setUploadingForComponent] = useState<number | null>(null);
-  const [expandedDocs, setExpandedDocs] = useState<Record<number, any[]>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form state
@@ -122,12 +249,6 @@ export default function ComponentsTab({ productId, readOnly = false }: Component
 
   const resetForm = () => setForm({ name: "", description: "", materialType: "", supplierName: "", partNumber: "" });
   const resetDocForm = () => setDocForm({ documentType: "test_report", standard: "", expiryDate: "", fileName: "", fileBase64: "", mimeType: "", fileSizeBytes: 0 });
-
-  // ── Load documents for expanded component ────────────────────────────────────
-  const loadDocs = async (componentId: number) => {
-    if (expandedDocs[componentId]) return;
-    // Docs are included in listByProduct via documentCount; for full list use getWithDocuments
-  };
 
   // ── File selection ────────────────────────────────────────────────────────────
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -143,7 +264,7 @@ export default function ComponentsTab({ productId, readOnly = false }: Component
 
   // ── Submit handlers ───────────────────────────────────────────────────────────
   const handleCreateComponent = () => {
-    if (!form.name.trim()) return toast.error("Name ist erforderlich");
+    if (!form.name.trim()) return toast.error(u.nameRequired);
     createMutation.mutate({
       productId,
       name: form.name.trim(),
@@ -167,7 +288,7 @@ export default function ComponentsTab({ productId, readOnly = false }: Component
   };
 
   const handleUploadDoc = () => {
-    if (!uploadingForComponent || !docForm.fileBase64) return toast.error("Bitte eine Datei auswählen");
+    if (!uploadingForComponent || !docForm.fileBase64) return toast.error(u.selectFile);
     uploadDocMutation.mutate({
       componentId: uploadingForComponent,
       documentType: docForm.documentType,
@@ -197,7 +318,7 @@ export default function ComponentsTab({ productId, readOnly = false }: Component
   const pendingDocs = components.reduce((s, c) => s + (c.pendingDocumentCount ?? 0), 0);
 
   if (isLoading) {
-    return <div className="flex items-center justify-center py-16 text-muted-foreground">Lade Komponenten…</div>;
+    return <div className="flex items-center justify-center py-16 text-muted-foreground">{u.loading}</div>;
   }
 
   return (
@@ -207,25 +328,25 @@ export default function ComponentsTab({ productId, readOnly = false }: Component
         <div className="flex gap-4">
           <div className="text-center">
             <div className="text-2xl font-bold text-foreground">{components.length}</div>
-            <div className="text-xs text-muted-foreground">Komponenten</div>
+            <div className="text-xs text-muted-foreground">{u.components}</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-foreground">{totalDocs}</div>
-            <div className="text-xs text-muted-foreground">Dokumente gesamt</div>
+            <div className="text-xs text-muted-foreground">{u.totalDocs}</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">{approvedDocs}</div>
-            <div className="text-xs text-muted-foreground">Genehmigt</div>
+            <div className="text-2xl font-bold text-emerald-600">{approvedDocs}</div>
+            <div className="text-xs text-muted-foreground">{u.approved}</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-amber-600">{pendingDocs}</div>
-            <div className="text-xs text-muted-foreground">Ausstehend</div>
+            <div className="text-xs text-muted-foreground">{u.pending}</div>
           </div>
         </div>
         {canEdit && (
           <Button onClick={() => { resetForm(); setShowCreateDialog(true); }} size="sm">
             <Plus className="w-4 h-4 mr-2" />
-            Komponente hinzufügen
+            {u.addComponent}
           </Button>
         )}
       </div>
@@ -235,14 +356,14 @@ export default function ComponentsTab({ productId, readOnly = false }: Component
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <Package className="w-12 h-12 text-muted-foreground mb-4" />
-            <h3 className="font-semibold text-foreground mb-1">Keine Komponenten definiert</h3>
+            <h3 className="font-semibold text-foreground mb-1">{u.noComponents}</h3>
             <p className="text-sm text-muted-foreground mb-4 max-w-sm">
-              Fügen Sie die einzelnen Bestandteile dieses Produkts hinzu und hinterlegen Sie die zugehörigen Testberichte und Zertifikate pro Komponente.
+              {u.noComponentsDesc}
             </p>
             {canEdit && (
               <Button onClick={() => { resetForm(); setShowCreateDialog(true); }} size="sm">
                 <Plus className="w-4 h-4 mr-2" />
-                Erste Komponente hinzufügen
+                {u.addFirstComponent}
               </Button>
             )}
           </CardContent>
@@ -258,16 +379,17 @@ export default function ComponentsTab({ productId, readOnly = false }: Component
               component={component}
               canEdit={canEdit}
               canReview={canReview}
-              language={language}
+              lang={lang}
+              u={u}
               onEdit={() => openEditDialog(component)}
               onDelete={() => {
-                if (confirm(`Komponente "${component.name}" wirklich entfernen?`)) {
+                if (confirm(`"${component.name}" ${u.deleteComponentConfirm}`)) {
                   deleteMutation.mutate({ id: component.id });
                 }
               }}
               onUpload={() => { resetDocForm(); setUploadingForComponent(component.id); }}
               onDeleteDoc={(docId) => {
-                if (confirm("Dokument wirklich löschen?")) deleteDocMutation.mutate({ documentId: docId });
+                if (confirm(u.deleteDocConfirm)) deleteDocMutation.mutate({ documentId: docId });
               }}
               onReviewDoc={(docId, status, note) => reviewDocMutation.mutate({ documentId: docId, reviewStatus: status, reviewNote: note })}
               productId={productId}
@@ -280,13 +402,13 @@ export default function ComponentsTab({ productId, readOnly = false }: Component
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Neue Komponente hinzufügen</DialogTitle>
+            <DialogTitle>{u.newComponent}</DialogTitle>
           </DialogHeader>
-          <ComponentForm form={form} setForm={setForm} />
+          <ComponentForm form={form} setForm={setForm} lang={lang} u={u} />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreateDialog(false)}>Abbrechen</Button>
+            <Button variant="outline" onClick={() => setShowCreateDialog(false)}>{u.cancel}</Button>
             <Button onClick={handleCreateComponent} disabled={createMutation.isPending}>
-              {createMutation.isPending ? "Wird erstellt…" : "Erstellen"}
+              {createMutation.isPending ? u.creating : u.create}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -296,13 +418,13 @@ export default function ComponentsTab({ productId, readOnly = false }: Component
       <Dialog open={!!editingComponent} onOpenChange={(o) => !o && setEditingComponent(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Komponente bearbeiten</DialogTitle>
+            <DialogTitle>{u.editComponent}</DialogTitle>
           </DialogHeader>
-          <ComponentForm form={form} setForm={setForm} />
+          <ComponentForm form={form} setForm={setForm} lang={lang} u={u} />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingComponent(null)}>Abbrechen</Button>
+            <Button variant="outline" onClick={() => setEditingComponent(null)}>{u.cancel}</Button>
             <Button onClick={handleUpdateComponent} disabled={updateMutation.isPending}>
-              {updateMutation.isPending ? "Wird gespeichert…" : "Speichern"}
+              {updateMutation.isPending ? u.saving : u.save}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -312,44 +434,45 @@ export default function ComponentsTab({ productId, readOnly = false }: Component
       <Dialog open={uploadingForComponent !== null} onOpenChange={(o) => !o && setUploadingForComponent(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Dokument hochladen</DialogTitle>
+            <DialogTitle>{u.uploadDocument}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label>Dokumenttyp *</Label>
+                <Label>{u.docType} *</Label>
                 <Select value={docForm.documentType} onValueChange={(v) => setDocForm((f) => ({ ...f, documentType: v as DocType }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {(Object.keys(DOC_TYPE_LABELS) as DocType[]).map((k) => (
-                      <SelectItem key={k} value={k}>{DOC_TYPE_LABELS[k][language as "de" | "en"]}</SelectItem>
+                      <SelectItem key={k} value={k}>{DOC_TYPE_LABELS[k][lang]}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Norm/Standard</Label>
+                <Label>{u.standard}</Label>
                 <Select value={docForm.standard} onValueChange={(v) => setDocForm((f) => ({ ...f, standard: v === "_none" ? "" : v }))}>
-                  <SelectTrigger><SelectValue placeholder="z.B. EN 71-3" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="e.g. EN 71-3" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="_none">– Keine –</SelectItem>
+                    <SelectItem value="_none">{u.noStandard}</SelectItem>
                     {COMMON_STANDARDS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label>Ablaufdatum (optional)</Label>
+              <Label>{u.expiryDate}</Label>
               <Input type="date" value={docForm.expiryDate} onChange={(e) => setDocForm((f) => ({ ...f, expiryDate: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Datei *</Label>
+              <Label>{u.file} *</Label>
               <div
                 className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
                 onClick={() => fileInputRef.current?.click()}
               >
                 {docForm.fileName ? (
-                  <div className="flex items-center justify-center gap-2 text-sm">
+                  <div className="flex items-center justify-center gap
+-2 text-sm">
                     <FileText className="w-4 h-4 text-primary" />
                     <span className="font-medium">{docForm.fileName}</span>
                     <span className="text-muted-foreground">({(docForm.fileSizeBytes / 1024).toFixed(1)} KB)</span>
@@ -357,7 +480,7 @@ export default function ComponentsTab({ productId, readOnly = false }: Component
                 ) : (
                   <div className="text-muted-foreground text-sm">
                     <Upload className="w-6 h-6 mx-auto mb-2" />
-                    Klicken zum Auswählen (PDF, max. 16 MB)
+                    {u.clickToSelect}
                   </div>
                 )}
               </div>
@@ -365,9 +488,9 @@ export default function ComponentsTab({ productId, readOnly = false }: Component
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setUploadingForComponent(null)}>Abbrechen</Button>
+            <Button variant="outline" onClick={() => setUploadingForComponent(null)}>{u.cancel}</Button>
             <Button onClick={handleUploadDoc} disabled={uploadDocMutation.isPending || !docForm.fileBase64}>
-              {uploadDocMutation.isPending ? "Wird hochgeladen…" : "Hochladen"}
+              {uploadDocMutation.isPending ? u.uploading : u.upload}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -377,38 +500,38 @@ export default function ComponentsTab({ productId, readOnly = false }: Component
 }
 
 // ─── Component Form ───────────────────────────────────────────────────────────
-function ComponentForm({ form, setForm }: { form: any; setForm: any }) {
+function ComponentForm({ form, setForm, lang, u }: { form: any; setForm: any; lang: "de" | "en"; u: Record<string, string> }) {
   return (
     <div className="space-y-4">
       <div className="space-y-1.5">
-        <Label>Name *</Label>
-        <Input placeholder="z.B. Holzrad 60mm" value={form.name} onChange={(e) => setForm((f: any) => ({ ...f, name: e.target.value }))} />
+        <Label>{u.name} *</Label>
+        <Input placeholder={u.namePlaceholder} value={form.name} onChange={(e) => setForm((f: any) => ({ ...f, name: e.target.value }))} />
       </div>
       <div className="space-y-1.5">
-        <Label>Beschreibung</Label>
-        <Textarea placeholder="Kurze Beschreibung der Komponente…" value={form.description} onChange={(e) => setForm((f: any) => ({ ...f, description: e.target.value }))} rows={2} />
+        <Label>{u.description}</Label>
+        <Textarea placeholder={u.descPlaceholder} value={form.description} onChange={(e) => setForm((f: any) => ({ ...f, description: e.target.value }))} rows={2} />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
-          <Label>Materialtyp</Label>
+          <Label>{u.materialType}</Label>
           <Select value={form.materialType || "_none"} onValueChange={(v) => setForm((f: any) => ({ ...f, materialType: v === "_none" ? "" : v }))}>
-            <SelectTrigger><SelectValue placeholder="Auswählen…" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder={u.selectMaterial} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="_none">– Kein –</SelectItem>
+              <SelectItem value="_none">{u.noMaterial}</SelectItem>
               {(Object.keys(MATERIAL_LABELS) as (keyof typeof MATERIAL_LABELS)[]).map((k) => (
-                <SelectItem key={k} value={k}>{MATERIAL_LABELS[k].de}</SelectItem>
+                <SelectItem key={k} value={k}>{MATERIAL_LABELS[k][lang]}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-1.5">
-          <Label>Teilenummer</Label>
-          <Input placeholder="z.B. HW-60-OAK" value={form.partNumber} onChange={(e) => setForm((f: any) => ({ ...f, partNumber: e.target.value }))} />
+          <Label>{u.partNumber}</Label>
+          <Input placeholder={u.partNumberPlaceholder} value={form.partNumber} onChange={(e) => setForm((f: any) => ({ ...f, partNumber: e.target.value }))} />
         </div>
       </div>
       <div className="space-y-1.5">
-        <Label>Komponenten-Lieferant</Label>
-        <Input placeholder="z.B. Holzwerk Müller GmbH" value={form.supplierName} onChange={(e) => setForm((f: any) => ({ ...f, supplierName: e.target.value }))} />
+        <Label>{u.componentSupplier}</Label>
+        <Input placeholder={u.supplierPlaceholder} value={form.supplierName} onChange={(e) => setForm((f: any) => ({ ...f, supplierName: e.target.value }))} />
       </div>
     </div>
   );
@@ -419,7 +542,8 @@ function ComponentAccordionItem({
   component,
   canEdit,
   canReview,
-  language,
+  lang,
+  u,
   onEdit,
   onDelete,
   onUpload,
@@ -430,7 +554,8 @@ function ComponentAccordionItem({
   component: any;
   canEdit: boolean;
   canReview: boolean;
-  language?: string;
+  lang: "de" | "en";
+  u: Record<string, string>;
   onEdit: () => void;
   onDelete: () => void;
   onUpload: () => void;
@@ -449,8 +574,10 @@ function ComponentAccordionItem({
   const completionPct = totalCount > 0 ? Math.round((approvedCount / totalCount) * 100) : 0;
 
   const materialLabel = component.materialType
-    ? (MATERIAL_LABELS[component.materialType as MaterialType]?.de ?? component.materialType)
+    ? (MATERIAL_LABELS[component.materialType as MaterialType]?.[lang] ?? component.materialType)
     : null;
+
+  const dateLocale = lang === "de" ? "de-CH" : "en-GB";
 
   return (
     <AccordionItem value={`component-${component.id}`} className="border rounded-lg overflow-hidden">
@@ -475,8 +602,8 @@ function ComponentAccordionItem({
           </div>
           <div className="flex items-center gap-3 flex-shrink-0 mr-2">
             <div className="text-right">
-              <div className="text-xs text-muted-foreground">{totalCount} Dok.</div>
-              <div className="text-xs font-medium text-foreground">{approvedCount} genehmigt</div>
+              <div className="text-xs text-muted-foreground">{totalCount} {u.dok}</div>
+              <div className="text-xs font-medium text-foreground">{approvedCount} {u.approvedCount}</div>
             </div>
             {totalCount > 0 && (
               <div className="w-16">
@@ -496,7 +623,7 @@ function ComponentAccordionItem({
         <div className="space-y-2 mb-4">
           {docs.length === 0 && (
             <div className="text-sm text-muted-foreground text-center py-4 border border-dashed rounded-lg">
-              Noch keine Dokumente für diese Komponente
+              {u.noDocs}
             </div>
           )}
           {docs.map((doc: any) => (
@@ -508,15 +635,15 @@ function ComponentAccordionItem({
                   {doc.standard && (
                     <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">{doc.standard}</Badge>
                   )}
-                  <ReviewBadge status={doc.reviewStatus} />
+                  <ReviewBadge status={doc.reviewStatus} lang={lang} />
                 </div>
                 <div className="text-xs text-muted-foreground mt-0.5">
-                  {DOC_TYPE_LABELS[doc.documentType as DocType]?.de ?? doc.documentType}
+                  {DOC_TYPE_LABELS[doc.documentType as DocType]?.[lang] ?? doc.documentType}
                   {doc.expiryDate && (
                     <span className="ml-2">
-                      · Ablauf: {new Date(doc.expiryDate).toLocaleDateString("de-CH")}
+                      · {u.expiry}: {new Date(doc.expiryDate).toLocaleDateString(dateLocale)}
                       {new Date(doc.expiryDate) < new Date() && (
-                        <span className="text-red-500 ml-1"><AlertTriangle className="w-3 h-3 inline" /> Abgelaufen</span>
+                        <span className="text-red-500 ml-1"><AlertTriangle className="w-3 h-3 inline" /> {u.expired}</span>
                       )}
                     </span>
                   )}
@@ -536,18 +663,18 @@ function ComponentAccordionItem({
                       className="h-7 text-xs text-green-600 hover:text-green-700 hover:bg-green-50"
                       onClick={() => onReviewDoc(doc.id, "approved", undefined)}
                     >
-                      <CheckCircle2 className="w-3.5 h-3.5 mr-1" />Genehmigen
+                      <CheckCircle2 className="w-3.5 h-3.5 mr-1" />{u.approve}
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       className="h-7 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
                       onClick={() => {
-                        const note = prompt("Ablehnungsgrund (optional):") ?? undefined;
+                        const note = prompt(u.rejectPrompt) ?? undefined;
                         onReviewDoc(doc.id, "rejected", note);
                       }}
                     >
-                      <XCircle className="w-3.5 h-3.5 mr-1" />Ablehnen
+                      <XCircle className="w-3.5 h-3.5 mr-1" />{u.reject}
                     </Button>
                   </>
                 )}
@@ -571,19 +698,19 @@ function ComponentAccordionItem({
           {canEdit && (
             <Button variant="outline" size="sm" onClick={onUpload}>
               <Upload className="w-3.5 h-3.5 mr-1.5" />
-              Dokument hochladen
+              {u.uploadDocument}
             </Button>
           )}
           {canEdit && (
             <Button variant="ghost" size="sm" onClick={onEdit}>
               <Pencil className="w-3.5 h-3.5 mr-1.5" />
-              Bearbeiten
+              {u.edit}
             </Button>
           )}
           {canEdit && (
             <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={onDelete}>
               <Trash2 className="w-3.5 h-3.5 mr-1.5" />
-              Entfernen
+              {u.remove}
             </Button>
           )}
         </div>

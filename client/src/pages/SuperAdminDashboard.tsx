@@ -241,7 +241,7 @@ function CreateTenantDialog({
 
           {/* Primärfarbe */}
           <div className="space-y-1.5">
-            <Label>Primärfarbe (Siegel-Farbe)</Label>
+            <Label>{lang === "de" ? "Primärfarbe (Siegel-Farbe)" : "Primary Color (Seal Color)"}</Label>
             <div className="flex items-center gap-3">
               <input
                 type="color"
@@ -267,7 +267,7 @@ function CreateTenantDialog({
             </Label>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label htmlFor="monthlyFee" className="text-xs text-muted-foreground">Monatliche Grundgebühr (CHF)</Label>
+                <Label htmlFor="monthlyFee" className="text-xs text-muted-foreground">{lang === "de" ? "Monatliche Grundgebühr (CHF)" : "Monthly Base Fee (CHF)"}</Label>
                 <Input
                   id="monthlyFee"
                   type="number"
@@ -433,7 +433,7 @@ function EditTenantDialog({
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Primärfarbe</Label>
+              <Label>{lang === "de" ? "Primärfarbe" : "Primary Color"}</Label>
               <div className="flex items-center gap-2">
                 <input
                   type="color"
@@ -474,8 +474,8 @@ function EditTenantDialog({
           {/* Aktiv/Inaktiv */}
           <div className="flex items-center justify-between p-3 rounded-lg border">
             <div>
-              <p className="text-sm font-medium">Mandant aktiv</p>
-              <p className="text-xs text-muted-foreground">Inaktive Mandanten können sich nicht einloggen.</p>
+              <p className="text-sm font-medium">{lang === "de" ? "Mandant aktiv" : "Tenant active"}</p>
+              <p className="text-xs text-muted-foreground">{lang === "de" ? "Inaktive Mandanten können sich nicht einloggen." : "Inactive tenants cannot log in."}</p>
             </div>
             <Switch
               checked={form.isActive}
@@ -555,13 +555,12 @@ function SummaryCards({ tenants }: { tenants: TenantRow[] }) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function SuperAdminDashboard() {
   const { user } = useAuth();
+  const { lang } = useLang();
   const [createOpen, setCreateOpen] = useState(false);
   const [editTenant, setEditTenant] = useState<TenantRow | null>(null);
-
   const { data: tenants, isLoading, error } = trpc.tenant.list.useQuery(undefined, {
     retry: false,
   });
-
   // Guard: only super_admin
   const role = (user as any)?.complianceRole;
   if (role !== "super_admin") {
@@ -570,7 +569,7 @@ export default function SuperAdminDashboard() {
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
           <XCircle className="h-12 w-12 text-destructive" />
           <h2 className="text-xl font-semibold">Zugriff verweigert</h2>
-          <p className="text-muted-foreground text-sm">Diese Seite ist nur für Super-Administratoren zugänglich.</p>
+          <p className="text-muted-foreground text-sm">{lang === "de" ? "Diese Seite ist nur für Super-Administratoren zugänglich." : "This page is only accessible to super administrators."}</p>
         </div>
       </ComplianceLayout>
     );
@@ -602,15 +601,15 @@ export default function SuperAdminDashboard() {
         {/* Tenant Table */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Mandanten-Übersicht</CardTitle>
+            <CardTitle className="text-base">{lang === "de" ? "Mandanten-Übersicht" : "Tenant Overview"}</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             {isLoading ? (
-              <div className="p-8 text-center text-muted-foreground text-sm">Wird geladen…</div>
+              <div className="p-8 text-center text-muted-foreground text-sm">{lang === "de" ? "Wird geladen…" : "Loading…"}</div>
             ) : error ? (
               <div className="p-8 text-center text-destructive text-sm">{error.message}</div>
             ) : !tenants || tenants.length === 0 ? (
-              <div className="p-8 text-center text-muted-foreground text-sm">Noch keine Mandanten angelegt.</div>
+              <div className="p-8 text-center text-muted-foreground text-sm">{lang === "de" ? "Noch keine Mandanten angelegt." : "No tenants created yet."}</div>
             ) : (
               <Table>
                 <TableHeader>
@@ -695,11 +694,9 @@ export default function SuperAdminDashboard() {
           <CardContent className="py-4 flex items-start gap-3">
             <Euro className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-medium text-amber-800">Datenschutz-Hinweis zur Abrechnung</p>
+              <p className="text-sm font-medium text-amber-800">{lang === "de" ? "Datenschutz-Hinweis zur Abrechnung" : "Privacy Notice on Billing"}</p>
               <p className="text-xs text-amber-700 mt-0.5">
-                Aus Datenschutzgründen werden im Super-Admin-Bereich ausschliesslich aggregierte Metriken (Produkte, Lieferanten, Nutzer) angezeigt.
-                Detaillierte Buchungsdaten der Mandanten sind nicht einsehbar. Tarife (Grundgebühr und Provision) werden intern gespeichert
-                und nicht an Mandanten kommuniziert.
+                {lang === "de" ? "Aus Datenschutzgründen werden im Super-Admin-Bereich ausschliesslich aggregierte Metriken (Produkte, Lieferanten, Nutzer) angezeigt. Detaillierte Buchungsdaten der Mandanten sind nicht einsehbar. Tarife (Grundgebühr und Provision) werden intern gespeichert und nicht an Mandanten kommuniziert." : "For privacy reasons, the super admin area only shows aggregated metrics (products, suppliers, users). Detailed billing data of tenants is not visible. Rates (base fee and commission) are stored internally and not communicated to tenants."}
               </p>
             </div>
           </CardContent>

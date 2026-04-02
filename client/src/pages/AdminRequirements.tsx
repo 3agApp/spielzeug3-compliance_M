@@ -14,7 +14,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 export default function AdminRequirements() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState({
     key: "",
@@ -50,7 +50,7 @@ export default function AdminRequirements() {
         <div>
           <h1 className="text-2xl font-semibold">{t.nav.requirements}</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Definieren Sie welche Dokumente und Daten Lieferanten einreichen müssen
+            {lang === "de" ? "Definieren Sie welche Dokumente und Daten Lieferanten einreichen müssen" : "Define which documents and data suppliers must submit"}
           </p>
         </div>
         <Button onClick={() => setCreateOpen(true)}>
@@ -64,19 +64,19 @@ export default function AdminRequirements() {
           {requirements.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">
               <FileText className="h-10 w-10 opacity-30" />
-              <p className="text-sm">Keine Anforderungstypen definiert</p>
+              <p className="text-sm">{lang === "de" ? "Keine Anforderungstypen definiert" : "No requirement types defined"}</p>
             </div>
           ) : (
             <table className="w-full data-table">
               <thead>
                 <tr>
-                  <th>Schlüssel</th>
+                  <th>{lang === "de" ? "Schlüssel" : "Key"}</th>
                   <th>Label (DE)</th>
                   <th>Label (EN)</th>
-                  <th>Kategorie</th>
-                  <th>Pflicht</th>
-                  <th>Aktiv</th>
-                  <th>Reihenfolge</th>
+                  <th>{lang === "de" ? "Kategorie" : "Category"}</th>
+                  <th>{lang === "de" ? "Pflicht" : "Required"}</th>
+                  <th>{lang === "de" ? "Aktiv" : "Active"}</th>
+                  <th>{lang === "de" ? "Reihenfolge" : "Order"}</th>
                 </tr>
               </thead>
               <tbody>
@@ -87,7 +87,7 @@ export default function AdminRequirements() {
                     <td className="text-sm text-muted-foreground">{r.labelEn}</td>
                     <td>
                       <Badge variant="outline" className="text-xs">
-                        {r.category === "document" ? "Dokument" : "Daten"}
+                        {r.category === "document" ? (lang === "de" ? "Dokument" : "Document") : (lang === "de" ? "Daten" : "Data")}
                       </Badge>
                     </td>
                     <td>
@@ -119,11 +119,11 @@ export default function AdminRequirements() {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Neuer Anforderungstyp</DialogTitle>
+            <DialogTitle>{lang === "de" ? "Neuer Anforderungstyp" : "New Requirement Type"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Schlüssel (eindeutig, z.B. "test_report") *</Label>
+              <Label>{lang === "de" ? "Schlüssel (eindeutig, z.B. \"test_report\") *" : "Key (unique, e.g. \"test_report\") *"}</Label>
               <Input
                 value={form.key}
                 onChange={(e) => setForm((f) => ({ ...f, key: e.target.value }))}
@@ -133,7 +133,7 @@ export default function AdminRequirements() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Label Deutsch *</Label>
+                <Label>{lang === "de" ? "Label Deutsch *" : "Label German *"}</Label>
                 <Input
                   value={form.labelDe}
                   onChange={(e) => setForm((f) => ({ ...f, labelDe: e.target.value }))}
@@ -142,7 +142,7 @@ export default function AdminRequirements() {
                 />
               </div>
               <div>
-                <Label>Label Englisch *</Label>
+                <Label>{lang === "de" ? "Label Englisch *" : "Label English *"}</Label>
                 <Input
                   value={form.labelEn}
                   onChange={(e) => setForm((f) => ({ ...f, labelEn: e.target.value }))}
@@ -153,7 +153,7 @@ export default function AdminRequirements() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Kategorie</Label>
+                <Label>{lang === "de" ? "Kategorie" : "Category"}</Label>
                 <Select
                   value={form.category}
                   onValueChange={(v) => setForm((f) => ({ ...f, category: v as any }))}
@@ -162,13 +162,13 @@ export default function AdminRequirements() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="document">Dokument</SelectItem>
-                    <SelectItem value="data">Daten</SelectItem>
+                    <SelectItem value="document">{lang === "de" ? "Dokument" : "Document"}</SelectItem>
+                    <SelectItem value="data">{lang === "de" ? "Daten" : "Data"}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Reihenfolge</Label>
+                <Label>{lang === "de" ? "Reihenfolge" : "Order"}</Label>
                 <Input
                   type="number"
                   value={form.sortOrder}
@@ -182,7 +182,7 @@ export default function AdminRequirements() {
                 checked={form.required}
                 onCheckedChange={(checked) => setForm((f) => ({ ...f, required: checked }))}
               />
-              <Label>Pflichtfeld</Label>
+              <Label>{lang === "de" ? "Pflichtfeld" : "Required field"}</Label>
             </div>
           </div>
           <DialogFooter>

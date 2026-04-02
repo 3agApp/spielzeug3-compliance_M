@@ -31,7 +31,7 @@ const MAX_FILE_SIZE_MB = 5;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 export default function ProductImagesGallery({ productId, readOnly = false }: ProductImagesGalleryProps) {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const utils = trpc.useUtils();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -221,7 +221,7 @@ export default function ProductImagesGallery({ productId, readOnly = false }: Pr
                     <button
                       onClick={() => setLightboxIndex(index)}
                       className="p-1.5 bg-white/90 rounded-full text-gray-800 hover:bg-white transition-colors"
-                      title="Vergrößern"
+                      title={lang === "de" ? "Vergrößern" : "Zoom in"}
                     >
                       <ZoomIn className="h-3.5 w-3.5" />
                     </button>
