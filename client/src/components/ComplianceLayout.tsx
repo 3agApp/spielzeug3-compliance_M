@@ -68,7 +68,7 @@ function getMenuItems(role: ComplianceRole, t: any) {
     { icon: Package, label: t.nav.products, path: "/products" },
     { icon: ClipboardList, label: t.nav.reviewQueue, path: "/review-queue" },
     { icon: Building2, label: t.nav.suppliers, path: "/suppliers" },
-    { icon: CalendarClock, label: "Ablaufdaten", path: "/expiry" },
+    { icon: CalendarClock, label: t.nav.expiryTracker, path: "/expiry" },
     { icon: Bell, label: t.nav.notifications, path: "/notifications" },
   ];
 
@@ -77,9 +77,9 @@ function getMenuItems(role: ComplianceRole, t: any) {
     { icon: Package, label: t.nav.products, path: "/products" },
     { icon: ClipboardList, label: t.nav.reviewQueue, path: "/review-queue" },
     { icon: Building2, label: t.nav.suppliers, path: "/suppliers" },
-    { icon: CheckCircle2, label: "Genehmigungen", path: "/approvals" },
-    { icon: CalendarClock, label: "Ablaufdaten", path: "/expiry" },
-    { icon: Layers, label: "Produktvorlagen", path: "/admin/templates" },
+    { icon: CheckCircle2, label: t.nav.approvals, path: "/approvals" },
+    { icon: CalendarClock, label: t.nav.expiryTracker, path: "/expiry" },
+    { icon: Layers, label: t.nav.templates, path: "/admin/templates" },
     { icon: RefreshCw, label: t.nav.syncLogs, path: "/sync" },
     { icon: Bell, label: t.nav.notifications, path: "/notifications" },
   ];
@@ -89,10 +89,10 @@ function getMenuItems(role: ComplianceRole, t: any) {
     { icon: Package, label: t.nav.products, path: "/products" },
     { icon: ClipboardList, label: t.nav.reviewQueue, path: "/review-queue" },
     { icon: Building2, label: t.nav.suppliers, path: "/suppliers" },
-    { icon: CalendarClock, label: "Ablaufdaten", path: "/expiry" },
+    { icon: CalendarClock, label: t.nav.expiryTracker, path: "/expiry" },
     { icon: Users, label: t.nav.users, path: "/admin/users" },
-    { icon: UserPlus, label: "Einladungen", path: "/admin/invitations" },
-    { icon: Layers, label: "Produktvorlagen", path: "/admin/templates" },
+    { icon: UserPlus, label: t.nav.invitations, path: "/admin/invitations" },
+    { icon: Layers, label: t.nav.templates, path: "/admin/templates" },
     { icon: FileText, label: t.nav.requirements, path: "/admin/requirements" },
     { icon: RefreshCw, label: t.nav.syncLogs, path: "/sync" },
     { icon: Activity, label: t.nav.auditLog, path: "/admin/audit" },
@@ -101,7 +101,7 @@ function getMenuItems(role: ComplianceRole, t: any) {
   ];
 
   const superAdmin = [
-    { icon: Crown, label: "Super-Admin", path: "/super-admin" },
+    { icon: Crown, label: t.nav.superAdmin, path: "/super-admin" },
     { icon: LayoutDashboard, label: t.nav.dashboard, path: "/dashboard" },
     { icon: Package, label: t.nav.products, path: "/products" },
     { icon: Building2, label: t.nav.suppliers, path: "/suppliers" },
