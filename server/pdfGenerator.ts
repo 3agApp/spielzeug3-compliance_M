@@ -1,5 +1,95 @@
 import PDFDocument from "pdfkit";
 
+// ─── i18n strings ─────────────────────────────────────────────────────────────
+const PDF_I18N = {
+  de: {
+    title: "KI-Plausibilitätsprüfung",
+    subtitle: "spielzeug3 AG · Supplier Compliance Portal",
+    createdAt: (date: string) => `Erstellt am ${date}`,
+    reportId: (id: number) => `Bericht #${id}`,
+    productInfo: "Produktinformationen",
+    labels: {
+      productName: "Produktname",
+      internalArticleNumber: "Interne Artikelnummer",
+      supplierArticleNumber: "Lieferanten-Artikelnummer",
+      ean: "EAN",
+      brand: "Marke",
+      supplier: "Lieferant",
+      status: "Status",
+    },
+    overallDesc: "Gesamtbewertung der Dokumentenplausibilität",
+    model: (m: string, tokens: string) => `Modell: ${m}${tokens ? ` · ${tokens} Tokens` : ""}`,
+    summary: "Zusammenfassung",
+    categoryScores: "Kategorie-Bewertungen",
+    categories: {
+      docCompleteness: "Dokumentenvollständigkeit",
+      contentPlausibility: "Inhaltliche Plausibilität",
+      formalCorrectness: "Formale Korrektheit",
+      consistency: "Konsistenz",
+    },
+    findings: (n: number) => `Befunde (${n})`,
+    findingFallback: (i: number) => `Befund ${i + 1}`,
+    recommendations: "Empfehlungen",
+    footer: (id: number, page: number, total: number) =>
+      `spielzeug3 AG · Supplier Compliance Portal · Bericht #${id} · Seite ${page} von ${total}`,
+    scoreLabels: {
+      plausible: "Plausibel",
+      partial: "Teilweise plausibel",
+      critical: "Kritisch",
+    },
+    severityLabels: {
+      high: "Kritisch",
+      medium: "Mittel",
+      low: "Gering",
+      info: "Info",
+    },
+  },
+  en: {
+    title: "AI Plausibility Check",
+    subtitle: "spielzeug3 AG · Supplier Compliance Portal",
+    createdAt: (date: string) => `Created on ${date}`,
+    reportId: (id: number) => `Report #${id}`,
+    productInfo: "Product Information",
+    labels: {
+      productName: "Product Name",
+      internalArticleNumber: "Internal Article Number",
+      supplierArticleNumber: "Supplier Article Number",
+      ean: "EAN",
+      brand: "Brand",
+      supplier: "Supplier",
+      status: "Status",
+    },
+    overallDesc: "Overall document plausibility assessment",
+    model: (m: string, tokens: string) => `Model: ${m}${tokens ? ` · ${tokens} tokens` : ""}`,
+    summary: "Summary",
+    categoryScores: "Category Scores",
+    categories: {
+      docCompleteness: "Document Completeness",
+      contentPlausibility: "Content Plausibility",
+      formalCorrectness: "Formal Correctness",
+      consistency: "Consistency",
+    },
+    findings: (n: number) => `Findings (${n})`,
+    findingFallback: (i: number) => `Finding ${i + 1}`,
+    recommendations: "Recommendations",
+    footer: (id: number, page: number, total: number) =>
+      `spielzeug3 AG · Supplier Compliance Portal · Report #${id} · Page ${page} of ${total}`,
+    scoreLabels: {
+      plausible: "Plausible",
+      partial: "Partially plausible",
+      critical: "Critical",
+    },
+    severityLabels: {
+      high: "Critical",
+      medium: "Medium",
+      low: "Low",
+      info: "Info",
+    },
+  },
+} as const;
+
+type PdfLang = "de" | "en";
+
 // ─── Color palette ────────────────────────────────────────────────────────────
 const COLORS = {
   primary: "#1e3a5f",       // Deep navy
@@ -21,10 +111,11 @@ function scoreColor(score: number): string {
   return COLORS.danger;
 }
 
-function scoreLabel(score: number): string {
-  if (score >= 75) return "Plausibel";
-  if (score >= 50) return "Teilweise plausibel";
-  return "Kritisch";
+function scoreLabel(score: number, lang: PdfLang): string {
+  const labels = PDF_I18N[lang].scoreLabels;
+  if (score >= 75) return labels.plausible;
+  if (score >= 50) return labels.partial;
+  return labels.critical;
 }
 
 function severityColor(severity: string): string {
@@ -36,9 +127,9 @@ function severityColor(severity: string): string {
   }
 }
 
-function severityLabel(severity: string): string {
-  const map: Record<string, string> = { high: "Kritisch", medium: "Mittel", low: "Gering", info: "Info" };
-  return map[severity] ?? severity;
+function severityLabel(severity: string, lang: PdfLang): string {
+  const labels = PDF_I18N[lang].severityLabels;
+  return (labels as Record<string, string>)[severity] ?? severity;
 }
 
 // ─── Draw helpers ─────────────────────────────────────────────────────────────
@@ -102,6 +193,7 @@ export interface PdfReportData {
     createdAt: Date;
     triggeredByUserName?: string | null;
   };
+  lang?: PdfLang;
 }
 
 export function generateAiAnalysisPdf(data: PdfReportData): Promise<Buffer> {
@@ -113,6 +205,10 @@ export function generateAiAnalysisPdf(data: PdfReportData): Promise<Buffer> {
     doc.on("error", reject);
 
     const { product, analysis } = data;
+    const lang: PdfLang = data.lang ?? "de";
+    const i18n = PDF_I18N[lang];
+    const locale = lang === "de" ? "de-DE" : "en-GB";
+
     const overall = Math.round(Number(analysis.overallScore ?? 0));
     const docScore = Math.round(Number(analysis.documentCompletenessScore ?? 0));
     const contentScore = Math.round(Number(analysis.contentPlausibilityScore ?? 0));
@@ -128,33 +224,33 @@ export function generateAiAnalysisPdf(data: PdfReportData): Promise<Buffer> {
     drawFilledRect(doc, 0, 0, doc.page.width, 90, COLORS.primary, 0);
 
     doc.fontSize(18).fillColor(COLORS.white)
-      .text("KI-Plausibilitätsprüfung", 50, 22, { width: pageW - 120 });
+      .text(i18n.title, 50, 22, { width: pageW - 120 });
     doc.fontSize(10).fillColor("#93c5fd")
-      .text("spielzeug3 AG · Supplier Compliance Portal", 50, 46);
+      .text(i18n.subtitle, 50, 46);
     doc.fontSize(8).fillColor("#bfdbfe")
-      .text(`Erstellt am ${new Date(analysis.createdAt).toLocaleString("de-DE")}`, 50, 62);
+      .text(i18n.createdAt(new Date(analysis.createdAt).toLocaleString(locale)), 50, 62);
 
     // Report ID badge (top right)
     doc.fontSize(8).fillColor("#bfdbfe")
-      .text(`Bericht #${analysis.id}`, doc.page.width - 150, 36, { width: 100, align: "right" });
+      .text(i18n.reportId(analysis.id), doc.page.width - 150, 36, { width: 100, align: "right" });
 
     doc.y = 110;
 
     // ── PRODUCT INFO ───────────────────────────────────────────────────────────
     doc.fontSize(11).fillColor(COLORS.primary).font("Helvetica-Bold")
-      .text("Produktinformationen", 50, doc.y);
+      .text(i18n.productInfo, 50, doc.y);
     doc.moveDown(0.4);
     drawHorizontalLine(doc, doc.y);
     doc.moveDown(0.5);
 
     const infoRows = [
-      ["Produktname", product.productName],
-      ["Interne Artikelnummer", product.internalArticleNumber ?? "–"],
-      ["Lieferanten-Artikelnummer", product.supplierArticleNumber ?? "–"],
-      ["EAN", product.ean ?? "–"],
-      ["Marke", product.brand ?? "–"],
-      ["Lieferant", product.supplierName ?? "–"],
-      ["Status", product.status],
+      [i18n.labels.productName, product.productName],
+      [i18n.labels.internalArticleNumber, product.internalArticleNumber ?? "–"],
+      [i18n.labels.supplierArticleNumber, product.supplierArticleNumber ?? "–"],
+      [i18n.labels.ean, product.ean ?? "–"],
+      [i18n.labels.brand, product.brand ?? "–"],
+      [i18n.labels.supplier, product.supplierName ?? "–"],
+      [i18n.labels.status, product.status],
     ];
 
     const colW = pageW / 2 - 10;
@@ -185,18 +281,21 @@ export function generateAiAnalysisPdf(data: PdfReportData): Promise<Buffer> {
 
     // Label
     doc.fontSize(14).fillColor(scoreColor(overall)).font("Helvetica-Bold")
-      .text(scoreLabel(overall), 170, scoreBoxY + 18);
+      .text(scoreLabel(overall, lang), 170, scoreBoxY + 18);
     doc.fontSize(9).fillColor(COLORS.muted).font("Helvetica")
-      .text(`Gesamtbewertung der Dokumentenplausibilität`, 170, scoreBoxY + 38);
+      .text(i18n.overallDesc, 170, scoreBoxY + 38);
+    const tokensStr = analysis.tokensUsed
+      ? analysis.tokensUsed.toLocaleString(locale)
+      : "";
     doc.fontSize(8).fillColor(COLORS.muted)
-      .text(`Modell: ${analysis.modelUsed ?? "GPT-4o"} · ${analysis.tokensUsed ? analysis.tokensUsed.toLocaleString("de-DE") + " Tokens" : ""}`, 170, scoreBoxY + 54);
+      .text(i18n.model(analysis.modelUsed ?? "GPT-4o", tokensStr), 170, scoreBoxY + 54);
 
     doc.y = scoreBoxY + scoreBoxH + 16;
 
     // ── SUMMARY ────────────────────────────────────────────────────────────────
     if (analysis.summary) {
       doc.fontSize(11).fillColor(COLORS.primary).font("Helvetica-Bold")
-        .text("Zusammenfassung", 50, doc.y);
+        .text(i18n.summary, 50, doc.y);
       doc.moveDown(0.4);
       drawHorizontalLine(doc, doc.y);
       doc.moveDown(0.5);
@@ -215,7 +314,7 @@ export function generateAiAnalysisPdf(data: PdfReportData): Promise<Buffer> {
 
     // ── CATEGORY SCORES ────────────────────────────────────────────────────────
     doc.fontSize(11).fillColor(COLORS.primary).font("Helvetica-Bold")
-      .text("Kategorie-Bewertungen", 50, doc.y);
+      .text(i18n.categoryScores, 50, doc.y);
     doc.moveDown(0.4);
     drawHorizontalLine(doc, doc.y);
     doc.moveDown(0.5);
@@ -224,10 +323,10 @@ export function generateAiAnalysisPdf(data: PdfReportData): Promise<Buffer> {
     const catStartY = doc.y;
 
     const categories = [
-      { label: "Dokumentenvollständigkeit", score: docScore },
-      { label: "Inhaltliche Plausibilität", score: contentScore },
-      { label: "Formale Korrektheit", score: formalScore },
-      { label: "Konsistenz", score: consistencyScore },
+      { label: i18n.categories.docCompleteness, score: docScore },
+      { label: i18n.categories.contentPlausibility, score: contentScore },
+      { label: i18n.categories.formalCorrectness, score: formalScore },
+      { label: i18n.categories.consistency, score: consistencyScore },
     ];
 
     let catY = catStartY;
@@ -246,7 +345,7 @@ export function generateAiAnalysisPdf(data: PdfReportData): Promise<Buffer> {
       if (doc.y > doc.page.height - 200) doc.addPage();
 
       doc.fontSize(11).fillColor(COLORS.primary).font("Helvetica-Bold")
-        .text(`Befunde (${findings.length})`, 50, doc.y);
+        .text(i18n.findings(findings.length), 50, doc.y);
       doc.moveDown(0.4);
       drawHorizontalLine(doc, doc.y);
       doc.moveDown(0.5);
@@ -268,11 +367,11 @@ export function generateAiAnalysisPdf(data: PdfReportData): Promise<Buffer> {
         doc.fontSize(7).fillColor(COLORS.white).font("Helvetica-Bold");
         const badgeW = 48;
         drawFilledRect(doc, doc.page.width - 50 - badgeW - 4, fY + 8, badgeW, 14, sColor, 3);
-        doc.text(severityLabel(finding.severity).toUpperCase(), doc.page.width - 50 - badgeW, fY + 11, { width: badgeW, align: "center" });
+        doc.text(severityLabel(finding.severity, lang).toUpperCase(), doc.page.width - 50 - badgeW, fY + 11, { width: badgeW, align: "center" });
 
         // Category
         doc.fontSize(9).fillColor(COLORS.primary).font("Helvetica-Bold")
-          .text(finding.category ?? `Befund ${i + 1}`, 62, fY + 8, { width: pageW - 80 });
+          .text(finding.category ?? i18n.findingFallback(i), 62, fY + 8, { width: pageW - 80 });
 
         // Description
         doc.fontSize(9).fillColor(COLORS.textSecondary).font("Helvetica")
@@ -289,7 +388,7 @@ export function generateAiAnalysisPdf(data: PdfReportData): Promise<Buffer> {
       if (doc.y > doc.page.height - 150) doc.addPage();
 
       doc.fontSize(11).fillColor(COLORS.primary).font("Helvetica-Bold")
-        .text("Empfehlungen", 50, doc.y);
+        .text(i18n.recommendations, 50, doc.y);
       doc.moveDown(0.4);
       drawHorizontalLine(doc, doc.y);
       doc.moveDown(0.5);
@@ -324,7 +423,7 @@ export function generateAiAnalysisPdf(data: PdfReportData): Promise<Buffer> {
       drawHorizontalLine(doc, footerY - 5, COLORS.border);
       doc.fontSize(7).fillColor(COLORS.muted).font("Helvetica")
         .text(
-          `spielzeug3 AG · Supplier Compliance Portal · Bericht #${analysis.id} · Seite ${i + 1} von ${totalPages}`,
+          i18n.footer(analysis.id, i + 1, totalPages),
           50, footerY, { width: pageW, align: "center" }
         );
     }

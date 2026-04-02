@@ -69,6 +69,10 @@ export function registerPdfRoutes(app: Express) {
         return;
       }
 
+      // Determine language: ?lang=en or Accept-Language header, default to "de"
+      const rawLang = String(req.query.lang ?? "").toLowerCase();
+      const lang: "de" | "en" = rawLang === "en" ? "en" : "de";
+
       const productId = parseInt(req.params.productId ?? "0");
       if (!productId || isNaN(productId)) {
         res.status(400).json({ error: "Ungültige Produkt-ID" });
@@ -129,12 +133,14 @@ export function registerPdfRoutes(app: Express) {
           createdAt: analysis.createdAt,
           triggeredByUserName: null,
         },
+        lang,
       });
 
       const safeName = ((product as any).productName ?? "produkt")
         .replace(/[^a-zA-Z0-9äöüÄÖÜß\-_]/g, "_")
         .slice(0, 50);
-      const filename = `KI-Analyse_${safeName}_${new Date(analysis.createdAt).toISOString().slice(0, 10)}.pdf`;
+      const filenameBase = lang === "en" ? "AI-Analysis" : "KI-Analyse";
+      const filename = `${filenameBase}_${safeName}_${new Date(analysis.createdAt).toISOString().slice(0, 10)}.pdf`;
 
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
@@ -319,6 +325,10 @@ export function registerPdfRoutes(app: Express) {
         return;
       }
 
+      // Determine language: ?lang=en, default to "de"
+      const rawLangR = String(req.query.lang ?? "").toLowerCase();
+      const langR: "de" | "en" = rawLangR === "en" ? "en" : "de";
+
       const productId = parseInt(req.params.productId ?? "0");
       if (!productId || isNaN(productId)) {
         res.status(400).json({ error: "Ungültige Produkt-ID" });
@@ -401,12 +411,14 @@ export function registerPdfRoutes(app: Express) {
           tokensUsed: assessment.tokensUsed,
           createdAt: assessment.createdAt,
         },
+        lang: langR,
       });
 
       const safeName = ((product as any).productName ?? "produkt")
         .replace(/[^a-zA-Z0-9äöüÄÖÜß\-_]/g, "_")
         .slice(0, 50);
-      const filename = `Risikobericht_${safeName}_${new Date(assessment.createdAt).toISOString().slice(0, 10)}.pdf`;
+      const filenameBaseR = langR === "en" ? "Risk-Report" : "Risikobericht";
+      const filename = `${filenameBaseR}_${safeName}_${new Date(assessment.createdAt).toISOString().slice(0, 10)}.pdf`;
 
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);

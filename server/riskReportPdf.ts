@@ -1,6 +1,72 @@
 import PDFDocument from "pdfkit";
 import type { RiskItem, RiskAssessmentResult } from "./domains/risk/riskAssessmentService";
 
+// ─── i18n strings ─────────────────────────────────────────────────────────────
+const RISK_I18N = {
+  de: {
+    headerTitle: "Swiss Product Seal – Risikobericht",
+    page: (n: number) => `Seite ${n}`,
+    footer: (date: string) => `Erstellt am ${date} · Swiss Product Seal Compliance Portal · Vertraulich`,
+    reportTitle: "Risikobericht",
+    summaryLabel: "ZUSAMMENFASSUNG",
+    riskOverview: "Risiko-Übersicht nach Kategorie",
+    assessmentMeta: (id: number, date: string, model: string, tokens: string | number) =>
+      `Bewertungs-ID: #${id}  ·  Erstellt: ${date}  ·  Modell: ${model}  ·  Token: ${tokens}`,
+    detailedRisks: "Identifizierte Risiken im Detail",
+    mitigations: "MASSNAHMEN ZUR RISIKOREDUKTION",
+    missingInfoTitle: "Fehlende Informationen & Empfehlungen",
+    missingInfoSubtitle: "Folgende Informationen würden die Risikobewertung verbessern und den Risikoscore senken:",
+    meta: {
+      internalArticleNumber: "Interne Artikelnummer",
+      supplierArticleNumber: "Lieferanten-Artikelnummer",
+      ean: "EAN / GTIN",
+      brand: "Marke",
+      supplier: "Lieferant",
+      status: "Produktstatus",
+    },
+    riskLevels: {
+      low: "Niedrig",
+      medium: "Mittel",
+      high: "Hoch",
+      critical: "Kritisch",
+    },
+    locale: "de-CH",
+    timezone: "Europe/Zurich",
+  },
+  en: {
+    headerTitle: "Swiss Product Seal – Risk Report",
+    page: (n: number) => `Page ${n}`,
+    footer: (date: string) => `Generated on ${date} · Swiss Product Seal Compliance Portal · Confidential`,
+    reportTitle: "Risk Report",
+    summaryLabel: "SUMMARY",
+    riskOverview: "Risk Overview by Category",
+    assessmentMeta: (id: number, date: string, model: string, tokens: string | number) =>
+      `Assessment ID: #${id}  ·  Created: ${date}  ·  Model: ${model}  ·  Tokens: ${tokens}`,
+    detailedRisks: "Identified Risks in Detail",
+    mitigations: "RISK MITIGATION MEASURES",
+    missingInfoTitle: "Missing Information & Recommendations",
+    missingInfoSubtitle: "The following information would improve the risk assessment and lower the risk score:",
+    meta: {
+      internalArticleNumber: "Internal Article Number",
+      supplierArticleNumber: "Supplier Article Number",
+      ean: "EAN / GTIN",
+      brand: "Brand",
+      supplier: "Supplier",
+      status: "Product Status",
+    },
+    riskLevels: {
+      low: "Low",
+      medium: "Medium",
+      high: "High",
+      critical: "Critical",
+    },
+    locale: "en-GB",
+    timezone: "Europe/London",
+  },
+} as const;
+
+type RiskPdfLang = "de" | "en";
+
 // ─── Color palette ────────────────────────────────────────────────────────────
 const C = {
   primary:    "#1e3a5f",
@@ -26,14 +92,9 @@ function riskColor(score: number): string {
   return C.critical;
 }
 
-function riskLevelLabel(level: string, lang: "de" | "en" = "de"): string {
-  const map: Record<string, Record<string, string>> = {
-    low:      { de: "Niedrig",   en: "Low" },
-    medium:   { de: "Mittel",    en: "Medium" },
-    high:     { de: "Hoch",      en: "High" },
-    critical: { de: "Kritisch",  en: "Critical" },
-  };
-  return map[level]?.[lang] ?? level;
+function riskLevelLabel(level: string, lang: RiskPdfLang = "de"): string {
+  const labels = RISK_I18N[lang].riskLevels;
+  return (labels as Record<string, string>)[level] ?? level;
 }
 
 function riskLevelColor(level: string): string {
@@ -99,23 +160,32 @@ function drawGauge(
 }
 
 // ─── Page header/footer ───────────────────────────────────────────────────────
-function addHeader(doc: PDFKit.PDFDocument, productName: string, pageNum: number) {
+function addHeader(
+  doc: PDFKit.PDFDocument,
+  productName: string,
+  pageNum: number,
+  i18n: typeof RISK_I18N[RiskPdfLang]
+) {
   const w = doc.page.width;
   filledRect(doc, 0, 0, w, 36, C.primary, 0);
   doc.fontSize(10).fillColor(C.white)
-    .text("Swiss Product Seal – Risikobericht", 50, 11, { width: w - 200 });
+    .text(i18n.headerTitle, 50, 11, { width: w - 200 });
   doc.fontSize(8).fillColor("#93c5fd")
     .text(productName, 50, 23, { width: w - 200 });
   doc.fontSize(8).fillColor("#93c5fd")
-    .text(`Seite ${pageNum}`, w - 90, 14, { width: 60, align: "right" });
+    .text(i18n.page(pageNum), w - 90, 14, { width: 60, align: "right" });
 }
 
-function addFooter(doc: PDFKit.PDFDocument, generatedAt: string) {
+function addFooter(
+  doc: PDFKit.PDFDocument,
+  generatedAt: string,
+  i18n: typeof RISK_I18N[RiskPdfLang]
+) {
   const w = doc.page.width;
   const y = doc.page.height - 28;
   drawHLine(doc, y, C.border);
   doc.fontSize(7).fillColor(C.muted)
-    .text(`Erstellt am ${generatedAt} · Swiss Product Seal Compliance Portal · Vertraulich`, 50, y + 6, {
+    .text(i18n.footer(generatedAt), 50, y + 6, {
       width: w - 100, align: "center",
     });
 }
@@ -143,6 +213,7 @@ export interface RiskReportData {
     createdAt: Date | number | string;
     triggeredByUserName?: string | null;
   };
+  lang?: RiskPdfLang;
 }
 
 export async function generateRiskReportPdf(data: RiskReportData): Promise<Buffer> {
@@ -154,11 +225,14 @@ export async function generateRiskReportPdf(data: RiskReportData): Promise<Buffe
     doc.on("error", reject);
 
     const { product, assessment } = data;
+    const lang: RiskPdfLang = data.lang ?? "de";
+    const i18n = RISK_I18N[lang];
+
     const score = Number(assessment.overallRiskScore);
     const level = assessment.riskLevel;
     const levelColor = riskLevelColor(level);
-    const generatedAt = new Date().toLocaleString("de-CH", { timeZone: "Europe/Zurich" });
-    const assessmentDate = new Date(assessment.createdAt).toLocaleString("de-CH", { timeZone: "Europe/Zurich" });
+    const generatedAt = new Date().toLocaleString(i18n.locale, { timeZone: i18n.timezone });
+    const assessmentDate = new Date(assessment.createdAt).toLocaleString(i18n.locale, { timeZone: i18n.timezone });
     const pageW = 595.28;
     const contentW = pageW - 100;
     let pageNum = 0;
@@ -166,32 +240,32 @@ export async function generateRiskReportPdf(data: RiskReportData): Promise<Buffe
     // ── Page 1: Cover ──────────────────────────────────────────────────────────
     pageNum++;
     doc.addPage();
-    addHeader(doc, product.productName, pageNum);
-    addFooter(doc, generatedAt);
+    addHeader(doc, product.productName, pageNum, i18n);
+    addFooter(doc, generatedAt, i18n);
 
     // Title block
     let y = 60;
     filledRect(doc, 50, y, contentW, 90, C.bgLight, 6);
     doc.fontSize(20).fillColor(C.primary)
-      .text("Risikobericht", 70, y + 14, { width: contentW - 40 });
+      .text(i18n.reportTitle, 70, y + 14, { width: contentW - 40 });
     doc.fontSize(13).fillColor(C.textSub)
       .text(product.productName, 70, y + 38, { width: contentW - 40 });
     // Risk level badge
     const badgeW = 110;
     filledRect(doc, pageW - 50 - badgeW - 10, y + 20, badgeW, 28, levelColor, 14);
     doc.fontSize(11).fillColor(C.white)
-      .text(riskLevelLabel(level).toUpperCase(), pageW - 50 - badgeW - 10, y + 27, { width: badgeW, align: "center" });
+      .text(riskLevelLabel(level, lang).toUpperCase(), pageW - 50 - badgeW - 10, y + 27, { width: badgeW, align: "center" });
 
     y += 105;
 
     // Product meta table
     const meta: [string, string | null | undefined][] = [
-      ["Interne Artikelnummer", product.internalArticleNumber],
-      ["Lieferanten-Artikelnummer", product.supplierArticleNumber],
-      ["EAN / GTIN", product.ean],
-      ["Marke", product.brand],
-      ["Lieferant", product.supplierName],
-      ["Produktstatus", product.status],
+      [i18n.meta.internalArticleNumber, product.internalArticleNumber],
+      [i18n.meta.supplierArticleNumber, product.supplierArticleNumber],
+      [i18n.meta.ean, product.ean],
+      [i18n.meta.brand, product.brand],
+      [i18n.meta.supplier, product.supplierName],
+      [i18n.meta.status, product.status],
     ];
     const colW = (contentW - 10) / 2;
     let col = 0;
@@ -219,7 +293,7 @@ export async function generateRiskReportPdf(data: RiskReportData): Promise<Buffe
     // Summary text beside gauge
     const summaryX = gaugeCX + gaugeR + 24;
     const summaryW = contentW - (gaugeCX - 50 + gaugeR + 24);
-    doc.fontSize(9).fillColor(C.muted).text("ZUSAMMENFASSUNG", summaryX, y + 8, { width: summaryW });
+    doc.fontSize(9).fillColor(C.muted).text(i18n.summaryLabel, summaryX, y + 8, { width: summaryW });
     doc.fontSize(9).fillColor(C.text).text(assessment.summary, summaryX, y + 20, {
       width: summaryW, lineGap: 3,
     });
@@ -229,7 +303,7 @@ export async function generateRiskReportPdf(data: RiskReportData): Promise<Buffe
     y += 14;
 
     // Risk score bars overview
-    doc.fontSize(10).fillColor(C.primary).text("Risiko-Übersicht nach Kategorie", 50, y);
+    doc.fontSize(10).fillColor(C.primary).text(i18n.riskOverview, 50, y);
     y += 16;
     const topRisks = [...(assessment.risks ?? [])].sort((a, b) => b.score - a.score).slice(0, 8);
     for (const risk of topRisks) {
@@ -243,18 +317,26 @@ export async function generateRiskReportPdf(data: RiskReportData): Promise<Buffe
 
     // Assessment metadata
     doc.fontSize(7).fillColor(C.muted)
-      .text(`Bewertungs-ID: #${assessment.id}  ·  Erstellt: ${assessmentDate}  ·  Modell: ${assessment.modelUsed ?? "–"}  ·  Token: ${assessment.tokensUsed ?? "–"}`, 50, y, { width: contentW });
+      .text(
+        i18n.assessmentMeta(
+          assessment.id,
+          assessmentDate,
+          assessment.modelUsed ?? "–",
+          assessment.tokensUsed ?? "–"
+        ),
+        50, y, { width: contentW }
+      );
 
     // ── Page 2+: Detailed risk cards ──────────────────────────────────────────
     const risks = assessment.risks ?? [];
     if (risks.length > 0) {
       pageNum++;
       doc.addPage();
-      addHeader(doc, product.productName, pageNum);
-      addFooter(doc, generatedAt);
+      addHeader(doc, product.productName, pageNum, i18n);
+      addFooter(doc, generatedAt, i18n);
       y = 55;
 
-      doc.fontSize(14).fillColor(C.primary).text("Identifizierte Risiken im Detail", 50, y);
+      doc.fontSize(14).fillColor(C.primary).text(i18n.detailedRisks, 50, y);
       y += 20;
 
       for (let i = 0; i < risks.length; i++) {
@@ -269,8 +351,8 @@ export async function generateRiskReportPdf(data: RiskReportData): Promise<Buffe
         if (y + cardH > doc.page.height - 60) {
           pageNum++;
           doc.addPage();
-          addHeader(doc, product.productName, pageNum);
-          addFooter(doc, generatedAt);
+          addHeader(doc, product.productName, pageNum, i18n);
+          addFooter(doc, generatedAt, i18n);
           y = 55;
         }
 
@@ -303,7 +385,7 @@ export async function generateRiskReportPdf(data: RiskReportData): Promise<Buffe
 
         // Mitigations
         if (risk.mitigations && risk.mitigations.length > 0) {
-          doc.fontSize(7.5).fillColor(C.muted).text("MASSNAHMEN ZUR RISIKOREDUKTION", 62, y);
+          doc.fontSize(7.5).fillColor(C.muted).text(i18n.mitigations, 62, y);
           y += 11;
           for (const m of risk.mitigations) {
             doc.fontSize(8).fillColor(C.text)
@@ -322,8 +404,8 @@ export async function generateRiskReportPdf(data: RiskReportData): Promise<Buffe
       if (y + 80 > doc.page.height - 60) {
         pageNum++;
         doc.addPage();
-        addHeader(doc, product.productName, pageNum);
-        addFooter(doc, generatedAt);
+        addHeader(doc, product.productName, pageNum, i18n);
+        addFooter(doc, generatedAt, i18n);
         y = 55;
       } else {
         y += 10;
@@ -331,10 +413,10 @@ export async function generateRiskReportPdf(data: RiskReportData): Promise<Buffe
         y += 16;
       }
 
-      doc.fontSize(13).fillColor(C.primary).text("Fehlende Informationen & Empfehlungen", 50, y);
+      doc.fontSize(13).fillColor(C.primary).text(i18n.missingInfoTitle, 50, y);
       y += 8;
       doc.fontSize(8.5).fillColor(C.muted)
-        .text("Folgende Informationen würden die Risikobewertung verbessern und den Risikoscore senken:", 50, y + 4, { width: contentW });
+        .text(i18n.missingInfoSubtitle, 50, y + 4, { width: contentW });
       y += 22;
 
       for (let i = 0; i < missingInfo.length; i++) {
@@ -342,8 +424,8 @@ export async function generateRiskReportPdf(data: RiskReportData): Promise<Buffe
         if (y + 30 > doc.page.height - 60) {
           pageNum++;
           doc.addPage();
-          addHeader(doc, product.productName, pageNum);
-          addFooter(doc, generatedAt);
+          addHeader(doc, product.productName, pageNum, i18n);
+          addFooter(doc, generatedAt, i18n);
           y = 55;
         }
         filledRect(doc, 50, y, contentW, 22, C.bgMuted, 4);
