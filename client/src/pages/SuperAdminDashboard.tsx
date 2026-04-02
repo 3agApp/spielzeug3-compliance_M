@@ -81,10 +81,10 @@ function useModuleOptions() {
   const { lang, t } = useLang();
   return [
     { id: "compliance", label: "Compliance" },
-    { id: "seal", label: t("inline.siegel_qr") },
-    { id: "ai_analysis", label: t("inline.kianalyse") },
-    { id: "bunnydoc", label: t("inline.digitale_signaturen") },
-    { id: "api_access", label: t("inline.apizugang") },
+    { id: "seal", label: t.inline.siegel_qr },
+    { id: "ai_analysis", label: t.inline.kianalyse },
+    { id: "bunnydoc", label: t.inline.digitale_signaturen },
+    { id: "api_access", label: t.inline.apizugang },
   ];
 }
 
@@ -130,8 +130,8 @@ function CreateTenantDialog({
     onSuccess: () => {
       utils.tenant.list.invalidate();
       toast.success(
-        t("inline.mandant_angelegt"),
-        { description: t("inline.der_neue_mandant_wurde_erfolgreich_erstellt") }
+        t.inline.mandant_angelegt,
+        { description: t.inline.der_neue_mandant_wurde_erfolgreich_erstellt }
       );
       onCreated();
     },
@@ -297,7 +297,7 @@ function CreateTenantDialog({
 
           {/* Module */}
           <div className="space-y-2">
-            <Label>{t("inline.freigeschaltete_module")}</Label>
+            <Label>{t.inline.freigeschaltete_module}</Label>
             <div className="grid grid-cols-2 gap-2 p-3 rounded-lg border bg-muted/30">
               {moduleOptions.map((opt) => (
                 <div key={opt.id} className="flex items-center gap-2">
@@ -343,8 +343,8 @@ function EditTenantDialog({
     onSuccess: () => {
       utils.tenant.list.invalidate();
       toast.success(
-        t("inline.gespeichert"),
-        { description: t("inline.mandant_wurde_aktualisiert") }
+        t.inline.gespeichert,
+        { description: t.inline.mandant_wurde_aktualisiert }
       );
       onClose();
     },
@@ -453,7 +453,7 @@ function EditTenantDialog({
 
           {/* Module */}
           <div className="space-y-2">
-            <Label>{t("inline.freigeschaltete_module")}</Label>
+            <Label>{t.inline.freigeschaltete_module}</Label>
             <div className="grid grid-cols-2 gap-2 p-3 rounded-lg border bg-muted/30">
               {moduleOptions.map((opt) => (
                 <div key={opt.id} className="flex items-center gap-2">

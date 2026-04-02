@@ -105,10 +105,10 @@ function AnalysisProgressDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
-            {t("inline.kiplausibilitaetspruefung")}
+            {t.inline.kiplausibilitaetspruefung}
           </DialogTitle>
           <DialogDescription>
-            {t("inline.gpt4o_analysiert_die_produktdokumente_auf_plausibilitaet_und")}
+            {t.inline.gpt4o_analysiert_die_produktdokumente_auf_plausibilitaet_und}
           </DialogDescription>
         </DialogHeader>
 
@@ -116,7 +116,7 @@ function AnalysisProgressDialog({
           {/* Overall progress */}
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">{t("inline.fortschritt")}</span>
+              <span className="text-muted-foreground">{t.inline.fortschritt}</span>
               <span className="font-medium">{done} / {total}</span>
             </div>
             <Progress value={pct} className="h-2" />
@@ -126,7 +126,7 @@ function AnalysisProgressDialog({
           {done < total && progress?.current && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/40 rounded-lg px-3 py-2">
               <Bot className="h-4 w-4 animate-pulse text-primary shrink-0" />
-              <span className="truncate">{t("inline.analysiere")} {progress.current}</span>
+              <span className="truncate">{t.inline.analysiere} {progress.current}</span>
             </div>
           )}
 
@@ -149,7 +149,7 @@ function AnalysisProgressDialog({
                   {r.success && r.score !== undefined ? (
                     <AiScoreBadge score={r.score} />
                   ) : (
-                    <span className="text-xs text-red-500 shrink-0">{t("inline.fehler")}</span>
+                    <span className="text-xs text-red-500 shrink-0">{t.inline.fehler}</span>
                   )}
                 </div>
               ))}
@@ -159,7 +159,7 @@ function AnalysisProgressDialog({
           {/* Done */}
           {done === total && total > 0 && (
             <div className="flex justify-end pt-2">
-              <Button onClick={onClose}>{t("inline.schliessen")}</Button>
+              <Button onClick={onClose}>{t.inline.schliessen}</Button>
             </div>
           )}
         </div>
@@ -283,7 +283,7 @@ export default function Products() {
       } catch (err: any) {
         results.push({ productId, name: productName, success: false, error: err.message });
         if (err.message?.includes("API-Schlüssel") || err.message?.includes("API key")) {
-          toast.error(t("inline.kein_openai_apischluessel_konfiguriert_bitte_in_den_einstellu"));
+          toast.error(t.inline.kein_openai_apischluessel_konfiguriert_bitte_in_den_einstellu);
           break;
         }
       }
@@ -330,11 +330,11 @@ export default function Products() {
       URL.revokeObjectURL(objectUrl);
 
       toast.success(lang === "de" ? `${ids.length} Etikett${ids.length !== 1 ? "en" : ""} exportiert` : `${ids.length} label${ids.length !== 1 ? "s" : ""} exported`, {
-        description: t("inline.die_siegeletiketten_wurden_als_ziparchiv_heruntergeladen"),
+        description: t.inline.die_siegeletiketten_wurden_als_ziparchiv_heruntergeladen,
       });
       setSelected(new Set());
     } catch (err: any) {
-      toast.error(t("inline.export_fehlgeschlagen"), { description: translateError(err.message, t) ?? (t("inline.unbekannter_fehler")) });
+      toast.error(t.inline.export_fehlgeschlagen, { description: translateError(err.message, t) ?? (t.inline.unbekannter_fehler) });
     } finally {
       setBatchExporting(false);
     }
@@ -355,7 +355,7 @@ export default function Products() {
             {products.length} {t.common.items}
             {someSelected && (
               <span className="ml-2 text-primary font-medium">
-                · {selected.size} {t("inline.ausgewaehlt")}
+                · {selected.size} {t.inline.ausgewaehlt}
               </span>
             )}
           </p>
@@ -368,7 +368,7 @@ export default function Products() {
             className="gap-2"
           >
             <Plus className="h-4 w-4" />
-            {t("inline.neues_produkt")}
+            {t.inline.neues_produkt}
           </Button>
         )}
 
@@ -383,7 +383,7 @@ export default function Products() {
               className="gap-2 border-violet-300 text-violet-700 hover:bg-violet-50"
             >
               <Sparkles className="h-4 w-4" />
-              {t("inline.kianalyse")} ({selected.size})
+              {t.inline.kianalyse} ({selected.size})
             </Button>
 
             {/* Batch label export */}
@@ -398,7 +398,7 @@ export default function Products() {
                 <FileArchive className="h-4 w-4" />
               )}
               {batchExporting
-                ? (t("inline.exportiere"))
+                ? (t.inline.exportiere)
                 : (lang === "de" ? `Etiketten exportieren (${selected.size})` : `Export labels (${selected.size})`)}
             </Button>
 
@@ -448,7 +448,7 @@ export default function Products() {
             {canRunAi && !someSelected && products.length > 0 && (
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap">
                 <Download className="h-3.5 w-3.5" />
-                {t("inline.produkte_auswaehlen_fuer_kianalyse_oder_etikettexport")}
+                {t.inline.produkte_auswaehlen_fuer_kianalyse_oder_etikettexport}
               </div>
             )}
           </div>
@@ -477,7 +477,7 @@ export default function Products() {
                         <Checkbox
                           checked={allSelected}
                           onCheckedChange={toggleAll}
-                          aria-label={t("inline.alle_auswaehlen")}
+                          aria-label={t.inline.alle_auswaehlen}
                         />
                       </th>
                     )}
@@ -492,17 +492,17 @@ export default function Products() {
                     <th className="whitespace-nowrap">
                       <span className="flex items-center gap-1">
                         <Bot className="h-3.5 w-3.5" />
-                        {t("inline.kiscore")}
+                        {t.inline.kiscore}
                       </span>
                     </th>
                     <th>{t.product.missingRequirements}</th>
                     <th className="whitespace-nowrap">
                       <span className="flex items-center gap-1">
                         <ShieldAlert className="h-3.5 w-3.5" />
-                        {t("inline.risiko")}
+                        {t.inline.risiko}
                       </span>
                     </th>
-                    <th className="whitespace-nowrap">{t("inline.siegel")}</th>
+                    <th className="whitespace-nowrap">{t.inline.siegel}</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -641,7 +641,7 @@ export default function Products() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-red-600">
               <Trash2 className="h-5 w-5" />
-              {t("inline.produkte_loeschen")}
+              {t.inline.produkte_loeschen}
             </DialogTitle>
             <DialogDescription>
               {lang === "de"
@@ -651,7 +651,7 @@ export default function Products() {
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowBulkDeleteDialog(false)}>
-              {t("inline.abbrechen")}
+              {t.inline.abbrechen}
             </Button>
             <Button
               variant="destructive"
@@ -660,7 +660,7 @@ export default function Products() {
             >
               <Trash2 className="mr-2 h-4 w-4" />
               {deleteBulkMutation.isPending
-                ? (t("inline.loeschen"))
+                ? (t.inline.loeschen)
                 : (lang === "de" ? `${selected.size} endgültig löschen` : `Delete ${selected.size} permanently`)}
             </Button>
           </DialogFooter>

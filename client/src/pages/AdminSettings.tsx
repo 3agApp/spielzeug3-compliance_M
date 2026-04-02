@@ -82,12 +82,12 @@ export default function AdminSettings() {
   const revokeNowMutation = trpc.documents.revokeExpiredPublic.useMutation({
     onSuccess: (data) => {
       if (data.skipped) {
-        toast.info(t("inline.autorevoke_ist_deaktiviert_keine_aktion_ausgefuehrt"));
+        toast.info(t.inline.autorevoke_ist_deaktiviert_keine_aktion_ausgefuehrt);
       } else {
         toast.success(
           data.revokedCount > 0
             ? (lang === "de" ? `${data.revokedCount} abgelaufene${data.revokedCount === 1 ? "s" : ""} Dokument${data.revokedCount === 1 ? "" : "e"} aus der öffentlichen Freigabe entfernt.` : `${data.revokedCount} expired document${data.revokedCount === 1 ? "" : "s"} removed from public access.`)
-            : (t("inline.keine_abgelaufenen_dokumente_gefunden"))
+            : (t.inline.keine_abgelaufenen_dokumente_gefunden)
         );
       }
     },
@@ -156,11 +156,11 @@ export default function AdminSettings() {
     if (!file) return;
     const allowedTypes = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
     if (!allowedTypes.includes(file.type)) {
-      toast.error(t("inline.ungueltiges_format"), { description: t("inline.erlaubt_png_jpg_webp_svg") });
+      toast.error(t.inline.ungueltiges_format, { description: t.inline.erlaubt_png_jpg_webp_svg });
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      toast.error(t("inline.datei_zu_gross"), { description: t("inline.maximale_dateigroesse_5_mb") });
+      toast.error(t.inline.datei_zu_gross, { description: t.inline.maximale_dateigroesse_5_mb });
       return;
     }
     // Show preview
@@ -243,8 +243,8 @@ export default function AdminSettings() {
   };
 
   const handleTestConnection = () => {
-    toast.info(t("inline.verbindungstest_wird_durchgefuehrt"));
-    setTimeout(() => toast.success(t("inline.verbindung_zu_kontor_erp_erfolgreich")), 1500);
+    toast.info(t.inline.verbindungstest_wird_durchgefuehrt);
+    setTimeout(() => toast.success(t.inline.verbindung_zu_kontor_erp_erfolgreich), 1500);
   };
 
   return (
@@ -255,7 +255,7 @@ export default function AdminSettings() {
           {t.nav.settings}
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
-          {t("inline.systemkonfiguration_und_integrationseinstellungen")}
+          {t.inline.systemkonfiguration_und_integrationseinstellungen}
         </p>
       </div>
 
@@ -267,7 +267,7 @@ export default function AdminSettings() {
           </TabsTrigger>
           <TabsTrigger value="notifications" className="gap-1.5">
             <Bell className="h-3.5 w-3.5" />
-            {t("inline.benachrichtigungen")}
+            {t.inline.benachrichtigungen}
           </TabsTrigger>
           <TabsTrigger value="portal" className="gap-1.5">
             <Globe className="h-3.5 w-3.5" />
@@ -275,19 +275,19 @@ export default function AdminSettings() {
           </TabsTrigger>
           <TabsTrigger value="security" className="gap-1.5">
             <Shield className="h-3.5 w-3.5" />
-            {t("inline.sicherheit")}
+            {t.inline.sicherheit}
           </TabsTrigger>
           <TabsTrigger value="ai" className="gap-1.5">
             <Sparkles className="h-3.5 w-3.5" />
-            {t("inline.kianalyse")}
+            {t.inline.kianalyse}
           </TabsTrigger>
           <TabsTrigger value="bunnydoc" className="gap-1.5">
             <FileSignature className="h-3.5 w-3.5" />
-            {t("inline.signaturen")}
+            {t.inline.signaturen}
           </TabsTrigger>
           <TabsTrigger value="seal" className="gap-1.5">
             <Shield className="h-3.5 w-3.5" />
-            {t("inline.siegel")}
+            {t.inline.siegel}
           </TabsTrigger>
           <TabsTrigger value="email" className="gap-1.5">
             <Mail className="h-3.5 w-3.5" />
@@ -301,16 +301,16 @@ export default function AdminSettings() {
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <Database className="h-4 w-4" />
-                {t("inline.kontor_erp_apiverbindung")}
+                {t.inline.kontor_erp_apiverbindung}
               </CardTitle>
               <CardDescription>
-                {t("inline.konfigurieren_sie_die_bidirektionale_datensynchronisation_mi")}
+                {t.inline.konfigurieren_sie_die_bidirektionale_datensynchronisation_mi}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="kontor-url">{t("inline.apiurl")}</Label>
+                  <Label htmlFor="kontor-url">{t.inline.apiurl}</Label>
                   <Input
                     id="kontor-url"
                     value={kontorApiUrl}
@@ -319,13 +319,13 @@ export default function AdminSettings() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="kontor-key">{t("inline.apischluessel")}</Label>
+                  <Label htmlFor="kontor-key">{t.inline.apischluessel}</Label>
                   <Input
                     id="kontor-key"
                     type="password"
                     value={kontorApiKey}
                     onChange={(e) => setKontorApiKey(e.target.value)}
-                    placeholder={t("inline.ihr_kontor_apischluessel")}
+                    placeholder={t.inline.ihr_kontor_apischluessel}
                   />
                 </div>
               </div>
@@ -334,9 +334,9 @@ export default function AdminSettings() {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium">{t("inline.automatische_synchronisation")}</p>
+                  <p className="text-sm font-medium">{t.inline.automatische_synchronisation}</p>
                   <p className="text-xs text-muted-foreground">
-                    {t("inline.daten_automatisch_in_regelmaessigen_abstaenden_synchronisieren")}
+                    {t.inline.daten_automatisch_in_regelmaessigen_abstaenden_synchronisieren}
                   </p>
                 </div>
                 <Switch checked={autoSync} onCheckedChange={setAutoSync} />
@@ -344,7 +344,7 @@ export default function AdminSettings() {
 
               {autoSync && (
                 <div className="space-y-1.5">
-                  <Label htmlFor="sync-interval">{t("inline.syncintervall_minuten")}</Label>
+                  <Label htmlFor="sync-interval">{t.inline.syncintervall_minuten}</Label>
                   <Input
                     id="sync-interval"
                     type="number"
@@ -364,7 +364,7 @@ export default function AdminSettings() {
                 </Button>
                 <Button variant="outline" onClick={handleTestConnection}>
                   <RefreshCw className="mr-2 h-4 w-4" />
-                  {t("inline.verbindung_testen")}
+                  {t.inline.verbindung_testen}
                 </Button>
               </div>
             </CardContent>
@@ -372,17 +372,17 @@ export default function AdminSettings() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">{t("inline.synckonfiguration")}</CardTitle>
+              <CardTitle className="text-base">{t.inline.synckonfiguration}</CardTitle>
               <CardDescription>
-                {t("inline.definieren_sie_welche_entitaeten_synchronisiert_werden_sollen")}
+                {t.inline.definieren_sie_welche_entitaeten_synchronisiert_werden_sollen}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {[
-                { label: t("inline.lieferanten_importieren"), desc: t("inline.lieferantenstammdaten_aus_kontor_importieren") },
-                { label: t("inline.produkte_importieren"), desc: t("inline.produktdaten_und_bestellungen_aus_kontor_importieren") },
-                { label: t("inline.compliancestatus_exportieren"), desc: t("inline.genehmigungsstatus_nach_kontor_exportieren") },
-                { label: t("inline.vollstaendigkeitsflags_exportieren"), desc: t("inline.completenessscore_nach_kontor_exportieren") },
+                { label: t.inline.lieferanten_importieren, desc: t.inline.lieferantenstammdaten_aus_kontor_importieren },
+                { label: t.inline.produkte_importieren, desc: t.inline.produktdaten_und_bestellungen_aus_kontor_importieren },
+                { label: t.inline.compliancestatus_exportieren, desc: t.inline.genehmigungsstatus_nach_kontor_exportieren },
+                { label: t.inline.vollstaendigkeitsflags_exportieren, desc: t.inline.completenessscore_nach_kontor_exportieren },
               ].map(({ label, desc }) => (
                 <div key={label} className="flex items-center justify-between py-1">
                   <div>
@@ -411,26 +411,26 @@ export default function AdminSettings() {
             <CardContent className="space-y-4">
               {[
                 {
-                  label: t("inline.bei_einreichung"),
-                  desc: t("inline.interne_mitarbeiter_werden_benachrichtigt_wenn_ein_lieferant"),
+                  label: t.inline.bei_einreichung,
+                  desc: t.inline.interne_mitarbeiter_werden_benachrichtigt_wenn_ein_lieferant,
                   checked: notifyOnSubmit,
                   onChange: setNotifyOnSubmit,
                 },
                 {
-                  label: t("inline.bei_genehmigung"),
-                  desc: t("inline.lieferanten_werden_benachrichtigt_wenn_ein_produkt_genehmigt"),
+                  label: t.inline.bei_genehmigung,
+                  desc: t.inline.lieferanten_werden_benachrichtigt_wenn_ein_produkt_genehmigt,
                   checked: notifyOnApprove,
                   onChange: setNotifyOnApprove,
                 },
                 {
-                  label: t("inline.bei_ablehnung"),
-                  desc: t("inline.lieferanten_werden_benachrichtigt_wenn_ein_produkt_abgelehnt"),
+                  label: t.inline.bei_ablehnung,
+                  desc: t.inline.lieferanten_werden_benachrichtigt_wenn_ein_produkt_abgelehnt,
                   checked: notifyOnReject,
                   onChange: setNotifyOnReject,
                 },
                 {
-                  label: t("inline.bei_rueckfrage"),
-                  desc: t("inline.lieferanten_werden_benachrichtigt_wenn_eine_rueckfrage_gestel"),
+                  label: t.inline.bei_rueckfrage,
+                  desc: t.inline.lieferanten_werden_benachrichtigt_wenn_eine_rueckfrage_gestel,
                   checked: notifyOnClarification,
                   onChange: setNotifyOnClarification,
                 },
@@ -492,17 +492,17 @@ export default function AdminSettings() {
                 </p>
               </div>
               <div className="space-y-1.5">
-                  <Label htmlFor="portal-email">{t("inline.kontaktemail")}</Label>
+                  <Label htmlFor="portal-email">{t.inline.kontaktemail}</Label>
                 <Input
                   id="portal-email"
                   type="email"
                   value={portalContactEmail}
                   onChange={(e) => setPortalContactEmail(e.target.value)}
-                    placeholder={t("inline.z_b_compliancespielzeug3ch")}
+                    placeholder={t.inline.z_b_compliancespielzeug3ch}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>{t("inline.primaerfarbe_siegelrahmen_akzent")}</Label>
+                <Label>{t.inline.primaerfarbe_siegelrahmen_akzent}</Label>
                 <div className="flex items-center gap-3">
                   <div className="relative">
                     <input
@@ -513,7 +513,7 @@ export default function AdminSettings() {
                         setPortalColorHex(e.target.value);
                       }}
                       className="w-10 h-10 rounded-lg border cursor-pointer p-0.5 bg-white"
-                      title={t("inline.farbe_waehlen")}
+                      title={t.inline.farbe_waehlen}
                     />
                   </div>
                   <Input
@@ -537,19 +537,19 @@ export default function AdminSettings() {
                     onClick={() => { setPortalPrimaryColor("#C8102E"); setPortalColorHex("#C8102E"); }}
                     className="text-xs text-muted-foreground hover:text-foreground underline"
                   >
-                    {t("inline.zuruecksetzen")}
+                    {t.inline.zuruecksetzen}
                   </button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {t("inline.diese_farbe_wird_fuer_den_rahmen_und_die_akzente_des_siegelet")}
+                  {t.inline.diese_farbe_wird_fuer_den_rahmen_und_die_akzente_des_siegelet}
                 </p>
               </div>
               <Separator />
               <div className="space-y-1.5">
-                <Label>{t("inline.standardsprache")}</Label>
+                <Label>{t.inline.standardsprache}</Label>
                 <div className="flex gap-2">
                   <Button
-                    variant={t("inline.default")}
+                    variant={t.inline.default}
                     size="sm"
                     onClick={() => setLang("de")}
                   >
@@ -678,7 +678,7 @@ export default function AdminSettings() {
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <Bot className="h-4 w-4" />
-                {t("inline.kianalyse_apikonfiguration")}
+                {t.inline.kianalyse_apikonfiguration}
               </CardTitle>
               <CardDescription>
                 {lang === "de"
@@ -700,8 +700,8 @@ export default function AdminSettings() {
                   <div>
                     <p className="text-sm font-medium">
                       {apiKeyStatusQuery.data?.configured
-                        ? (t("inline.apischluessel_konfiguriert"))
-                        : (t("inline.kein_apischluessel_hinterlegt_kifunktionen_deaktiviert"))}
+                        ? (t.inline.apischluessel_konfiguriert)
+                        : (t.inline.kein_apischluessel_hinterlegt_kifunktionen_deaktiviert)}
                     </p>
                     {apiKeyStatusQuery.data?.configured && (
                       <p className="text-xs text-muted-foreground mt-0.5">
@@ -721,7 +721,7 @@ export default function AdminSettings() {
               {/* Provider selection + key input */}
               <div className="space-y-3">
                 <div className="space-y-1.5">
-                  <Label>{t("inline.kianbieter")}</Label>
+                  <Label>{t.inline.kianbieter}</Label>
                   <div className="grid grid-cols-3 gap-2">
                     {(["openai", "anthropic", "gemini"] as const).map((p) => (
                       <button
@@ -744,7 +744,7 @@ export default function AdminSettings() {
 
                 <div className="space-y-1.5">
                   <Label htmlFor="ai-key">
-                    {apiKeyStatusQuery.data?.configured ? (t("inline.schluessel_ersetzen")) : (t("inline.apischluessel_eingeben"))}
+                    {apiKeyStatusQuery.data?.configured ? (t.inline.schluessel_ersetzen) : (t.inline.apischluessel_eingeben)}
                   </Label>
                   <div className="flex gap-2">
                     <div className="relative flex-1">
@@ -773,11 +773,11 @@ export default function AdminSettings() {
                       ) : (
                         <Save className="mr-2 h-4 w-4" />
                       )}
-                      {t("inline.speichern")}
+                      {t.inline.speichern}
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {t("inline.schluessel_erhalten_sie_unter")}:{" "}
+                    {t.inline.schluessel_erhalten_sie_unter}:{" "}
                     {aiProvider === "openai" && <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">platform.openai.com/api-keys</a>}
                     {aiProvider === "anthropic" && <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">console.anthropic.com</a>}
                     {aiProvider === "gemini" && <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">aistudio.google.com</a>}
@@ -786,13 +786,13 @@ export default function AdminSettings() {
 
                 {/* Model selection */}
                 <div className="space-y-1.5">
-                  <Label>{t("inline.modell")}</Label>
+                  <Label>{t.inline.modell}</Label>
                   <select
                     value={aiModel}
                     onChange={(e) => setAiModel(e.target.value)}
                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
                   >
-                    <option value="">{t("inline.standard_empfohlen")}</option>
+                    <option value="">{t.inline.standard_empfohlen}</option>
                     {aiProvider === "openai" && (
                       <>
                         <option value="gpt-4o">GPT-4o (Recommended)</option>
@@ -830,9 +830,9 @@ export default function AdminSettings() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium">{t("inline.verbindungstest")}</p>
+                    <p className="text-sm font-medium">{t.inline.verbindungstest}</p>
                     <p className="text-xs text-muted-foreground">
-                      {t("inline.prueft_den_gespeicherten_schluessel_mit_einem_minimalen_apiauf")}
+                      {t.inline.prueft_den_gespeicherten_schluessel_mit_einem_minimalen_apiauf}
                     </p>
                   </div>
                   <Button
@@ -849,7 +849,7 @@ export default function AdminSettings() {
                     ) : (
                       <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
                     )}
-                    {t("inline.testen")}
+                    {t.inline.testen}
                   </Button>
                 </div>
 
@@ -875,14 +875,14 @@ export default function AdminSettings() {
               <div className="rounded-lg bg-blue-50 border border-blue-200 p-4 space-y-2">
                 <p className="text-sm font-semibold text-blue-800 flex items-center gap-1.5">
                   <Sparkles className="h-4 w-4" />
-                  {t("inline.so_funktioniert_die_kianalyse")}
+                  {t.inline.so_funktioniert_die_kianalyse}
                 </p>
                 <ul className="text-xs text-blue-700 space-y-1">
-                  <li>• {t("inline.waehlen_sie_in_der_produktliste_ein_oder_mehrere_produkte_per")}</li>
+                  <li>• {t.inline.waehlen_sie_in_der_produktliste_ein_oder_mehrere_produkte_per}</li>
                   <li>• {lang === "de" ? "Klicken Sie auf \"KI-Analyse starten\" – GPT-4o analysiert alle hochgeladenen Dokumente" : "Click \"Start AI analysis\" – GPT-4o analyses all uploaded documents"}</li>
-                  <li>• {t("inline.das_modell_prueft_vollstaendigkeit_plausibilitaet_formale_korre")}</li>
-                  <li>• {t("inline.das_ergebnis_erscheint_als_score_0100_mit_begruendung_direkt")}</li>
-                  <li>• {t("inline.alle_analysen_werden_gespeichert_und_koennen_jederzeit_abgeru")}</li>
+                  <li>• {t.inline.das_modell_prueft_vollstaendigkeit_plausibilitaet_formale_korre}</li>
+                  <li>• {t.inline.das_ergebnis_erscheint_als_score_0100_mit_begruendung_direkt}</li>
+                  <li>• {t.inline.alle_analysen_werden_gespeichert_und_koennen_jederzeit_abgeru}</li>
                 </ul>
                </div>
             </CardContent>
@@ -893,7 +893,7 @@ export default function AdminSettings() {
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <Shield className="h-4 w-4" />
-                {t("inline.automatische_risikobewertung")}
+                {t.inline.automatische_risikobewertung}
               </CardTitle>
               <CardDescription>
                 {lang === "de"
@@ -905,7 +905,7 @@ export default function AdminSettings() {
               <div className="flex items-center justify-between py-2">
                 <div>
                   <p className="text-sm font-medium">
-                    {t("inline.risikobewertung_bei_dokumentupload_automatisch_neu_berechnen")}
+                    {t.inline.risikobewertung_bei_dokumentupload_automatisch_neu_berechnen}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {lang === "de"
@@ -934,11 +934,11 @@ export default function AdminSettings() {
                 ) : (
                   <Save className="mr-2 h-4 w-4" />
                 )}
-                {t("inline.speichern")}
+                {t.inline.speichern}
               </Button>
               <div className="rounded-lg border p-3 bg-muted/20 text-sm text-muted-foreground">
                 <p className="font-medium text-foreground mb-1">
-                  {t("inline.wann_wird_die_bewertung_ausgeloest")}
+                  {t.inline.wann_wird_die_bewertung_ausgeloest}
                 </p>
                 <p>
                   {lang === "de"
@@ -955,29 +955,29 @@ export default function AdminSettings() {
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <Shield className="h-4 w-4" />
-                {t("inline.sicherheitseinstellungen")}
+                {t.inline.sicherheitseinstellungen}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {[
                 {
-                  label: t("inline.auditlog_aktiviert"),
-                  desc: t("inline.alle_benutzeraktionen_werden_protokolliert"),
+                  label: t.inline.auditlog_aktiviert,
+                  desc: t.inline.alle_benutzeraktionen_werden_protokolliert,
                   defaultChecked: true,
                 },
                 {
-                  label: t("inline.sessiontimeout"),
-                  desc: t("inline.benutzer_werden_nach_inaktivitaet_automatisch_abgemeldet"),
+                  label: t.inline.sessiontimeout,
+                  desc: t.inline.benutzer_werden_nach_inaktivitaet_automatisch_abgemeldet,
                   defaultChecked: true,
                 },
                 {
-                  label: t("inline.dokumentzugriff_einschraenken"),
-                  desc: t("inline.lieferanten_koennen_nur_eigene_dokumente_einsehen"),
+                  label: t.inline.dokumentzugriff_einschraenken,
+                  desc: t.inline.lieferanten_koennen_nur_eigene_dokumente_einsehen,
                   defaultChecked: true,
                 },
                 {
-                  label: t("inline.kommentare_moderieren"),
-                  desc: t("inline.externe_kommentare_werden_vor_veroeffentlichung_geprueft"),
+                  label: t.inline.kommentare_moderieren,
+                  desc: t.inline.externe_kommentare_werden_vor_veroeffentlichung_geprueft,
                   defaultChecked: false,
                 },
               ].map(({ label, desc, defaultChecked }) => (
@@ -990,7 +990,7 @@ export default function AdminSettings() {
                 </div>
               ))}
               <div className="pt-2">
-                <Button onClick={() => toast.success(t("inline.sicherheitseinstellungen_gespeichert"))}>
+                <Button onClick={() => toast.success(t.inline.sicherheitseinstellungen_gespeichert)}>
                   <Save className="mr-2 h-4 w-4" />
                   {t.action.save}
                 </Button>
@@ -1009,7 +1009,7 @@ export default function AdminSettings() {
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <Shield className="h-4 w-4" />
-                {t("inline.siegelgrafiken_verwalten")}
+                {t.inline.siegelgrafiken_verwalten}
               </CardTitle>
               <CardDescription>
                 {lang === "de" ? "Laden Sie eigene Grafiken für jeden Prüfstatus hoch. Die Grafiken werden auf dem Siegel-Etikett und der öffentlichen Produktseite angezeigt. Klicken Sie auf \"Standard wiederherstellen\", um zur Originalgrafik zurückzukehren." : "Upload custom graphics for each review status. The graphics are displayed on the seal label and the public product page. Click \"Restore default\" to revert to the original graphic."}
@@ -1025,10 +1025,10 @@ export default function AdminSettings() {
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <Shield className="h-4 w-4" />
-                {t("inline.siegelvorschau")}
+                {t.inline.siegelvorschau}
               </CardTitle>
               <CardDescription>
-                {t("inline.so_sieht_das_etikett_auf_einer_produktverpackung_aus_klicken")}
+                {t.inline.so_sieht_das_etikett_auf_einer_produktverpackung_aus_klicken}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -1046,20 +1046,20 @@ export default function AdminSettings() {
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <Shield className="h-4 w-4" />
-                {t("inline.swiss_product_seal_automatisierung")}
+                {t.inline.swiss_product_seal_automatisierung}
               </CardTitle>
               <CardDescription>
-                {t("inline.steuern_sie_wann_das_siegel_und_der_qrcode_automatisch_gener")}
+                {t.inline.steuern_sie_wann_das_siegel_und_der_qrcode_automatisch_gener}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
               <div className="flex items-center justify-between py-2">
                 <div>
                   <p className="text-sm font-medium">
-                    {t("inline.siegel_bei_genehmigung_automatisch_aktivieren")}
+                    {t.inline.siegel_bei_genehmigung_automatisch_aktivieren}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {t("inline.wenn_ein_produkt_genehmigt_wird_wird_das_siegel_und_der_qrco")}
+                    {t.inline.wenn_ein_produkt_genehmigt_wird_wird_das_siegel_und_der_qrco}
                   </p>
                 </div>
                 <Switch
@@ -1070,13 +1070,13 @@ export default function AdminSettings() {
               </div>
 
               <div className="rounded-lg border p-3 bg-muted/20 text-sm text-muted-foreground">
-                <p className="font-medium text-foreground mb-1">{t("inline.wie_funktioniert_das")}</p>
+                <p className="font-medium text-foreground mb-1">{t.inline.wie_funktioniert_das}</p>
                 <p>
-                  {t("inline.sobald_ein_compliance_manager_oder_administrator_ein_produkt")}{" "}
+                  {t.inline.sobald_ein_compliance_manager_oder_administrator_ein_produkt}{" "}
                   <code className="font-mono text-xs bg-background border rounded px-1">
                     {window.location.origin}/p/:uuid
                   </code>{" "}
-                  {t("inline.veroeffentlicht_das_siegel_kann_jederzeit_im_siegeltab_des_pr")}
+                  {t.inline.veroeffentlicht_das_siegel_kann_jederzeit_im_siegeltab_des_pr}
                 </p>
               </div>
 
@@ -1102,10 +1102,10 @@ export default function AdminSettings() {
                 <div className="flex items-center justify-between py-2">
                   <div>
                     <p className="text-sm font-medium">
-                      {t("inline.abgelaufene_dokumente_automatisch_aus_der_oeffentlichen_freig")}
+                      {t.inline.abgelaufene_dokumente_automatisch_aus_der_oeffentlichen_freig}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {t("inline.dokumente_mit_abgelaufenem_gueltigkeitsdatum_werden_taeglich_a")}
+                      {t.inline.dokumente_mit_abgelaufenem_gueltigkeitsdatum_werden_taeglich_a}
                     </p>
                   </div>
                   <Switch
@@ -1138,7 +1138,7 @@ export default function AdminSettings() {
                     variant="secondary"
                     onClick={() => revokeNowMutation.mutate({ force: true })}
                     disabled={revokeNowMutation.isPending}
-                    title={t("inline.jetzt_alle_abgelaufenen_dokumente_aus_der_oeffentlichen_freig")}
+                    title={t.inline.jetzt_alle_abgelaufenen_dokumente_aus_der_oeffentlichen_freig}
                   >
                     {revokeNowMutation.isPending ? (
                       <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
@@ -1150,13 +1150,13 @@ export default function AdminSettings() {
                 </div>
 
                 <div className="rounded-lg border p-3 bg-muted/20 text-sm text-muted-foreground mt-3">
-                  <p className="font-medium text-foreground mb-1">{t("inline.was_passiert_dabei")}</p>
+                  <p className="font-medium text-foreground mb-1">{t.inline.was_passiert_dabei}</p>
                   <p>
-                    {t("inline.alle_dokumente_bei_denen_das_ablaufdatum_ueberschritten_ist_u")}
+                    {t.inline.alle_dokumente_bei_denen_das_ablaufdatum_ueberschritten_ist_u}
                     <code className="font-mono text-xs bg-background border rounded px-1 mx-1">publicDownload = true</code>
-                    {t("inline.gesetzt_ist_werden_automatisch_auf")}
+                    {t.inline.gesetzt_ist_werden_automatisch_auf}
                     <code className="font-mono text-xs bg-background border rounded px-1 mx-1">publicDownload = false</code>
-                    {t("inline.zurueckgesetzt_jede_aenderung_wird_im_auditlog_protokolliert_d")}
+                    {t.inline.zurueckgesetzt_jede_aenderung_wird_im_auditlog_protokolliert_d}
                   </p>
                 </div>
               </div>
@@ -1168,7 +1168,7 @@ export default function AdminSettings() {
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <Download className="h-4 w-4" />
-                {t("inline.beispielsiegel_herunterladen")}
+                {t.inline.beispielsiegel_herunterladen}
               </CardTitle>
               <CardDescription>
                 {lang === "de"
@@ -1181,7 +1181,7 @@ export default function AdminSettings() {
               <div className="rounded-lg border bg-blue-50 border-blue-200 p-4 space-y-2">
                 <div className="flex items-center gap-2 text-blue-800 font-medium text-sm">
                   <Info className="h-4 w-4 flex-shrink-0" />
-                  {t("inline.wozu_dient_das_beispielsiegel")}
+                  {t.inline.wozu_dient_das_beispielsiegel}
                 </div>
                 <ul className="space-y-1.5 text-sm text-blue-900">
                   {(lang === "de" ? [
@@ -1204,7 +1204,7 @@ export default function AdminSettings() {
               {/* QR-Ziel-Vorschau */}
               <div className="rounded-lg border bg-muted/20 p-4">
                 <p className="text-xs text-muted-foreground mb-2 font-medium">
-                  {t("inline.qrcodeziel_oeffentliche_informationsseite")}
+                  {t.inline.qrcodeziel_oeffentliche_informationsseite}
                 </p>
                 <div className="flex items-center gap-2 flex-wrap">
                   <code className="font-mono text-xs bg-background border rounded px-2 py-1">
@@ -1217,7 +1217,7 @@ export default function AdminSettings() {
                     className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
                   >
                     <ExternalLink className="h-3 w-3" />
-                    {t("inline.seite_ansehen")}
+                    {t.inline.seite_ansehen}
                   </a>
                 </div>
               </div>
@@ -1237,7 +1237,7 @@ export default function AdminSettings() {
                   className="gap-2"
                 >
                   <Download className="h-4 w-4" />
-                  {t("inline.als_pdf_herunterladen")}
+                  {t.inline.als_pdf_herunterladen}
                 </Button>
                 <Button
                   variant="outline"
@@ -1253,10 +1253,10 @@ export default function AdminSettings() {
                   className="gap-2"
                 >
                   <Download className="h-4 w-4" />
-                  {t("inline.als_png_herunterladen")}
+                  {t.inline.als_png_herunterladen}
                 </Button>
                 <span className="text-xs text-muted-foreground">
-                  {t("inline.status_verified_a6format_pdf_png_300_dpi")}
+                  {t.inline.status_verified_a6format_pdf_png_300_dpi}
                 </span>
               </div>
             </CardContent>
@@ -1277,7 +1277,7 @@ function BunnyDocSettingsTab() {
   const settingsQuery = trpc.bunnydoc.getSettings.useQuery();
   const saveSettingsMutation = trpc.bunnydoc.saveSettings.useMutation({
     onSuccess: () => {
-      toast.success(t("inline.bunnydoceinstellungen_gespeichert"));
+      toast.success(t.inline.bunnydoceinstellungen_gespeichert);
       settingsQuery.refetch();
       setBunnyApiKey("");
       setBunnyTemplateId("");
@@ -1295,10 +1295,10 @@ function BunnyDocSettingsTab() {
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <FileSignature className="h-4 w-4" />
-            {t("inline.bunnydoc_digitale_signaturen")}
+            {t.inline.bunnydoc_digitale_signaturen}
           </CardTitle>
           <CardDescription>
-            {t("inline.verbinden_sie_bunnydoc_um_compliancedokumente_automatisch_zu")}
+            {t.inline.verbinden_sie_bunnydoc_um_compliancedokumente_automatisch_zu}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -1313,7 +1313,7 @@ function BunnyDocSettingsTab() {
             </div>
             <div>
               <p className="text-sm font-medium">
-                {settingsQuery.data?.hasApiKey ? (t("inline.apischluessel_konfiguriert")) : (t("inline.kein_apischluessel_hinterlegt"))}
+                {settingsQuery.data?.hasApiKey ? (t.inline.apischluessel_konfiguriert) : (t.inline.kein_apischluessel_hinterlegt)}
               </p>
               {settingsQuery.data?.templateId && (
                 <p className="text-xs text-muted-foreground font-mono mt-0.5">
@@ -1326,7 +1326,7 @@ function BunnyDocSettingsTab() {
           {/* API Key */}
           <div className="space-y-1.5">
             <Label htmlFor="bunny-api-key">
-              {settingsQuery.data?.hasApiKey ? (t("inline.apischluessel_ersetzen")) : (t("inline.apischluessel_eingeben"))}
+              {settingsQuery.data?.hasApiKey ? (t.inline.apischluessel_ersetzen) : (t.inline.apischluessel_eingeben)}
             </Label>
             <div className="relative">
               <Input
@@ -1334,7 +1334,7 @@ function BunnyDocSettingsTab() {
                 type={showBunnyKey ? "text" : "password"}
                 value={bunnyApiKey}
                 onChange={(e) => setBunnyApiKey(e.target.value)}
-                placeholder={t("inline.ihr_bunnydoc_apischluessel")}
+                placeholder={t.inline.ihr_bunnydoc_apischluessel}
                 className="pr-10 font-mono text-sm"
               />
               <button
@@ -1346,17 +1346,17 @@ function BunnyDocSettingsTab() {
               </button>
             </div>
             <p className="text-xs text-muted-foreground">
-              {t("inline.den_schluessel_finden_sie_unter")}{" "}
+              {t.inline.den_schluessel_finden_sie_unter}{" "}
               <a href="https://bunnydoc.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                 bunnydoc.com
               </a>{" "}
-              {t("inline.einstellungen_api")}
+              {t.inline.einstellungen_api}
             </p>
           </div>
 
           {/* Template ID */}
           <div className="space-y-1.5">
-              <Label htmlFor="bunny-template-id">{t("inline.templateid")}</Label>
+              <Label htmlFor="bunny-template-id">{t.inline.templateid}</Label>
             <Input
               id="bunny-template-id"
               value={bunnyTemplateId}
@@ -1365,7 +1365,7 @@ function BunnyDocSettingsTab() {
               className="font-mono text-sm"
             />
             <p className="text-xs text-muted-foreground">
-              {t("inline.die_uuid_der_bunnydocvorlage_die_fuer_compliancedokumente_ver")}
+              {t.inline.die_uuid_der_bunnydocvorlage_die_fuer_compliancedokumente_ver}
             </p>
           </div>
 
@@ -1373,9 +1373,9 @@ function BunnyDocSettingsTab() {
 
           {/* Webhook Info */}
           <div className="rounded-lg border p-3 bg-muted/20 space-y-1">
-            <p className="text-sm font-medium">{t("inline.webhookurl")}</p>
+            <p className="text-sm font-medium">{t.inline.webhookurl}</p>
             <p className="text-xs text-muted-foreground">
-              {t("inline.tragen_sie_diese_url_in_ihrem_bunnydockonto_unter_einstellun")}
+              {t.inline.tragen_sie_diese_url_in_ihrem_bunnydockonto_unter_einstellun}
             </p>
             <code className="block text-xs font-mono bg-background border rounded px-2 py-1 mt-1 break-all">
               {window.location.origin}/api/webhooks/bunnydoc
@@ -1385,7 +1385,7 @@ function BunnyDocSettingsTab() {
           <Button
             onClick={() => {
               if (!bunnyApiKey || !bunnyTemplateId) {
-                toast.error(t("inline.bitte_apischluessel_und_templateid_eingeben"));
+                toast.error(t.inline.bitte_apischluessel_und_templateid_eingeben);
                 return;
               }
               saveSettingsMutation.mutate({ apiKey: bunnyApiKey, templateId: bunnyTemplateId });
@@ -1432,7 +1432,7 @@ function EmailSettingsTab() {
 
   const updateMutation = trpc.email.updateSettings.useMutation({
     onSuccess: () => {
-      toast.success(t("inline.emaileinstellungen_gespeichert"));
+      toast.success(t.inline.emaileinstellungen_gespeichert);
       setApiKey("");
       utils.email.getSettings.invalidate();
     },
@@ -1440,7 +1440,7 @@ function EmailSettingsTab() {
   });
 
   const testMutation = trpc.email.testConnection.useMutation({
-    onSuccess: () => toast.success(t("inline.testemail_erfolgreich_gesendet")),
+    onSuccess: () => toast.success(t.inline.testemail_erfolgreich_gesendet),
     onError: (e: any) => toast.error(translateError(e.message, lang)),
   });
 
@@ -1451,7 +1451,7 @@ function EmailSettingsTab() {
     if (fromAddress !== (data?.fromAddress ?? "")) updates.fromAddress = fromAddress;
     if (htmlSignature !== (data?.htmlSignature ?? "")) updates.htmlSignature = htmlSignature;
     if (Object.keys(updates).length === 0) {
-      toast.info(t("inline.keine_aenderungen_erkannt"));
+      toast.info(t.inline.keine_aenderungen_erkannt);
       return;
     }
     updateMutation.mutate(updates);
@@ -1467,8 +1467,8 @@ function EmailSettingsTab() {
           <Info className="h-4 w-4 shrink-0" />
         )}
         {data?.configured
-          ? (t("inline.emailit_ist_konfiguriert_und_bereit"))
-          : (t("inline.emailit_ist_noch_nicht_konfiguriert_bitte_apischluessel_und_a"))}
+          ? (t.inline.emailit_ist_konfiguriert_und_bereit)
+          : (t.inline.emailit_ist_noch_nicht_konfiguriert_bitte_apischluessel_und_a)}
       </div>
 
       {/* API Key */}
@@ -1476,7 +1476,7 @@ function EmailSettingsTab() {
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Key className="h-4 w-4" />
-            {t("inline.emailit_apischluessel")}
+            {t.inline.emailit_apischluessel}
           </CardTitle>
           <CardDescription>
             {lang === "de"
@@ -1490,15 +1490,15 @@ function EmailSettingsTab() {
               <Key className="h-3.5 w-3.5 shrink-0" />
               {data.maskedApiKey}
               <Badge variant="outline" className="ml-auto text-xs text-emerald-700 bg-emerald-50 border-emerald-200">
-                {t("inline.gespeichert")}
+                {t.inline.gespeichert}
               </Badge>
             </div>
           )}
           <div className="space-y-1.5">
             <Label htmlFor="emailit-key">
               {data?.maskedApiKey
-                ? (t("inline.apischluessel_ersetzen"))
-                : (t("inline.apischluessel_eingeben"))}
+                ? (t.inline.apischluessel_ersetzen)
+                : (t.inline.apischluessel_eingeben)}
             </Label>
             <div className="relative">
               <Input
@@ -1518,11 +1518,11 @@ function EmailSettingsTab() {
               </button>
             </div>
             <p className="text-xs text-muted-foreground">
-              {t("inline.erhaeltlich_unter")}{" "}
+              {t.inline.erhaeltlich_unter}{" "}
               <a href="https://emailit.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                 emailit.com
               </a>{" "}
-              → {t("inline.dashboard_api_keys")}
+              → {t.inline.dashboard_api_keys}
             </p>
           </div>
         </CardContent>
@@ -1533,7 +1533,7 @@ function EmailSettingsTab() {
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Mail className="h-4 w-4" />
-            {t("inline.absendereinstellungen")}
+            {t.inline.absendereinstellungen}
           </CardTitle>
           <CardDescription>
             {lang === "de"
@@ -1544,7 +1544,7 @@ function EmailSettingsTab() {
         <CardContent className="space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="from-name">{t("inline.absendername")}</Label>
+              <Label htmlFor="from-name">{t.inline.absendername}</Label>
               <Input
                 id="from-name"
                 value={fromName}
@@ -1553,7 +1553,7 @@ function EmailSettingsTab() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="from-address">{t("inline.absenderemail")}</Label>
+              <Label htmlFor="from-address">{t.inline.absenderemail}</Label>
               <Input
                 id="from-address"
                 type="email"
@@ -1571,7 +1571,7 @@ function EmailSettingsTab() {
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <FileSignature className="h-4 w-4" />
-            {t("inline.htmlsignatur")}
+            {t.inline.htmlsignatur}
           </CardTitle>
           <CardDescription>
             {lang === "de"
@@ -1582,7 +1582,7 @@ function EmailSettingsTab() {
         <CardContent className="space-y-3">
           <div className="space-y-1.5">
             <Label htmlFor="html-signature">
-              {t("inline.htmlcode_der_signatur")}
+              {t.inline.htmlcode_der_signatur}
             </Label>
             <textarea
               id="html-signature"
@@ -1603,7 +1603,7 @@ function EmailSettingsTab() {
           {htmlSignature && (
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">
-                {t("inline.vorschau")}
+                {t.inline.vorschau}
               </Label>
               <div
                 className="rounded-md border bg-white p-3 text-sm min-h-[60px]"
@@ -1619,7 +1619,7 @@ function EmailSettingsTab() {
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Send className="h-4 w-4" />
-            {t("inline.verbindung_testen")}
+            {t.inline.verbindung_testen}
           </CardTitle>
           <CardDescription>
             {lang === "de"
@@ -1633,14 +1633,14 @@ function EmailSettingsTab() {
               type="email"
               value={testAddress}
               onChange={(e) => setTestAddress(e.target.value)}
-              placeholder={t("inline.testbeispielch")}
+              placeholder={t.inline.testbeispielch}
               className="flex-1"
             />
             <Button
               variant="outline"
               onClick={() => {
                 if (!testAddress) {
-                  toast.error(t("inline.bitte_eine_emailadresse_eingeben"));
+                  toast.error(t.inline.bitte_eine_emailadresse_eingeben);
                   return;
                 }
                 testMutation.mutate({ toAddress: testAddress });
@@ -1649,7 +1649,7 @@ function EmailSettingsTab() {
               className="gap-2 shrink-0"
             >
               {testMutation.isPending ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              {t("inline.test_senden")}
+              {t.inline.test_senden}
             </Button>
           </div>
           {!data?.configured && (
@@ -1666,7 +1666,7 @@ function EmailSettingsTab() {
       <div className="flex justify-end">
         <Button onClick={handleSave} disabled={updateMutation.isPending} className="gap-2">
           {updateMutation.isPending ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          {t("inline.einstellungen_speichern")}
+          {t.inline.einstellungen_speichern}
         </Button>
       </div>
     </div>

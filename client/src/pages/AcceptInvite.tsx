@@ -123,14 +123,14 @@ export default function AcceptInvite() {
           <div className="bg-muted/50 rounded-lg p-4 space-y-2">
             <div className="flex items-center gap-2 text-sm">
               <Building2 className="h-4 w-4 text-muted-foreground" />
-              <span className="text-muted-foreground">{t("inline.lieferant")}</span>
+              <span className="text-muted-foreground">{t.inline.lieferant}</span>
               <span className="font-semibold">{inv.supplierName}</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <CheckCircle2 className="h-4 w-4 text-green-500" />
-              <span className="text-muted-foreground">{t("inline.gueltig_bis")}</span>
+              <span className="text-muted-foreground">{t.inline.gueltig_bis}</span>
               <span className="font-medium">
-                {new Date(inv.expiresAt).toLocaleDateString(t("inline.dede"))}
+                {new Date(inv.expiresAt).toLocaleDateString(t.inline.dede)}
               </span>
             </div>
           </div>
@@ -174,7 +174,7 @@ export default function AcceptInvite() {
           )}
 
           <p className="text-xs text-center text-muted-foreground">
-            {t("inline.bei_fragen_wenden_sie_sich_an")}
+            {t.inline.bei_fragen_wenden_sie_sich_an}
             <a href="mailto:compliance@spielzeug3.de" className="underline">
               compliance@spielzeug3.de
             </a>

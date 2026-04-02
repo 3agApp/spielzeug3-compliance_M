@@ -141,7 +141,7 @@ function RiskCard({ risk, lang, t }: { risk: RiskItem; lang: "de" | "en"; t: (ke
             {risk.mitigations.length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
-                  {t("inline.massnahmen_zur_risikoreduktion")}
+                  {t.inline.massnahmen_zur_risikoreduktion}
                 </p>
                 <ul className="space-y-1">
                   {risk.mitigations.map((m, i) => (
@@ -222,24 +222,24 @@ export default function RiskAssessmentTab({ productId, isInternalRole }: Props) 
   const displaySummary = translated?.summary ?? latest?.summary;
 
   const labels = {
-    title:          t("inline.kirisikobewertung"),
-    subtitle:       t("inline.automatische_analyse_aller_vorliegenden_produktinformationen"),
-    runBtn:         t("inline.neue_bewertung_starten"),
-    running:        t("inline.bewertung_laeuft"),
-    noData:         t("inline.noch_keine_risikobewertung_vorhanden"),
-    noDataHint:     t("inline.starten_sie_eine_neue_bewertung_um_alle_risiken_zu_analysier"),
-    overallRisk:    t("inline.gesamtrisiko"),
-    riskLevel:      t("inline.risikostufe"),
-    summary:        t("inline.zusammenfassung"),
-    risks:          t("inline.identifizierte_risiken"),
-    missingInfo:    t("inline.fehlende_informationen_zur_risikoreduktion"),
-    history:        t("inline.bewertungsverlauf"),
-    hideHistory:    t("inline.verlauf_ausblenden"),
-    createdAt:      t("inline.erstellt_1"),
-    score:          t("inline.score"),
-    noHistory:      t("inline.kein_verlauf_vorhanden"),
-    errorRun:       t("inline.fehler_beim_starten_der_bewertung"),
-    downloadPdf:    t("inline.pdf_exportieren"),
+    title:          t.inline.kirisikobewertung,
+    subtitle:       t.inline.automatische_analyse_aller_vorliegenden_produktinformationen,
+    runBtn:         t.inline.neue_bewertung_starten,
+    running:        t.inline.bewertung_laeuft,
+    noData:         t.inline.noch_keine_risikobewertung_vorhanden,
+    noDataHint:     t.inline.starten_sie_eine_neue_bewertung_um_alle_risiken_zu_analysier,
+    overallRisk:    t.inline.gesamtrisiko,
+    riskLevel:      t.inline.risikostufe,
+    summary:        t.inline.zusammenfassung,
+    risks:          t.inline.identifizierte_risiken,
+    missingInfo:    t.inline.fehlende_informationen_zur_risikoreduktion,
+    history:        t.inline.bewertungsverlauf,
+    hideHistory:    t.inline.verlauf_ausblenden,
+    createdAt:      t.inline.erstellt_1,
+    score:          t.inline.score,
+    noHistory:      t.inline.kein_verlauf_vorhanden,
+    errorRun:       t.inline.fehler_beim_starten_der_bewertung,
+    downloadPdf:    t.inline.pdf_exportieren,
   };
 
   return (
@@ -315,7 +315,7 @@ export default function RiskAssessmentTab({ productId, isInternalRole }: Props) 
       {latestQuery.isLoading && (
         <div className="flex items-center justify-center py-12 text-muted-foreground gap-2">
           <Loader2 className="h-5 w-5 animate-spin" />
-          <span className="text-sm">{t("inline.lade_bewertung")}</span>
+          <span className="text-sm">{t.inline.lade_bewertung}</span>
         </div>
       )}
 
@@ -363,13 +363,13 @@ export default function RiskAssessmentTab({ productId, isInternalRole }: Props) 
                 {isTranslating ? (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    <span>{t("inline.uebersetzung_wird_geladen")}</span>
+                    <span>{t.inline.uebersetzung_wird_geladen}</span>
                   </div>
                 ) : (
                   <>
                     <p className="text-sm leading-relaxed">{displaySummary}</p>
                     {translated && (
-                      <p className="text-xs text-muted-foreground mt-1 opacity-70">🌐 {t("inline.uebersetzt_aus_dem_englischen")}</p>
+                      <p className="text-xs text-muted-foreground mt-1 opacity-70">🌐 {t.inline.uebersetzt_aus_dem_englischen}</p>
                     )}
                   </>
                 )}
@@ -443,7 +443,7 @@ export default function RiskAssessmentTab({ productId, isInternalRole }: Props) 
               <CardContent className="pt-4">
                 {historyQuery.isLoading ? (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground py-4 justify-center">
-                    <Loader2 className="h-4 w-4 animate-spin" /> {t("inline.lade")}
+                    <Loader2 className="h-4 w-4 animate-spin" /> {t.inline.lade}
                   </div>
                 ) : !historyQuery.data?.length ? (
                   <p className="text-sm text-muted-foreground text-center py-4">{labels.noHistory}</p>

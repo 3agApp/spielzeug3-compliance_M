@@ -83,7 +83,7 @@ export default function InvitationsManager() {
 
   function handleCreate() {
     if (!newEmail || !newSupplierId) {
-      toast.error(t("inline.bitte_email_und_lieferant_auswaehlen"));
+      toast.error(t.inline.bitte_email_und_lieferant_auswaehlen);
       return;
     }
     createMutation.mutate({
@@ -156,7 +156,7 @@ export default function InvitationsManager() {
             <Link2 className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-semibold text-blue-800">
-                {t("inline.so_funktioniert_der_onboardingprozess")}
+                {t.inline.so_funktioniert_der_onboardingprozess}
               </p>
               <p className="text-sm text-blue-700 mt-1">
                 {lang === "de"
@@ -184,7 +184,7 @@ export default function InvitationsManager() {
               <Mail className="h-10 w-10 text-muted-foreground/40" />
               <p className="font-medium">{t.invitations.noInvitations}</p>
               <p className="text-sm">
-                {t("inline.erstellen_sie_die_erste_einladung_fuer_einen_lieferanten")}
+                {t.inline.erstellen_sie_die_erste_einladung_fuer_einen_lieferanten}
               </p>
               <Button size="sm" onClick={() => setShowCreate(true)} className="mt-2 gap-2">
                 <Plus className="h-4 w-4" />
@@ -221,12 +221,12 @@ export default function InvitationsManager() {
                     <TableCell>{statusBadge(inv.status)}</TableCell>
                     <TableCell>
                       <span className="text-sm text-muted-foreground">
-                        {new Date(inv.createdAt).toLocaleDateString(t("inline.dede"))}
+                        {new Date(inv.createdAt).toLocaleDateString(t.inline.dede)}
                       </span>
                     </TableCell>
                     <TableCell>
                       <span className={`text-sm ${new Date(inv.expiresAt) < new Date() ? "text-red-600 font-medium" : "text-muted-foreground"}`}>
-                        {new Date(inv.expiresAt).toLocaleDateString(t("inline.dede"))}
+                        {new Date(inv.expiresAt).toLocaleDateString(t.inline.dede)}
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
@@ -270,7 +270,7 @@ export default function InvitationsManager() {
               <Label>{t.invitations.supplierEmail}</Label>
               <Input
                 type="email"
-                placeholder={t("inline.lieferantbeispielde")}
+                placeholder={t.inline.lieferantbeispielde}
                 value={newEmail}
                 onChange={(e) => setNewEmail(e.target.value)}
               />
@@ -279,7 +279,7 @@ export default function InvitationsManager() {
               <Label>{t.invitations.supplierName}</Label>
               <Select value={newSupplierId} onValueChange={setNewSupplierId}>
                 <SelectTrigger>
-                  <SelectValue placeholder={t("inline.lieferant_auswaehlen")} />
+                  <SelectValue placeholder={t.inline.lieferant_auswaehlen} />
                 </SelectTrigger>
                 <SelectContent>
                   {suppliers.map((s: any) => (
@@ -291,7 +291,7 @@ export default function InvitationsManager() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>{t("inline.gueltigkeitsdauer")}</Label>
+              <Label>{t.inline.gueltigkeitsdauer}</Label>
               <Select value={newValidDays} onValueChange={setNewValidDays}>
                 <SelectTrigger>
                   <SelectValue />
@@ -308,7 +308,7 @@ export default function InvitationsManager() {
             <Button variant="outline" onClick={() => setShowCreate(false)}>{t.action.cancel}</Button>
             <Button onClick={handleCreate} disabled={createMutation.isPending} className="gap-2">
               {createMutation.isPending ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
-              {t("inline.magiclink_generieren")}
+              {t.inline.magiclink_generieren}
             </Button>
           </DialogFooter>
         </DialogContent>

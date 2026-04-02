@@ -103,8 +103,8 @@ function EmailLogRow({ entry, onResent }: { entry: EmailLogEntry; onResent: () =
                 : "text-red-700 bg-red-50 border-red-200 text-xs"}
             >
               {entry.status === "sent"
-                ? (t("inline.gesendet"))
-                : (t("inline.fehlgeschlagen"))}
+                ? (t.inline.gesendet)
+                : (t.inline.fehlgeschlagen)}
             </Badge>
           </div>
         </div>
@@ -113,7 +113,7 @@ function EmailLogRow({ entry, onResent }: { entry: EmailLogEntry; onResent: () =
         <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
           <span className="flex items-center gap-1">
             <Clock className="h-3 w-3" />
-            {sentDate.toLocaleString(t("inline.dech"))}
+            {sentDate.toLocaleString(t.inline.dech)}
           </span>
           {entry.sentBy && (
             <span className="flex items-center gap-1">
@@ -140,7 +140,7 @@ function EmailLogRow({ entry, onResent }: { entry: EmailLogEntry; onResent: () =
               onClick={() => setPreviewOpen(true)}
             >
               <Eye className="h-3.5 w-3.5" />
-              {t("inline.email_anzeigen")}
+              {t.inline.email_anzeigen}
             </Button>
           )}
           {/* Resend button – shown for failed emails, but also available for any entry */}
@@ -159,7 +159,7 @@ function EmailLogRow({ entry, onResent }: { entry: EmailLogEntry; onResent: () =
             {resendMutation.isPending
               ? <RefreshCw className="h-3.5 w-3.5 animate-spin" />
               : <RotateCcw className="h-3.5 w-3.5" />}
-            {t("inline.erneut_senden")}
+            {t.inline.erneut_senden}
           </Button>
           <Button
             variant="ghost"
@@ -169,8 +169,8 @@ function EmailLogRow({ entry, onResent }: { entry: EmailLogEntry; onResent: () =
           >
             {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
             {expanded
-              ? (t("inline.weniger"))
-              : (t("inline.details"))}
+              ? (t.inline.weniger)
+              : (t.inline.details)}
           </Button>
         </div>
 
@@ -178,23 +178,23 @@ function EmailLogRow({ entry, onResent }: { entry: EmailLogEntry; onResent: () =
         {expanded && (
           <div className="border-t pt-3 space-y-2 text-xs text-muted-foreground">
             <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
-              <span className="font-medium text-foreground">{t("inline.an")}</span>
+              <span className="font-medium text-foreground">{t.inline.an}</span>
               <span>{entry.to}</span>
-              <span className="font-medium text-foreground">{t("inline.betreff")}</span>
+              <span className="font-medium text-foreground">{t.inline.betreff}</span>
               <span>{entry.subject}</span>
-              <span className="font-medium text-foreground">{t("inline.gesendet_1")}</span>
-              <span>{sentDate.toLocaleString(t("inline.dech"))}</span>
+              <span className="font-medium text-foreground">{t.inline.gesendet_1}</span>
+              <span>{sentDate.toLocaleString(t.inline.dech)}</span>
               {entry.sentBy && (
                 <>
-                  <span className="font-medium text-foreground">{t("inline.von")}</span>
+                  <span className="font-medium text-foreground">{t.inline.von}</span>
                   <span>{entry.sentBy}</span>
                 </>
               )}
               <span className="font-medium text-foreground">Status:</span>
               <span className={entry.status === "sent" ? "text-emerald-600" : "text-red-600"}>
                 {entry.status === "sent"
-                  ? (t("inline.erfolgreich_gesendet"))
-                  : (t("inline.versand_fehlgeschlagen"))}
+                  ? (t.inline.erfolgreich_gesendet)
+                  : (t.inline.versand_fehlgeschlagen)}
               </span>
             </div>
           </div>
@@ -212,11 +212,11 @@ function EmailLogRow({ entry, onResent }: { entry: EmailLogEntry; onResent: () =
           </DialogHeader>
           <div className="space-y-3 mt-2">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="font-medium text-foreground">{t("inline.an")}</span>
+              <span className="font-medium text-foreground">{t.inline.an}</span>
               <span>{entry.to}</span>
               <span className="mx-2">·</span>
               <Clock className="h-3 w-3" />
-              <span>{sentDate.toLocaleString(t("inline.dech"))}</span>
+              <span>{sentDate.toLocaleString(t.inline.dech)}</span>
             </div>
             <div
               className="rounded-md border bg-white p-4 text-sm"
@@ -243,7 +243,7 @@ export function EmailLogTab({ productId }: EmailLogTabProps) {
     return (
       <div className="flex items-center justify-center py-12 gap-2 text-muted-foreground">
         <RefreshCw className="h-4 w-4 animate-spin" />
-        <span className="text-sm">{t("inline.lade_emailprotokoll")}</span>
+        <span className="text-sm">{t.inline.lade_emailprotokoll}</span>
       </div>
     );
   }
@@ -257,7 +257,7 @@ export function EmailLogTab({ productId }: EmailLogTabProps) {
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
               <Mail className="h-4 w-4 text-primary" />
-              {t("inline.emailversandprotokoll")}
+              {t.inline.emailversandprotokoll}
             </CardTitle>
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="text-xs">
@@ -268,7 +268,7 @@ export function EmailLogTab({ productId }: EmailLogTabProps) {
                 size="sm"
                 className="h-7 w-7 p-0"
                 onClick={() => logsQuery.refetch()}
-                title={t("inline.aktualisieren")}
+                title={t.inline.aktualisieren}
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${logsQuery.isFetching ? "animate-spin" : ""}`} />
               </Button>
@@ -288,7 +288,7 @@ export function EmailLogTab({ productId }: EmailLogTabProps) {
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  {t("inline.keine_emails_gesendet")}
+                  {t.inline.keine_emails_gesendet}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   {lang === "de"

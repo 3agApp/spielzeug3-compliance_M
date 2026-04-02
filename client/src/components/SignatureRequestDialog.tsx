@@ -57,7 +57,7 @@ export default function SignatureRequestDialog({
 
   const sendMutation = trpc.bunnydoc.send.useMutation({
     onSuccess: (data) => {
-      toast.success(t("inline.signaturanfrage_erfolgreich_versendet"));
+      toast.success(t.inline.signaturanfrage_erfolgreich_versendet);
       setSigningLink(data.signingLink ?? null);
       onSuccess?.();
     },
@@ -66,7 +66,7 @@ export default function SignatureRequestDialog({
 
   const handleSend = () => {
     if (!signerName.trim() || !signerEmail.trim()) {
-      toast.error(t("inline.bitte_name_und_email_des_unterzeichners_eingeben"));
+      toast.error(t.inline.bitte_name_und_email_des_unterzeichners_eingeben);
       return;
     }
     sendMutation.mutate({
@@ -99,10 +99,10 @@ export default function SignatureRequestDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileSignature className="h-5 w-5" />
-            {t("inline.zur_unterschrift_senden")}
+            {t.inline.zur_unterschrift_senden}
           </DialogTitle>
           <DialogDescription>
-            {t("inline.sendet_eine_signaturanfrage_ueber_bunnydoc_an_den_angegebenen")}
+            {t.inline.sendet_eine_signaturanfrage_ueber_bunnydoc_an_den_angegebenen}
           </DialogDescription>
         </DialogHeader>
 
@@ -112,7 +112,7 @@ export default function SignatureRequestDialog({
           </div>
         ) : !isConfigured ? (
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 space-y-1">
-            <p className="font-medium">{t("inline.bunnydoc_nicht_konfiguriert")}</p>
+            <p className="font-medium">{t.inline.bunnydoc_nicht_konfiguriert}</p>
             <p className="text-amber-700">
               {lang === "de" ? (
                 <>Bitte hinterlegen Sie API-Schlüssel und Template-ID unter{" "}<strong>Einstellungen → Signaturen</strong>.</>
@@ -124,7 +124,7 @@ export default function SignatureRequestDialog({
         ) : isSent ? (
           <div className="space-y-4">
             <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 space-y-1">
-              <p className="font-medium">{t("inline.signaturanfrage_versendet")}</p>
+              <p className="font-medium">{t.inline.signaturanfrage_versendet}</p>
               <p className="text-emerald-700">
                 {lang === "de"
                   ? `${signerName} (${signerEmail}) erhält in Kürze eine E-Mail mit dem Dokument.`
@@ -133,7 +133,7 @@ export default function SignatureRequestDialog({
             </div>
             {signingLink && (
               <div className="space-y-1.5">
-                <p className="text-xs font-medium text-muted-foreground">{t("inline.direkter_signaturlink")}</p>
+                <p className="text-xs font-medium text-muted-foreground">{t.inline.direkter_signaturlink}</p>
                 <a
                   href={signingLink}
                   target="_blank"
@@ -150,7 +150,7 @@ export default function SignatureRequestDialog({
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="sig-name">{t("inline.name_des_unterzeichners")}</Label>
+                <Label htmlFor="sig-name">{t.inline.name_des_unterzeichners}</Label>
                 <Input
                   id="sig-name"
                   value={signerName}
@@ -170,7 +170,7 @@ export default function SignatureRequestDialog({
               </div>
             </div>
             <div className="space-y-1.5">
-                <Label htmlFor="sig-message">{t("inline.nachricht_optional")}</Label>
+                <Label htmlFor="sig-message">{t.inline.nachricht_optional}</Label>
               <Textarea
                 id="sig-message"
                 value={emailMessage}
@@ -180,14 +180,14 @@ export default function SignatureRequestDialog({
               />
             </div>
             <p className="text-xs text-muted-foreground">
-              {t("inline.vorlage")}: <span className="font-mono">{settingsQuery.data?.templateId}</span>
+              {t.inline.vorlage}: <span className="font-mono">{settingsQuery.data?.templateId}</span>
             </p>
           </div>
         )}
 
         <DialogFooter>
           <Button variant="outline" onClick={handleClose} disabled={sendMutation.isPending}>
-            {isSent ? (t("inline.schliessen")) : (t("inline.abbrechen"))}
+            {isSent ? (t.inline.schliessen) : (t.inline.abbrechen)}
           </Button>
           {!isSent && isConfigured && (
             <Button onClick={handleSend} disabled={sendMutation.isPending}>
@@ -196,7 +196,7 @@ export default function SignatureRequestDialog({
               ) : (
                 <Send className="mr-2 h-4 w-4" />
               )}
-              {t("inline.senden")}
+              {t.inline.senden}
             </Button>
           )}
         </DialogFooter>

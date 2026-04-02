@@ -124,7 +124,7 @@ export default function ProductDetail() {
   const [showDeleteProductDialog, setShowDeleteProductDialog] = useState(false);
   const deleteProductMutation = trpc.products.delete.useMutation({
     onSuccess: () => {
-      toast.success(t("inline.produkt_wurde_geloescht"));
+      toast.success(t.inline.produkt_wurde_geloescht);
       setLocation("/products");
     },
     onError: (e) => toast.error(translateError(e.message, t)),
@@ -171,7 +171,7 @@ export default function ProductDetail() {
 
   const updateProductMutation = trpc.products.update.useMutation({
     onSuccess: () => {
-      toast.success(t("inline.produkt_gespeichert"));
+      toast.success(t.inline.produkt_gespeichert);
       setShowEditDialog(false);
       utils.products.getById.invalidate({ id: productId });
     },
@@ -365,7 +365,7 @@ export default function ProductDetail() {
                   onClick={() => setShowDeleteProductDialog(true)}
                 >
                   <Trash2 className="h-4 w-4" />
-                  {t("inline.loeschen_1")}
+                  {t.inline.loeschen_1}
                 </Button>
               </div>
             )}
@@ -503,7 +503,7 @@ export default function ProductDetail() {
           {isInternalRole && (
             <TabsTrigger value="risk" className="gap-2">
               <ShieldAlert className="h-4 w-4" />
-              {t("inline.risiken")} {/* risk tab label */}
+              {t.inline.risiken} {/* risk tab label */}
             </TabsTrigger>
           )}
           <TabsTrigger value="images" className="gap-2">
@@ -519,7 +519,7 @@ export default function ProductDetail() {
           {isInternalRole && (
             <TabsTrigger value="email-log" className="gap-2">
               <Mail className="h-4 w-4" />
-              {t("inline.emailprotokoll")}
+              {t.inline.emailprotokoll}
             </TabsTrigger>
           )}
         </TabsList>
@@ -883,7 +883,7 @@ export default function ProductDetail() {
             </div>
             {/* Kontor-ID */}
             <div>
-              <Label>{t("inline.kontorid")}</Label>
+              <Label>{t.inline.kontorid}</Label>
               <Input
                 className="mt-1"
                 value={editForm.kontorId}
@@ -959,7 +959,7 @@ export default function ProductDetail() {
               disabled={updateProductMutation.isPending}
             >
               {updateProductMutation.isPending
-                ? (t("inline.speichern_1"))
+                ? (t.inline.speichern_1)
                 : t.action.saveChanges}
             </Button>
           </DialogFooter>
@@ -972,7 +972,7 @@ export default function ProductDetail() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-red-600">
               <Trash2 className="h-5 w-5" />
-              {t("inline.produkt_loeschen")}
+              {t.inline.produkt_loeschen}
             </DialogTitle>
           </DialogHeader>
           <div className="py-3 text-sm text-muted-foreground">
@@ -984,7 +984,7 @@ export default function ProductDetail() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDeleteProductDialog(false)}>
-              {t("inline.abbrechen")}
+              {t.inline.abbrechen}
             </Button>
             <Button
               variant="destructive"
@@ -993,8 +993,8 @@ export default function ProductDetail() {
             >
               <Trash2 className="mr-2 h-4 w-4" />
               {deleteProductMutation.isPending
-                ? (t("inline.loeschen"))
-                : (t("inline.endgueltig_loeschen"))}
+                ? (t.inline.loeschen)
+                : (t.inline.endgueltig_loeschen)}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1103,8 +1103,8 @@ function SealTab({
   const previewQrMutation = trpc.tenant.generatePreviewQr.useMutation({
     onSuccess: (data) => {
       toast.success(
-        t("inline.vorschauqr_generiert"),
-        { description: t("inline.qrcode_und_oeffentliche_seite_sind_jetzt_verfuegbar") }
+        t.inline.vorschauqr_generiert,
+        { description: t.inline.qrcode_und_oeffentliche_seite_sind_jetzt_verfuegbar }
       );
       sealQuery.refetch();
     },
@@ -1327,7 +1327,7 @@ function SealTab({
                   ) : (
                     <QrCode className="mr-2 h-4 w-4" />
                   )}
-                  {t("inline.vorschauqr_generieren")}
+                  {t.inline.vorschauqr_generieren}
                 </Button>
                 <Button
                   size="sm"
@@ -1353,7 +1353,7 @@ function SealTab({
               <QrCode className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-blue-800 font-medium">
-                  {t("inline.vorschau_aktiv_siegel_noch_nicht_aktiviert")}
+                  {t.inline.vorschau_aktiv_siegel_noch_nicht_aktiviert}
                 </p>
                 <p className="text-xs text-blue-700 mt-0.5">
                   {lang === "de"
@@ -1368,7 +1368,7 @@ function SealTab({
                 className="bg-[#C8102E] hover:bg-[#a00d24] text-white flex-shrink-0"
               >
                 <ShieldCheck className="mr-1 h-3 w-3" />
-                {t("inline.aktivieren")}
+                {t.inline.aktivieren}
               </Button>
             </div>
           )}

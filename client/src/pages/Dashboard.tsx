@@ -80,7 +80,7 @@ function SupplierDashboard({ stats, recentProducts, t, lang, setLocation }: any)
     <div className="p-6 space-y-6 max-w-6xl">
       <div>
         <h1 className="text-2xl font-semibold">{t.nav.dashboard}</h1>
-        <p className="text-muted-foreground text-sm mt-1">{t("inline.uebersicht_ihrer_complianceaufgaben")}</p>
+        <p className="text-muted-foreground text-sm mt-1">{t.inline.uebersicht_ihrer_complianceaufgaben}</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -134,7 +134,7 @@ function InternalDashboard({ stats, recentProducts, t, lang, setLocation }: any)
     <div className="p-6 space-y-6 max-w-6xl">
       <div>
         <h1 className="text-2xl font-semibold">{t.nav.dashboard}</h1>
-        <p className="text-muted-foreground text-sm mt-1">{t("inline.interne_uebersicht_aller_complianceartikel")}</p>
+        <p className="text-muted-foreground text-sm mt-1">{t.inline.interne_uebersicht_aller_complianceartikel}</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -221,7 +221,7 @@ function ComplianceManagerDashboard({ stats, recentProducts, t, lang, setLocatio
     <div className="p-6 space-y-6 max-w-6xl">
       <div>
         <h1 className="text-2xl font-semibold">{t.nav.dashboard}</h1>
-        <p className="text-muted-foreground text-sm mt-1">{t("inline.compliance_manager_uebersicht")}</p>
+        <p className="text-muted-foreground text-sm mt-1">{t.inline.compliance_manager_uebersicht}</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -287,7 +287,7 @@ function ComplianceManagerDashboard({ stats, recentProducts, t, lang, setLocatio
           </CardHeader>
           <CardContent>
             {syncLogs.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t("inline.noch_kein_sync_durchgefuehrt")}</p>
+              <p className="text-sm text-muted-foreground">{t.inline.noch_kein_sync_durchgefuehrt}</p>
             ) : (
               <div className="space-y-2">
                 {syncLogs.map((log: any) => (
