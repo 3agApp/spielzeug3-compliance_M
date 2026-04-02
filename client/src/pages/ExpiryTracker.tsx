@@ -247,7 +247,7 @@ export default function ExpiryTracker() {
                       <TableCell>
                         <p className="text-sm font-mono">
                           {item.expiryDate
-                            ? new Date(item.expiryDate).toLocaleDateString(lang === "de" ? "de-DE" : "en-GB")
+                            ? new Date(item.expiryDate).toLocaleDateString(t("inline.dede"))
                             : "–"}
                         </p>
                       </TableCell>
@@ -269,7 +269,7 @@ export default function ExpiryTracker() {
                         <Link href={`/products/${item.productId}`}>
                           <Button variant="ghost" size="sm" className="gap-1 h-7 text-xs">
                             <ExternalLink className="h-3 w-3" />
-                            {lang === "de" ? "Produkt öffnen" : "Open product"}
+                            {t("inline.produkt_oeffnen")}
                           </Button>
                         </Link>
                       </TableCell>

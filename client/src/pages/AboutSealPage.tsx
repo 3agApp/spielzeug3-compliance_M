@@ -106,7 +106,7 @@ export default function AboutSealPage() {
             {c.back}
           </Link>
           <button
-            onClick={() => setLang(lang === "de" ? "en" : "de")}
+            onClick={() => setLang("en" as Lang)}
             className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 border border-gray-200 rounded px-2 py-1 transition-colors"
           >
             <Globe size={12} />

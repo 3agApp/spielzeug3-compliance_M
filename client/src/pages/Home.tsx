@@ -44,11 +44,11 @@ export default function Home() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setLang(lang === "de" ? "en" : "de")}
+            onClick={() => setLang(t("inline.en"))}
             className="gap-1.5"
           >
             <Globe className="h-4 w-4" />
-            {lang === "de" ? "EN" : "DE"}
+            {t("inline.en_1")}
           </Button>
         </div>
       </header>
@@ -71,28 +71,28 @@ export default function Home() {
               {[
                 {
                   icon: Shield,
-                  title: lang === "de" ? "Compliance-Workflows" : "Compliance Workflows",
+                  title: t("inline.complianceworkflows"),
                   desc: lang === "de"
                     ? "Strukturierter Prozess von Einreichung bis Genehmigung"
                     : "Structured process from submission to approval",
                 },
                 {
                   icon: FileText,
-                  title: lang === "de" ? "Dokumentenmanagement" : "Document Management",
+                  title: t("inline.dokumentenmanagement"),
                   desc: lang === "de"
                     ? "Sicherer Upload und Versionierung aller Compliance-Dokumente"
                     : "Secure upload and versioning of all compliance documents",
                 },
                 {
                   icon: CheckCircle2,
-                  title: lang === "de" ? "Vollständigkeitsprüfung" : "Completeness Check",
+                  title: t("inline.vollstaendigkeitspruefung"),
                   desc: lang === "de"
                     ? "Automatische Prüfung aller Anforderungen"
                     : "Automatic verification of all requirements",
                 },
                 {
                   icon: Globe,
-                  title: lang === "de" ? "Kontor ERP-Integration" : "Kontor ERP Integration",
+                  title: t("inline.kontor_erpintegration"),
                   desc: lang === "de"
                     ? "Bidirektionale Synchronisation mit Kontor ERP"
                     : "Bidirectional synchronization with Kontor ERP",
@@ -119,7 +119,7 @@ export default function Home() {
                   <Shield className="h-7 w-7 text-primary" />
                 </div>
                 <h2 className="text-xl font-semibold">
-                  {lang === "de" ? "Anmelden" : "Sign In"}
+                  {t("inline.anmelden")}
                 </h2>
                 <p className="text-sm text-muted-foreground">
                   {lang === "de"

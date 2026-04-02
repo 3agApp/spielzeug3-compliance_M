@@ -41,7 +41,7 @@ export default function SignatureRequestDialog({
   defaultSignerEmail = "",
   onSuccess,
 }: SignatureRequestDialogProps) {
-  const { lang } = useLang();
+  const { lang, t } = useLang();
   const [signerName, setSignerName] = useState(defaultSignerName);
   const [signerEmail, setSignerEmail] = useState(defaultSignerEmail);
   const [emailMessage, setEmailMessage] = useState(
@@ -57,7 +57,7 @@ export default function SignatureRequestDialog({
 
   const sendMutation = trpc.bunnydoc.send.useMutation({
     onSuccess: (data) => {
-      toast.success(lang === "de" ? "Signaturanfrage erfolgreich versendet" : "Signature request sent successfully");
+      toast.success(t("inline.signaturanfrage_erfolgreich_versendet"));
       setSigningLink(data.signingLink ?? null);
       onSuccess?.();
     },
@@ -66,7 +66,7 @@ export default function SignatureRequestDialog({
 
   const handleSend = () => {
     if (!signerName.trim() || !signerEmail.trim()) {
-      toast.error(lang === "de" ? "Bitte Name und E-Mail des Unterzeichners eingeben." : "Please enter the signer's name and email.");
+      toast.error(t("inline.bitte_name_und_email_des_unterzeichners_eingeben"));
       return;
     }
     sendMutation.mutate({
@@ -99,10 +99,10 @@ export default function SignatureRequestDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileSignature className="h-5 w-5" />
-            {lang === "de" ? "Zur Unterschrift senden" : "Send for signature"}
+            {t("inline.zur_unterschrift_senden")}
           </DialogTitle>
           <DialogDescription>
-            {lang === "de" ? "Sendet eine Signaturanfrage über BunnyDoc an den angegebenen Unterzeichner." : "Sends a signature request via BunnyDoc to the specified signer."}
+            {t("inline.sendet_eine_signaturanfrage_ueber_bunnydoc_an_den_angegebenen")}
           </DialogDescription>
         </DialogHeader>
 
@@ -112,7 +112,7 @@ export default function SignatureRequestDialog({
           </div>
         ) : !isConfigured ? (
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 space-y-1">
-            <p className="font-medium">{lang === "de" ? "BunnyDoc nicht konfiguriert" : "BunnyDoc not configured"}</p>
+            <p className="font-medium">{t("inline.bunnydoc_nicht_konfiguriert")}</p>
             <p className="text-amber-700">
               {lang === "de" ? (
                 <>Bitte hinterlegen Sie API-Schlüssel und Template-ID unter{" "}<strong>Einstellungen → Signaturen</strong>.</>
@@ -124,7 +124,7 @@ export default function SignatureRequestDialog({
         ) : isSent ? (
           <div className="space-y-4">
             <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 space-y-1">
-              <p className="font-medium">{lang === "de" ? "Signaturanfrage versendet" : "Signature request sent"}</p>
+              <p className="font-medium">{t("inline.signaturanfrage_versendet")}</p>
               <p className="text-emerald-700">
                 {lang === "de"
                   ? `${signerName} (${signerEmail}) erhält in Kürze eine E-Mail mit dem Dokument.`
@@ -133,7 +133,7 @@ export default function SignatureRequestDialog({
             </div>
             {signingLink && (
               <div className="space-y-1.5">
-                <p className="text-xs font-medium text-muted-foreground">{lang === "de" ? "Direkter Signatur-Link" : "Direct signing link"}</p>
+                <p className="text-xs font-medium text-muted-foreground">{t("inline.direkter_signaturlink")}</p>
                 <a
                   href={signingLink}
                   target="_blank"
@@ -150,7 +150,7 @@ export default function SignatureRequestDialog({
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="sig-name">{lang === "de" ? "Name des Unterzeichners" : "Signer's name"}</Label>
+                <Label htmlFor="sig-name">{t("inline.name_des_unterzeichners")}</Label>
                 <Input
                   id="sig-name"
                   value={signerName}
@@ -170,7 +170,7 @@ export default function SignatureRequestDialog({
               </div>
             </div>
             <div className="space-y-1.5">
-                <Label htmlFor="sig-message">{lang === "de" ? "Nachricht (optional)" : "Message (optional)"}</Label>
+                <Label htmlFor="sig-message">{t("inline.nachricht_optional")}</Label>
               <Textarea
                 id="sig-message"
                 value={emailMessage}
@@ -180,14 +180,14 @@ export default function SignatureRequestDialog({
               />
             </div>
             <p className="text-xs text-muted-foreground">
-              {lang === "de" ? "Vorlage" : "Template"}: <span className="font-mono">{settingsQuery.data?.templateId}</span>
+              {t("inline.vorlage")}: <span className="font-mono">{settingsQuery.data?.templateId}</span>
             </p>
           </div>
         )}
 
         <DialogFooter>
           <Button variant="outline" onClick={handleClose} disabled={sendMutation.isPending}>
-            {isSent ? (lang === "de" ? "Schließen" : "Close") : (lang === "de" ? "Abbrechen" : "Cancel")}
+            {isSent ? (t("inline.schliessen")) : (t("inline.abbrechen"))}
           </Button>
           {!isSent && isConfigured && (
             <Button onClick={handleSend} disabled={sendMutation.isPending}>
@@ -196,7 +196,7 @@ export default function SignatureRequestDialog({
               ) : (
                 <Send className="mr-2 h-4 w-4" />
               )}
-              {lang === "de" ? "Senden" : "Send"}
+              {t("inline.senden")}
             </Button>
           )}
         </DialogFooter>

@@ -19,11 +19,11 @@ const DEFAULT_SEAL_IMAGES: Record<SealStatus, string> = {
 };
 
 function useStatusConfig(): Record<SealStatus, { label: string; borderColor: string; accentColor: string }> {
-  const { lang } = useLang();
+  const { lang, t } = useLang();
   return {
     verified: { label: "VERIFIED", borderColor: "#16a34a", accentColor: "#16a34a" },
-    in_progress: { label: lang === "de" ? "IN PRÜFUNG" : "IN REVIEW", borderColor: "#d97706", accentColor: "#d97706" },
-    not_verified: { label: lang === "de" ? "NICHT VERIFIZIERT" : "NOT VERIFIED", borderColor: "#9ca3af", accentColor: "#6b7280" },
+    in_progress: { label: t("inline.in_pruefung_1"), borderColor: "#d97706", accentColor: "#d97706" },
+    not_verified: { label: t("inline.nicht_verifiziert_1"), borderColor: "#9ca3af", accentColor: "#6b7280" },
   };
 }
 
@@ -46,7 +46,7 @@ export function SealPreview({
   productId,
   qrCodeUrl,
 }: SealPreviewProps) {
-  const { lang } = useLang();
+  const { lang, t } = useLang();
   const STATUS_CONFIG = useStatusConfig();
   const [status, setStatus] = useState<SealStatus>("verified");
   const [downloading, setDownloading] = useState(false);
@@ -80,9 +80,9 @@ export function SealPreview({
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(objectUrl);
-      toast.success(lang === "de" ? "PDF heruntergeladen" : "PDF downloaded", { description: lang === "de" ? "Das Etikett wurde als PDF exportiert." : "The label was exported as PDF." });
+      toast.success(t("inline.pdf_heruntergeladen"), { description: t("inline.das_etikett_wurde_als_pdf_exportiert") });
     } catch (err: any) {
-      toast.error(lang === "de" ? "Download fehlgeschlagen" : "Download failed", { description: translateError(err.message, lang) ?? (lang === "de" ? "Unbekannter Fehler" : "Unknown error") });
+      toast.error(t("inline.download_fehlgeschlagen"), { description: translateError(err.message, lang) ?? (t("inline.unbekannter_fehler")) });
     } finally {
       setDownloading(false);
     }
@@ -108,8 +108,8 @@ ${qrSrc ? `  <img src="${qrSrc}" alt="QR-Code" width="100" height="100" style="d
   function handleCopyEmbed() {
     navigator.clipboard.writeText(getEmbedCode()).then(() => {
       setCopied(true);
-      toast.success(lang === "de" ? "HTML-Code kopiert" : "HTML code copied", {
-        description: lang === "de" ? "Fügen Sie den Code in Ihre Webseite, WooCommerce oder Shopify ein." : "Paste the code into your website, WooCommerce or Shopify.",
+      toast.success(t("inline.htmlcode_kopiert"), {
+        description: t("inline.fuegen_sie_den_code_in_ihre_webseite_woocommerce_oder_shopify"),
       });
       setTimeout(() => setCopied(false), 2500);
     });
@@ -128,7 +128,7 @@ ${qrSrc ? `  <img src="${qrSrc}" alt="QR-Code" width="100" height="100" style="d
               onClick={() => setStatus(s)}
               className="text-xs h-8"
             >
-              {s === "verified" ? "✓ Verified" : s === "in_progress" ? (lang === "de" ? "⟳ In Prüfung" : "⟳ In Review") : (lang === "de" ? "✕ Nicht verifiziert" : "✕ Not verified")}
+              {s === "verified" ? "✓ Verified" : s === "in_progress" ? (t("inline.in_pruefung_2")) : (t("inline.nicht_verifiziert_2"))}
             </Button>
           ))}
         </div>
@@ -140,7 +140,7 @@ ${qrSrc ? `  <img src="${qrSrc}" alt="QR-Code" width="100" height="100" style="d
           className="gap-1.5 text-xs h-8"
         >
           {downloading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-          {downloading ? (lang === "de" ? "Generiere…" : "Generating...") : (lang === "de" ? "PDF herunterladen" : "Download PDF")}
+          {downloading ? (t("inline.generiere")) : (t("inline.pdf_herunterladen"))}
         </Button>
       </div>
 
@@ -149,7 +149,7 @@ ${qrSrc ? `  <img src="${qrSrc}" alt="QR-Code" width="100" height="100" style="d
 
         {/* ── Seal Card ───────────────────────────────────────────────────── */}
         <div className="flex flex-col items-center gap-3 flex-shrink-0">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{lang === "de" ? "Vorschau Etikett" : "Label preview"}</p>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("inline.vorschau_etikett")}</p>
 
           {/* The actual seal label */}
           <div
@@ -282,13 +282,13 @@ ${qrSrc ? `  <img src="${qrSrc}" alt="QR-Code" width="100" height="100" style="d
           </div>
 
           <p className="text-[10px] text-muted-foreground text-center max-w-[200px]">
-            {lang === "de" ? "QR-Code wird pro Produkt generiert · PDF A6-Format" : "QR code generated per product · PDF A6 format"}
+            {t("inline.qrcode_wird_pro_produkt_generiert_pdf_a6format")}
           </p>
         </div>
 
         {/* ── HTML Embed Widget ────────────────────────────────────────────── */}
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">{lang === "de" ? "HTML-Einbettungscode" : "HTML embed code"}</p>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">{t("inline.htmleinbettungscode")}</p>
 
           <div className="rounded-lg border bg-muted/40 p-4 space-y-4">
             <p className="text-sm text-foreground">
@@ -312,7 +312,7 @@ ${qrSrc ? `  <img src="${qrSrc}" alt="QR-Code" width="100" height="100" style="d
                 className="absolute top-2 right-2 gap-1.5 text-xs h-7"
               >
                 {copied ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
-                {copied ? (lang === "de" ? "Kopiert!" : "Copied!") : (lang === "de" ? "Kopieren" : "Copy")}
+                {copied ? (t("inline.kopiert")) : (t("inline.kopieren"))}
               </Button>
             </div>
 

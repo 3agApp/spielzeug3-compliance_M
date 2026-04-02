@@ -63,7 +63,7 @@ interface Props {
 type Step = "details" | "category" | "template" | "confirm";
 
 export default function CreateProductDialog({ open, onOpenChange, onSuccess }: Props) {
-  const { lang } = useLang();
+  const { lang, t } = useLang();
   const { user } = useAuth();
 
   // Steps
@@ -91,7 +91,7 @@ export default function CreateProductDialog({ open, onOpenChange, onSuccess }: P
   const utils = trpc.useUtils();
   const createMutation = trpc.products.create.useMutation({
     onSuccess: () => {
-      toast.success(lang === "de" ? "Produkt erfolgreich angelegt" : "Product created successfully");
+      toast.success(t("inline.produkt_erfolgreich_angelegt"));
       utils.products.list.invalidate();
       utils.products.getDashboardStats.invalidate();
       handleClose();
@@ -159,7 +159,7 @@ export default function CreateProductDialog({ open, onOpenChange, onSuccess }: P
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Package className="h-5 w-5 text-primary" />
-            {lang === "de" ? "Neues Produkt anlegen" : "Create New Product"}
+            {t("inline.neues_produkt_anlegen")}
           </DialogTitle>
           <DialogDescription>
             {lang === "de"
@@ -201,13 +201,13 @@ export default function CreateProductDialog({ open, onOpenChange, onSuccess }: P
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2 space-y-1.5">
                 <Label htmlFor="productName" className="text-sm font-medium">
-                  {lang === "de" ? "Produktname" : "Product Name"} <span className="text-destructive">*</span>
+                  {t("inline.produktname")} <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="productName"
                   value={productName}
                   onChange={(e) => setProductName(e.target.value)}
-                  placeholder={lang === "de" ? "z.B. Holzeisenbahn Set Deluxe" : "e.g. Wooden Train Set Deluxe"}
+                  placeholder={t("inline.zb_holzeisenbahn_set_deluxe")}
                   autoFocus
                 />
               </div>
@@ -216,14 +216,14 @@ export default function CreateProductDialog({ open, onOpenChange, onSuccess }: P
               {!user?.supplierId && (
                 <div className="col-span-2 space-y-1.5">
                   <Label className="text-sm font-medium">
-                    {lang === "de" ? "Lieferant" : "Supplier"} <span className="text-destructive">*</span>
+                    {t("inline.lieferant_1")} <span className="text-destructive">*</span>
                   </Label>
                   <Select
                     value={supplierId?.toString() ?? ""}
                     onValueChange={(v) => setSupplierId(Number(v))}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={lang === "de" ? "Lieferant auswählen…" : "Select supplier…"} />
+                      <SelectValue placeholder={t("inline.lieferant_auswaehlen_1")} />
                     </SelectTrigger>
                     <SelectContent>
                       {suppliersQuery.data?.map((s: any) => (
@@ -238,7 +238,7 @@ export default function CreateProductDialog({ open, onOpenChange, onSuccess }: P
 
               <div className="space-y-1.5">
                 <Label className="text-sm font-medium">
-                  {lang === "de" ? "Interne Artikelnummer" : "Internal Article No."}
+                  {t("inline.interne_artikelnummer")}
                 </Label>
                 <Input
                   value={internalArticleNumber}
@@ -249,7 +249,7 @@ export default function CreateProductDialog({ open, onOpenChange, onSuccess }: P
 
               <div className="space-y-1.5">
                 <Label className="text-sm font-medium">
-                  {lang === "de" ? "Lieferanten-Artikelnummer" : "Supplier Article No."}
+                  {t("inline.lieferantenartikelnummer")}
                 </Label>
                 <Input
                   value={supplierArticleNumber}
@@ -260,7 +260,7 @@ export default function CreateProductDialog({ open, onOpenChange, onSuccess }: P
 
               <div className="space-y-1.5">
                 <Label className="text-sm font-medium">
-                  {lang === "de" ? "Bestellnummer" : "Order Number"}
+                  {t("inline.bestellnummer")}
                 </Label>
                 <Input
                   value={orderNumber}
@@ -280,12 +280,12 @@ export default function CreateProductDialog({ open, onOpenChange, onSuccess }: P
 
               <div className="col-span-2 space-y-1.5">
                 <Label className="text-sm font-medium">
-                  {lang === "de" ? "Marke" : "Brand"}
+                  {t("inline.marke")}
                 </Label>
                 <Input
                   value={brand}
                   onChange={(e) => setBrand(e.target.value)}
-                  placeholder={lang === "de" ? "z.B. Müller Kids" : "e.g. Müller Kids"}
+                  placeholder={t("inline.zb_mueller_kids")}
                 />
               </div>
             </div>
@@ -434,27 +434,27 @@ export default function CreateProductDialog({ open, onOpenChange, onSuccess }: P
               <div className="flex items-center gap-2 mb-3">
                 <Package className="h-4 w-4 text-primary" />
                 <span className="font-medium text-sm">
-                  {lang === "de" ? "Produktdaten" : "Product Data"}
+                  {t("inline.produktdaten")}
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
-                <span className="text-muted-foreground">{lang === "de" ? "Name" : "Name"}:</span>
+                <span className="text-muted-foreground">{t("inline.name")}:</span>
                 <span className="font-medium">{productName}</span>
                 {internalArticleNumber && (
                   <>
-                    <span className="text-muted-foreground">{lang === "de" ? "Int. Artikelnr." : "Int. Article No."}:</span>
+                    <span className="text-muted-foreground">{t("inline.int_artikelnr")}:</span>
                     <span>{internalArticleNumber}</span>
                   </>
                 )}
                 {supplierArticleNumber && (
                   <>
-                    <span className="text-muted-foreground">{lang === "de" ? "Lief. Artikelnr." : "Supp. Article No."}:</span>
+                    <span className="text-muted-foreground">{t("inline.lief_artikelnr")}:</span>
                     <span>{supplierArticleNumber}</span>
                   </>
                 )}
                 {brand && (
                   <>
-                    <span className="text-muted-foreground">{lang === "de" ? "Marke" : "Brand"}:</span>
+                    <span className="text-muted-foreground">{t("inline.marke")}:</span>
                     <span>{brand}</span>
                   </>
                 )}
@@ -473,22 +473,22 @@ export default function CreateProductDialog({ open, onOpenChange, onSuccess }: P
                 <div className="flex items-center gap-2 mb-3">
                   <Tag className="h-4 w-4 text-primary" />
                   <span className="font-medium text-sm">
-                    {lang === "de" ? "Kategorie & Vorlage" : "Category & Template"}
+                    {t("inline.kategorie_vorlage")}
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
-                  <span className="text-muted-foreground">{lang === "de" ? "Kategorie" : "Category"}:</span>
+                  <span className="text-muted-foreground">{t("inline.kategorie")}:</span>
                   <span>{lang === "de" ? selectedCategory.labelDe : selectedCategory.labelEn}</span>
                   {selectedTemplate ? (
                     <>
-                      <span className="text-muted-foreground">{lang === "de" ? "Vorlage" : "Template"}:</span>
+                      <span className="text-muted-foreground">{t("inline.vorlage")}:</span>
                       <span>{selectedTemplate.name}</span>
                     </>
                   ) : (
                     <>
-                      <span className="text-muted-foreground">{lang === "de" ? "Vorlage" : "Template"}:</span>
+                      <span className="text-muted-foreground">{t("inline.vorlage")}:</span>
                       <span className="text-muted-foreground italic">
-                        {lang === "de" ? "Keine Vorlage" : "No template"}
+                        {t("inline.keine_vorlage")}
                       </span>
                     </>
                   )}
@@ -496,7 +496,7 @@ export default function CreateProductDialog({ open, onOpenChange, onSuccess }: P
                 {selectedTemplate && (
                   <div className="mt-2 pt-2 border-t">
                     <p className="text-xs text-muted-foreground mb-1.5">
-                      {lang === "de" ? "Automatisch gesetzte Anforderungen:" : "Automatically set requirements:"}
+                      {t("inline.automatisch_gesetzte_anforderungen")}
                     </p>
                     <div className="flex flex-wrap gap-1">
                       {((selectedTemplate.requiredDocuments as string[]) ?? []).map((doc) => (
@@ -537,13 +537,13 @@ export default function CreateProductDialog({ open, onOpenChange, onSuccess }: P
                 }}
               >
                 <ChevronLeft className="h-4 w-4 mr-1" />
-                {lang === "de" ? "Zurück" : "Back"}
+                {t("inline.zurueck")}
               </Button>
             )}
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleClose}>
-              {lang === "de" ? "Abbrechen" : "Cancel"}
+              {t("inline.abbrechen")}
             </Button>
             {step !== "confirm" ? (
               <Button
@@ -553,7 +553,7 @@ export default function CreateProductDialog({ open, onOpenChange, onSuccess }: P
                 }}
                 disabled={step === "details" && !isDetailsValid}
               >
-                {lang === "de" ? "Weiter" : "Next"}
+                {t("inline.weiter")}
                 <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             ) : (
@@ -562,8 +562,8 @@ export default function CreateProductDialog({ open, onOpenChange, onSuccess }: P
                 disabled={createMutation.isPending || !isDetailsValid}
               >
                 {createMutation.isPending
-                  ? lang === "de" ? "Wird angelegt…" : "Creating…"
-                  : lang === "de" ? "Produkt anlegen" : "Create Product"}
+                  ? t("inline.wird_angelegt")
+                  : t("inline.produkt_anlegen")}
               </Button>
             )}
           </div>

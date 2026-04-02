@@ -145,7 +145,7 @@ export default function TemplatesManager() {
 
   function handleSave() {
     if (!formName || !formCategoryId) {
-      toast.error(lang === "de" ? "Bitte Name und Kategorie angeben" : "Please enter name and category");
+      toast.error(t("inline.bitte_name_und_kategorie_angeben"));
       return;
     }
     const payload = {
@@ -198,7 +198,7 @@ export default function TemplatesManager() {
         {/* Category Sidebar */}
         <div className="col-span-3 space-y-2">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-1">
-            {lang === "de" ? "Kategorien" : "Categories"}
+            {t("inline.kategorien")}
           </p>
           <Card className="p-1">
             <button
@@ -208,7 +208,7 @@ export default function TemplatesManager() {
               onClick={() => setSelectedCategoryId(null)}
             >
               <Layers className="h-4 w-4" />
-              {lang === "de" ? "Alle Kategorien" : "All categories"}
+              {t("inline.alle_kategorien")}
             </button>
             {catLoading ? (
               <div className="flex items-center justify-center py-4">
@@ -244,7 +244,7 @@ export default function TemplatesManager() {
                 <FileText className="h-10 w-10 text-muted-foreground/40" />
                 <p className="font-medium">{t.templates.noTemplates}</p>
                 <p className="text-sm">
-                  {lang === "de" ? "Erstellen Sie die erste Vorlage für diese Kategorie." : "Create the first template for this category."}
+                  {t("inline.erstellen_sie_die_erste_vorlage_fuer_diese_kategorie")}
                 </p>
                 <Button size="sm" onClick={() => { resetForm(); setShowCreateTemplate(true); }} className="gap-2">
                   <Plus className="h-4 w-4" />
@@ -362,18 +362,18 @@ export default function TemplatesManager() {
           <div className="space-y-5 py-2">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label>{lang === "de" ? "Name der Vorlage *" : "Template name *"}</Label>
+                <Label>{t("inline.name_der_vorlage")}</Label>
                 <Input
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  placeholder={lang === "de" ? "z.B. Holzspielzeug Standard" : "e.g. Wooden Toy Standard"}
+                  placeholder={t("inline.zb_holzspielzeug_standard")}
                 />
               </div>
               <div className="space-y-1.5">
                 <Label>{t.templates.templateCategory} *</Label>
                 <Select value={formCategoryId} onValueChange={setFormCategoryId}>
                   <SelectTrigger>
-                    <SelectValue placeholder={lang === "de" ? "Kategorie wählen..." : "Select category..."} />
+                    <SelectValue placeholder={t("inline.kategorie_waehlen")} />
                   </SelectTrigger>
                   <SelectContent>
                     {categories?.map((cat) => (
@@ -385,11 +385,11 @@ export default function TemplatesManager() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label>{lang === "de" ? "Beschreibung (Deutsch)" : "Description (German)"}</Label>
+                <Label>{t("inline.beschreibung_deutsch")}</Label>
                 <Textarea value={formDescDe} onChange={(e) => setFormDescDe(e.target.value)} rows={2} />
               </div>
               <div className="space-y-1.5">
-                <Label>{lang === "de" ? "Beschreibung (Englisch)" : "Description (English)"}</Label>
+                <Label>{t("inline.beschreibung_englisch")}</Label>
                 <Textarea value={formDescEn} onChange={(e) => setFormDescEn(e.target.value)} rows={2} />
               </div>
             </div>
@@ -399,7 +399,7 @@ export default function TemplatesManager() {
             {/* Document Requirements */}
             <div>
               <p className="text-sm font-semibold mb-3">
-                {lang === "de" ? "Dokument-Anforderungen" : "Document requirements"}
+                {t("inline.dokumentanforderungen")}
               </p>
               <div className="grid grid-cols-2 gap-3">
                 {DOCUMENT_TYPE_KEYS.map((key) => {
@@ -419,7 +419,7 @@ export default function TemplatesManager() {
                             className="h-3.5 w-3.5"
                           />
                           <span className="text-red-600 font-medium">
-                            {lang === "de" ? "Pflicht" : "Required"}
+                            {t("inline.pflicht")}
                           </span>
                         </label>
                         <label className="flex items-center gap-1.5 text-xs cursor-pointer">
@@ -432,7 +432,7 @@ export default function TemplatesManager() {
                             className="h-3.5 w-3.5"
                           />
                           <span className="text-blue-600 font-medium">
-                            {lang === "de" ? "Optional" : "Optional"}
+                            {t("inline.optional")}
                           </span>
                         </label>
                       </div>
@@ -447,7 +447,7 @@ export default function TemplatesManager() {
             {/* Data Fields */}
             <div>
               <p className="text-sm font-semibold mb-3">
-                {lang === "de" ? "Pflicht-Datenfelder" : "Required data fields"}
+                {t("inline.pflichtdatenfelder")}
               </p>
               <div className="grid grid-cols-2 gap-2">
                 {DATA_FIELD_KEYS.map((key) => (

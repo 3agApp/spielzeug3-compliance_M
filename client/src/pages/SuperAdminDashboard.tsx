@@ -78,13 +78,13 @@ const PLAN_COLORS: Record<Plan, string> = {
 };
 
 function useModuleOptions() {
-  const { lang } = useLang();
+  const { lang, t } = useLang();
   return [
     { id: "compliance", label: "Compliance" },
-    { id: "seal", label: lang === "de" ? "Siegel / QR" : "Seal / QR" },
-    { id: "ai_analysis", label: lang === "de" ? "KI-Analyse" : "AI Analysis" },
-    { id: "bunnydoc", label: lang === "de" ? "Digitale Signaturen" : "Digital Signatures" },
-    { id: "api_access", label: lang === "de" ? "API-Zugang" : "API Access" },
+    { id: "seal", label: t("inline.siegel_qr") },
+    { id: "ai_analysis", label: t("inline.kianalyse") },
+    { id: "bunnydoc", label: t("inline.digitale_signaturen") },
+    { id: "api_access", label: t("inline.apizugang") },
   ];
 }
 
@@ -123,15 +123,15 @@ function CreateTenantDialog({
   onClose: () => void;
   onCreated: () => void;
 }) {
-  const { lang } = useLang();
+  const { lang, t } = useLang();
   const moduleOptions = useModuleOptions();
   const utils = trpc.useUtils();
   const createMutation = trpc.tenant.create.useMutation({
     onSuccess: () => {
       utils.tenant.list.invalidate();
       toast.success(
-        lang === "de" ? "Mandant angelegt" : "Tenant created",
-        { description: lang === "de" ? "Der neue Mandant wurde erfolgreich erstellt." : "The new tenant was created successfully." }
+        t("inline.mandant_angelegt"),
+        { description: t("inline.der_neue_mandant_wurde_erfolgreich_erstellt") }
       );
       onCreated();
     },
@@ -297,7 +297,7 @@ function CreateTenantDialog({
 
           {/* Module */}
           <div className="space-y-2">
-            <Label>{lang === "de" ? "Freigeschaltete Module" : "Enabled modules"}</Label>
+            <Label>{t("inline.freigeschaltete_module")}</Label>
             <div className="grid grid-cols-2 gap-2 p-3 rounded-lg border bg-muted/30">
               {moduleOptions.map((opt) => (
                 <div key={opt.id} className="flex items-center gap-2">
@@ -336,15 +336,15 @@ function EditTenantDialog({
   tenant: TenantRow;
   onClose: () => void;
 }) {
-  const { lang } = useLang();
+  const { lang, t } = useLang();
   const moduleOptions = useModuleOptions();
   const utils = trpc.useUtils();
   const updateMutation = trpc.tenant.update.useMutation({
     onSuccess: () => {
       utils.tenant.list.invalidate();
       toast.success(
-        lang === "de" ? "Gespeichert" : "Saved",
-        { description: lang === "de" ? "Mandant wurde aktualisiert." : "Tenant has been updated." }
+        t("inline.gespeichert"),
+        { description: t("inline.mandant_wurde_aktualisiert") }
       );
       onClose();
     },
@@ -453,7 +453,7 @@ function EditTenantDialog({
 
           {/* Module */}
           <div className="space-y-2">
-            <Label>{lang === "de" ? "Freigeschaltete Module" : "Enabled modules"}</Label>
+            <Label>{t("inline.freigeschaltete_module")}</Label>
             <div className="grid grid-cols-2 gap-2 p-3 rounded-lg border bg-muted/30">
               {moduleOptions.map((opt) => (
                 <div key={opt.id} className="flex items-center gap-2">

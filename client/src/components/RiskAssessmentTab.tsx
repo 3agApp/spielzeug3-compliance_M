@@ -104,7 +104,7 @@ interface RiskItem {
   mitigations: string[];
 }
 
-function RiskCard({ risk, lang }: { risk: RiskItem; lang: "de" | "en" }) {
+function RiskCard({ risk, lang, t }: { risk: RiskItem; lang: "de" | "en"; t: (key: string) => string }) {
   const [open, setOpen] = useState(false);
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
@@ -141,7 +141,7 @@ function RiskCard({ risk, lang }: { risk: RiskItem; lang: "de" | "en" }) {
             {risk.mitigations.length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
-                  {lang === "de" ? "Maßnahmen zur Risikoreduktion" : "Risk mitigation measures"}
+                  {t("inline.massnahmen_zur_risikoreduktion")}
                 </p>
                 <ul className="space-y-1">
                   {risk.mitigations.map((m, i) => (
@@ -168,7 +168,7 @@ interface Props {
 }
 
 export default function RiskAssessmentTab({ productId, isInternalRole }: Props) {
-  const { lang } = useLang();
+  const { lang, t } = useLang();
   const [showHistory, setShowHistory] = useState(false);
 
   // Poll history every 5 s to detect auto-triggered running assessments
@@ -221,25 +221,25 @@ export default function RiskAssessmentTab({ productId, isInternalRole }: Props) 
     : [];
   const displaySummary = translated?.summary ?? latest?.summary;
 
-  const t = {
-    title:          lang === "de" ? "KI-Risikobewertung" : "AI Risk Assessment",
-    subtitle:       lang === "de" ? "Automatische Analyse aller vorliegenden Produktinformationen" : "Automated analysis of all available product information",
-    runBtn:         lang === "de" ? "Neue Bewertung starten" : "Run new assessment",
-    running:        lang === "de" ? "Bewertung läuft…" : "Assessment running…",
-    noData:         lang === "de" ? "Noch keine Risikobewertung vorhanden." : "No risk assessment available yet.",
-    noDataHint:     lang === "de" ? "Starten Sie eine neue Bewertung, um alle Risiken zu analysieren." : "Run a new assessment to analyse all risks.",
-    overallRisk:    lang === "de" ? "Gesamt-Risiko" : "Overall Risk",
-    riskLevel:      lang === "de" ? "Risikostufe" : "Risk Level",
-    summary:        lang === "de" ? "Zusammenfassung" : "Summary",
-    risks:          lang === "de" ? "Identifizierte Risiken" : "Identified Risks",
-    missingInfo:    lang === "de" ? "Fehlende Informationen zur Risikoreduktion" : "Missing information to reduce risk",
-    history:        lang === "de" ? "Bewertungsverlauf" : "Assessment history",
-    hideHistory:    lang === "de" ? "Verlauf ausblenden" : "Hide history",
-    createdAt:      lang === "de" ? "Erstellt" : "Created",
-    score:          lang === "de" ? "Score" : "Score",
-    noHistory:      lang === "de" ? "Kein Verlauf vorhanden." : "No history available.",
-    errorRun:       lang === "de" ? "Fehler beim Starten der Bewertung" : "Error starting assessment",
-    downloadPdf:    lang === "de" ? "PDF exportieren" : "Export PDF",
+  const labels = {
+    title:          t("inline.kirisikobewertung"),
+    subtitle:       t("inline.automatische_analyse_aller_vorliegenden_produktinformationen"),
+    runBtn:         t("inline.neue_bewertung_starten"),
+    running:        t("inline.bewertung_laeuft"),
+    noData:         t("inline.noch_keine_risikobewertung_vorhanden"),
+    noDataHint:     t("inline.starten_sie_eine_neue_bewertung_um_alle_risiken_zu_analysier"),
+    overallRisk:    t("inline.gesamtrisiko"),
+    riskLevel:      t("inline.risikostufe"),
+    summary:        t("inline.zusammenfassung"),
+    risks:          t("inline.identifizierte_risiken"),
+    missingInfo:    t("inline.fehlende_informationen_zur_risikoreduktion"),
+    history:        t("inline.bewertungsverlauf"),
+    hideHistory:    t("inline.verlauf_ausblenden"),
+    createdAt:      t("inline.erstellt_1"),
+    score:          t("inline.score"),
+    noHistory:      t("inline.kein_verlauf_vorhanden"),
+    errorRun:       t("inline.fehler_beim_starten_der_bewertung"),
+    downloadPdf:    t("inline.pdf_exportieren"),
   };
 
   return (
@@ -251,9 +251,9 @@ export default function RiskAssessmentTab({ productId, isInternalRole }: Props) 
             <div>
               <CardTitle className="text-base flex items-center gap-2">
                 <ShieldAlert className="h-4 w-4" />
-                {t.title}
+                {labels.title}
               </CardTitle>
-              <CardDescription className="mt-0.5">{t.subtitle}</CardDescription>
+              <CardDescription className="mt-0.5">{labels.subtitle}</CardDescription>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
               {latest && (
@@ -270,7 +270,7 @@ export default function RiskAssessmentTab({ productId, isInternalRole }: Props) 
                     rel="noopener noreferrer"
                   >
                     <Download className="h-4 w-4" />
-                    {t.downloadPdf}
+                    {labels.downloadPdf}
                   </a>
                 </Button>
               )}
@@ -286,14 +286,14 @@ export default function RiskAssessmentTab({ productId, isInternalRole }: Props) 
                   ) : (
                     <RefreshCw className="h-4 w-4" />
                   )}
-                  {runMutation.isPending ? t.running : t.runBtn}
+                  {runMutation.isPending ? labels.running : labels.runBtn}
                 </Button>
               )}
             </div>
           </div>
           {runMutation.isError && (
             <p className="text-sm text-destructive mt-2">
-              {t.errorRun}: {runMutation.error.message}
+              {labels.errorRun}: {runMutation.error.message}
             </p>
           )}
         </CardHeader>
@@ -315,7 +315,7 @@ export default function RiskAssessmentTab({ productId, isInternalRole }: Props) 
       {latestQuery.isLoading && (
         <div className="flex items-center justify-center py-12 text-muted-foreground gap-2">
           <Loader2 className="h-5 w-5 animate-spin" />
-          <span className="text-sm">{lang === "de" ? "Lade Bewertung…" : "Loading assessment…"}</span>
+          <span className="text-sm">{t("inline.lade_bewertung")}</span>
         </div>
       )}
 
@@ -324,9 +324,9 @@ export default function RiskAssessmentTab({ productId, isInternalRole }: Props) 
         <Card>
           <CardContent className="py-12 flex flex-col items-center gap-3 text-center">
             <ShieldAlert className="h-10 w-10 text-muted-foreground/40" />
-            <p className="font-medium text-muted-foreground">{t.noData}</p>
+            <p className="font-medium text-muted-foreground">{labels.noData}</p>
             {isInternalRole && (
-              <p className="text-sm text-muted-foreground">{t.noDataHint}</p>
+              <p className="text-sm text-muted-foreground">{labels.noDataHint}</p>
             )}
           </CardContent>
         </Card>
@@ -340,7 +340,7 @@ export default function RiskAssessmentTab({ productId, isInternalRole }: Props) 
             {/* Score gauge */}
             <Card className="flex flex-col items-center justify-center py-6">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-                {t.overallRisk}
+                {labels.overallRisk}
               </p>
               <ScoreGauge score={Number(latest.overallRiskScore)} />
               <div className="mt-3 flex items-center gap-1.5">
@@ -356,26 +356,26 @@ export default function RiskAssessmentTab({ productId, isInternalRole }: Props) 
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <Info className="h-4 w-4" />
-                  {t.summary}
+                  {labels.summary}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {isTranslating ? (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    <span>{lang === "de" ? "Übersetzung wird geladen…" : "Loading translation…"}</span>
+                    <span>{t("inline.uebersetzung_wird_geladen")}</span>
                   </div>
                 ) : (
                   <>
                     <p className="text-sm leading-relaxed">{displaySummary}</p>
                     {translated && (
-                      <p className="text-xs text-muted-foreground mt-1 opacity-70">🌐 {lang === "de" ? "Übersetzt aus dem Englischen" : "Translated from English"}</p>
+                      <p className="text-xs text-muted-foreground mt-1 opacity-70">🌐 {t("inline.uebersetzt_aus_dem_englischen")}</p>
                     )}
                   </>
                 )}
                 <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">
                   <Clock className="h-3 w-3" />
-                  {t.createdAt}: {new Date(latest.createdAt).toLocaleString()}
+                  {labels.createdAt}: {new Date(latest.createdAt).toLocaleString()}
                   {latest.modelUsed && (
                     <span className="ml-2 font-mono">· {latest.modelUsed}</span>
                   )}
@@ -390,12 +390,12 @@ export default function RiskAssessmentTab({ productId, isInternalRole }: Props) 
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <Zap className="h-4 w-4" />
-                  {t.risks} ({risks.length})
+                  {labels.risks} ({risks.length})
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 {risks.map((risk, i) => (
-                  <RiskCard key={i} risk={risk} lang={lang} />
+                  <RiskCard key={i} risk={risk} lang={lang} t={t} />
                 ))}
               </CardContent>
             </Card>
@@ -407,7 +407,7 @@ export default function RiskAssessmentTab({ productId, isInternalRole }: Props) 
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <AlertTriangle className="h-4 w-4 text-amber-500" />
-                  {t.missingInfo}
+                  {labels.missingInfo}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -435,7 +435,7 @@ export default function RiskAssessmentTab({ productId, isInternalRole }: Props) 
             onClick={() => setShowHistory((v) => !v)}
           >
             <History className="h-4 w-4" />
-            {showHistory ? t.hideHistory : t.history}
+            {showHistory ? labels.hideHistory : labels.history}
           </Button>
 
           {showHistory && (
@@ -443,10 +443,10 @@ export default function RiskAssessmentTab({ productId, isInternalRole }: Props) 
               <CardContent className="pt-4">
                 {historyQuery.isLoading ? (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground py-4 justify-center">
-                    <Loader2 className="h-4 w-4 animate-spin" /> {lang === "de" ? "Lade…" : "Loading…"}
+                    <Loader2 className="h-4 w-4 animate-spin" /> {t("inline.lade")}
                   </div>
                 ) : !historyQuery.data?.length ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">{t.noHistory}</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">{labels.noHistory}</p>
                 ) : (
                   <div className="space-y-2">
                     {historyQuery.data.map((h) => (
