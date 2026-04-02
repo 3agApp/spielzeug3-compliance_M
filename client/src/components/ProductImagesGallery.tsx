@@ -42,7 +42,7 @@ export default function ProductImagesGallery({ productId, readOnly = false }: Pr
   const uploadMutation = trpc.productImages.upload.useMutation({
     onSuccess: () => {
       utils.productImages.list.invalidate({ productId });
-      toast.success((t.productImages as any)?.uploadSuccess ?? "Bild erfolgreich hochgeladen.");
+      toast.success(t.productImages.uploadSuccess);
     },
     onError: (e) => toast.error(translateError(e.message, t)),
   });
@@ -50,7 +50,7 @@ export default function ProductImagesGallery({ productId, readOnly = false }: Pr
   const deleteMutation = trpc.productImages.delete.useMutation({
     onSuccess: () => {
       utils.productImages.list.invalidate({ productId });
-      toast.success((t.productImages as any)?.deleteSuccess ?? "Bild gelöscht.");
+      toast.success(t.productImages.deleteSuccess);
     },
     onError: (e) => toast.error(translateError(e.message, t)),
   });
@@ -63,18 +63,18 @@ export default function ProductImagesGallery({ productId, readOnly = false }: Pr
     if (!files || files.length === 0) return;
     const remaining = MAX_IMAGES - images.length;
     if (remaining <= 0) {
-      toast.error((t.productImages as any)?.maxReached ?? `Maximal ${MAX_IMAGES} Bilder erlaubt.`);
+      toast.error(t.productImages.maxReached);
       return;
     }
     const toUpload = Array.from(files).slice(0, remaining);
     setUploading(true);
     for (const file of toUpload) {
       if (!ALLOWED_TYPES.includes(file.type)) {
-        toast.error((t.productImages as any)?.invalidType ?? "Nur JPEG, PNG, WebP oder GIF erlaubt.");
+        toast.error(t.productImages.invalidType);
         continue;
       }
       if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-        toast.error((t.productImages as any)?.tooLarge ?? `Datei zu groß. Max. ${MAX_FILE_SIZE_MB} MB.`);
+        toast.error(t.productImages.tooLarge);
         continue;
       }
       const reader = new FileReader();
@@ -126,11 +126,11 @@ export default function ProductImagesGallery({ productId, readOnly = false }: Pr
     });
   };
 
-  const titleKey = (t.productImages as any)?.title ?? "Produktbilder";
-  const uploadLabel = (t.productImages as any)?.upload ?? "Bilder hochladen";
-  const emptyLabel = (t.productImages as any)?.empty ?? "Noch keine Bilder vorhanden.";
-  const primaryLabel = (t.productImages as any)?.primary ?? "Hauptbild";
-  const deleteLabel = (t.productImages as any)?.delete ?? "Löschen";
+  const titleKey = t.productImages.title;
+  const uploadLabel = t.productImages.upload;
+  const emptyLabel = t.productImages.empty;
+  const primaryLabel = t.productImages.primary;
+  const deleteLabel = t.productImages.delete;
 
   return (
     <Card>
@@ -176,7 +176,7 @@ export default function ProductImagesGallery({ productId, readOnly = false }: Pr
         {isLoading ? (
           <div className="flex items-center justify-center h-24 text-muted-foreground">
             <Loader2 className="h-5 w-5 animate-spin mr-2" />
-            {(t as any).msg?.loading ?? "Lädt..."}
+            {t.msg.loading}
           </div>
         ) : images.length === 0 ? (
           /* Drop zone when empty */
@@ -194,7 +194,7 @@ export default function ProductImagesGallery({ productId, readOnly = false }: Pr
             <p className="text-sm text-muted-foreground">{emptyLabel}</p>
             {!readOnly && (
               <p className="text-xs text-muted-foreground/60 mt-1">
-                {(t.productImages as any)?.dropHint ?? "Klicken oder Dateien hierher ziehen (JPEG, PNG, WebP · max. 5 MB)"}
+                {t.productImages.dropHint}
               </p>
             )}
           </div>
@@ -221,7 +221,7 @@ export default function ProductImagesGallery({ productId, readOnly = false }: Pr
                     <button
                       onClick={() => setLightboxIndex(index)}
                       className="p-1.5 bg-white/90 rounded-full text-gray-800 hover:bg-white transition-colors"
-                      title={lang === "de" ? "Vergrößern" : "Zoom in"}
+                      title={lang === "de" ? "Vergrößern" : "Zoom in"} // tooltip only
                     >
                       <ZoomIn className="h-3.5 w-3.5" />
                     </button>
@@ -231,7 +231,7 @@ export default function ProductImagesGallery({ productId, readOnly = false }: Pr
                           <button
                             onClick={() => handleMoveLeft(index)}
                             className="p-1.5 bg-white/90 rounded-full text-gray-800 hover:bg-white transition-colors"
-                            title="Nach links"
+                            title={lang === "de" ? "Nach links" : "Move left"}
                           >
                             <ChevronLeft className="h-3.5 w-3.5" />
                           </button>
@@ -240,14 +240,14 @@ export default function ProductImagesGallery({ productId, readOnly = false }: Pr
                           <button
                             onClick={() => handleMoveRight(index)}
                             className="p-1.5 bg-white/90 rounded-full text-gray-800 hover:bg-white transition-colors"
-                            title="Nach rechts"
+                            title={lang === "de" ? "Nach rechts" : "Move right"}
                           >
                             <ChevronRight className="h-3.5 w-3.5" />
                           </button>
                         )}
                         <button
                           onClick={() => {
-                            if (confirm((t.productImages as any)?.confirmDelete ?? "Bild wirklich löschen?")) {
+                            if (confirm(t.productImages.confirmDelete)) {
                               deleteMutation.mutate({ imageId: img.id });
                             }
                           }}
@@ -275,7 +275,7 @@ export default function ProductImagesGallery({ productId, readOnly = false }: Pr
                     <>
                       <Upload className="h-6 w-6" />
                       <span className="text-xs text-center px-1">
-                        {(t.productImages as any)?.addMore ?? "Hinzufügen"}
+                        {t.productImages.addMore}
                       </span>
                     </>
                   )}
@@ -283,7 +283,7 @@ export default function ProductImagesGallery({ productId, readOnly = false }: Pr
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              {(t.productImages as any)?.hint ?? "Das erste Bild wird als Hauptbild verwendet. Reihenfolge per Pfeil-Buttons ändern."}
+              {t.productImages.hint}
             </p>
           </div>
         )}
@@ -311,7 +311,7 @@ export default function ProductImagesGallery({ productId, readOnly = false }: Pr
           )}
           <img
             src={images[lightboxIndex].url}
-            alt={images[lightboxIndex].originalName ?? "Produktbild"}
+                    alt={images[lightboxIndex].originalName ?? (lang === "de" ? "Produktbild" : "Product image")}
             className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           />

@@ -30,7 +30,7 @@ const EMPTY_FORM = {
 };
 
 export default function Suppliers() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [, setLocation] = useLocation();
   const [search, setSearch] = useState("");
 
@@ -94,6 +94,27 @@ export default function Suppliers() {
     setEditOpen(true);
   }
 
+  // Field labels for forms
+  const createFields = [
+    { key: "name",         label: lang === "de" ? "Name *"                  : "Name *",                   required: true },
+    { key: "contactEmail", label: lang === "de" ? "E-Mail"                  : "Email" },
+    { key: "contactName",  label: lang === "de" ? "Ansprechpartner"         : "Contact person" },
+    { key: "phone",        label: lang === "de" ? "Telefon"                 : "Phone" },
+    { key: "address",      label: lang === "de" ? "Adresse"                 : "Address" },
+    { key: "country",      label: lang === "de" ? "Land (ISO, z. B. DE)"   : "Country (ISO, e.g. DE)" },
+    { key: "kontorId",     label: "Kontor-ID" },
+  ] as { key: keyof typeof createForm; label: string; required?: boolean }[];
+
+  const editFields = [
+    { key: "name",         label: lang === "de" ? "Name *"                  : "Name *" },
+    { key: "contactEmail", label: lang === "de" ? "E-Mail"                  : "Email" },
+    { key: "contactName",  label: lang === "de" ? "Ansprechpartner"         : "Contact person" },
+    { key: "phone",        label: lang === "de" ? "Telefon"                 : "Phone" },
+    { key: "address",      label: lang === "de" ? "Adresse"                 : "Address" },
+    { key: "country",      label: lang === "de" ? "Land (ISO, z. B. DE)"   : "Country (ISO, e.g. DE)" },
+    { key: "kontorId",     label: "Kontor-ID" },
+  ] as { key: keyof typeof editForm; label: string }[];
+
   return (
     <div className="p-6 space-y-5 max-w-7xl">
       {/* Header */}
@@ -131,19 +152,19 @@ export default function Suppliers() {
           {suppliers.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">
               <Building2 className="h-10 w-10 opacity-30" />
-              <p className="text-sm">Keine Lieferanten gefunden</p>
+              <p className="text-sm">{t.msg.noResults}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full data-table">
                 <thead>
                   <tr>
-                    <th>Lieferant</th>
-                    <th>Kontakt</th>
-                    <th>Land</th>
+                    <th>{lang === "de" ? "Lieferant" : "Supplier"}</th>
+                    <th>{lang === "de" ? "Kontakt" : "Contact"}</th>
+                    <th>{lang === "de" ? "Land" : "Country"}</th>
                     <th>Kontor-ID</th>
                     <th>Status</th>
-                    <th>Produkte</th>
+                    <th>{lang === "de" ? "Produkte" : "Products"}</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -182,7 +203,7 @@ export default function Suppliers() {
                             variant="ghost"
                             size="sm"
                             onClick={(e) => openEdit(e, s)}
-                            title="Bearbeiten"
+                            title={lang === "de" ? "Bearbeiten" : "Edit"}
                           >
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
@@ -211,20 +232,10 @@ export default function Suppliers() {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Neuer Lieferant</DialogTitle>
+            <DialogTitle>{lang === "de" ? "Neuer Lieferant" : "New Supplier"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            {(
-              [
-                { key: "name", label: "Name *", required: true },
-                { key: "contactEmail", label: "E-Mail" },
-                { key: "contactName", label: "Ansprechpartner" },
-                { key: "phone", label: "Telefon" },
-                { key: "address", label: "Adresse" },
-                { key: "country", label: "Land (ISO, z. B. DE)" },
-                { key: "kontorId", label: "Kontor-ID" },
-              ] as { key: keyof typeof createForm; label: string; required?: boolean }[]
-            ).map(({ key, label }) => (
+            {createFields.map(({ key, label }) => (
               <div key={key}>
                 <Label className="text-sm">{label}</Label>
                 <Input
@@ -265,20 +276,10 @@ export default function Suppliers() {
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Lieferant bearbeiten</DialogTitle>
+            <DialogTitle>{lang === "de" ? "Lieferant bearbeiten" : "Edit Supplier"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            {(
-              [
-                { key: "name", label: "Name *" },
-                { key: "contactEmail", label: "E-Mail" },
-                { key: "contactName", label: "Ansprechpartner" },
-                { key: "phone", label: "Telefon" },
-                { key: "address", label: "Adresse" },
-                { key: "country", label: "Land (ISO, z. B. DE)" },
-                { key: "kontorId", label: "Kontor-ID" },
-              ] as { key: keyof typeof editForm; label: string }[]
-            ).map(({ key, label }) => (
+            {editFields.map(({ key, label }) => (
               <div key={key}>
                 <Label className="text-sm">{label}</Label>
                 <Input
@@ -290,7 +291,7 @@ export default function Suppliers() {
             ))}
             {/* Active toggle */}
             <div className="flex items-center justify-between pt-1">
-              <Label className="text-sm">Aktiv</Label>
+              <Label className="text-sm">{lang === "de" ? "Aktiv" : "Active"}</Label>
               <Switch
                 checked={editForm.active}
                 onCheckedChange={(v) => setEditForm((f) => ({ ...f, active: v }))}

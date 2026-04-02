@@ -1528,7 +1528,7 @@ function ProductEmbedCode({
   productName: string;
   sealStatus: SealStatus;
 }) {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<"dynamic" | "badge" | "widget" | "minimal">("dynamic");
   const [showPreview, setShowPreview] = useState(true);
@@ -1690,7 +1690,7 @@ ${currentCode.replace(/<!--.*?-->/g, "").replace(/<\/script>/g, "</script>").tri
               key={currentCode}
               srcDoc={previewHtml}
               sandbox="allow-same-origin"
-              title="Widget-Vorschau"
+              title={lang === "de" ? "Widget-Vorschau" : "Widget Preview"}
               className="w-full border-0 rounded-lg"
               style={{ minHeight: activeTab === "widget" ? 100 : 60, maxHeight: 140 }}
               onLoad={(e) => {
@@ -2559,22 +2559,21 @@ function BatchUploadCard({ productId, product, role, isOperator, t, existingDocu
 // ─── Safety Data Cardd ────────────────────────────────────────────────────────
 function SafetyDataCard({ productId, safety, role, t, onSuccess }: any) {
   const utils = trpc.useUtils();
+  const { lang } = useLang();
   const safetyImgRef = useRef<HTMLInputElement>(null);
   const [imgUploading, setImgUploading] = useState(false);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
-
   const uploadSafetyImageMutation = trpc.safety.uploadSafetyImage.useMutation({
     onSuccess: () => {
       utils.safety.getByProduct.invalidate({ productId });
-      toast.success("Sicherheitsbild hochgeladen.");
+      toast.success(lang === "de" ? "Sicherheitsbild hochgeladen." : "Safety image uploaded.");
     },
     onError: (e) => toast.error(e.message),
   });
-
   const deleteSafetyImageMutation = trpc.safety.deleteSafetyImage.useMutation({
     onSuccess: () => {
       utils.safety.getByProduct.invalidate({ productId });
-      toast.success("Sicherheitsbild entfernt.");
+      toast.success(lang === "de" ? "Sicherheitsbild entfernt." : "Safety image removed.");
     },
     onError: (e) => toast.error(e.message),
   });
@@ -2583,8 +2582,8 @@ function SafetyDataCard({ productId, safety, role, t, onSuccess }: any) {
     if (!files || files.length === 0) return;
     setImgUploading(true);
     for (const file of Array.from(files)) {
-      if (!file.type.startsWith("image/")) { toast.error("Nur Bilddateien erlaubt."); continue; }
-      if (file.size > 8 * 1024 * 1024) { toast.error("Datei zu groß (max. 8 MB)."); continue; }
+      if (!file.type.startsWith("image/")) { toast.error(lang === "de" ? "Nur Bilddateien erlaubt." : "Only image files are allowed."); continue; }
+      if (file.size > 8 * 1024 * 1024) { toast.error(lang === "de" ? "Datei zu groß (max. 8 MB)." : "File too large (max. 8 MB)."); continue; }
       const reader = new FileReader();
       await new Promise<void>((resolve) => {
         reader.onload = async () => {
@@ -2727,7 +2726,7 @@ function SafetyDataCard({ productId, safety, role, t, onSuccess }: any) {
                     <div key={idx} className="relative group rounded-lg overflow-hidden border bg-muted aspect-square">
                       <img
                         src={url}
-                        alt={`Sicherheitsbild ${idx + 1}`}
+                        alt={lang === "de" ? `Sicherheitsbild ${idx + 1}` : `Safety image ${idx + 1}`}
                         className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
                         onClick={() => setLightboxUrl(url)}
                       />
@@ -2735,7 +2734,7 @@ function SafetyDataCard({ productId, safety, role, t, onSuccess }: any) {
                         <button
                           className="absolute top-1 right-1 bg-black/60 hover:bg-red-600 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
                           onClick={() => deleteSafetyImageMutation.mutate({ productId, imageUrl: url })}
-                          title="Bild entfernen"
+                          title={lang === "de" ? "Bild entfernen" : "Remove image"}
                         >
                           <X className="h-3 w-3" />
                         </button>
@@ -2766,7 +2765,7 @@ function SafetyDataCard({ productId, safety, role, t, onSuccess }: any) {
         onClick={() => setLightboxUrl(null)}
       >
         <div className="relative max-w-3xl max-h-full">
-          <img src={lightboxUrl} alt="Sicherheitsbild" className="max-w-full max-h-[85vh] rounded-lg object-contain" />
+          <img src={lightboxUrl} alt={lang === "de" ? "Sicherheitsbild" : "Safety image"} className="max-w-full max-h-[85vh] rounded-lg object-contain" />
           <button
             className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1 hover:bg-black"
             onClick={() => setLightboxUrl(null)}

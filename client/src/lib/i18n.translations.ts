@@ -995,6 +995,14 @@ export const translations: Record<Language, any> = {
       bunnyDocNoTemplateId: "Keine BunnyDoc Template-ID konfiguriert. Bitte in den Einstellungen hinterlegen.",
       bunnyDocError: "BunnyDoc-Fehler: {detail}",
       signatureAlreadyCompleted: "Abgeschlossene Signaturanfragen können nicht storniert werden.",
+      // Produkt-Einreichung
+      confirmCompletenessFirst: "Bitte bestätigen Sie zuerst die Vollständigkeit der Unterlagen im Siegel-Tab, bevor Sie das Produkt einreichen.",
+      // Bild-Fehler
+      imageReadError: "Das Bild konnte nicht gelesen werden. Bitte prüfen Sie, ob die Datei beschädigt ist.",
+      // Allgemein
+      invalidProductId: "Ungültige Produkt-ID.",
+      logoUploadNoPermission: "Keine Berechtigung für Logo-Upload.",
+      dbConnectionUnavailable: "Datenbankverbindung nicht verfügbar.",
       // Fallback
       unknownError: "Ein unbekannter Fehler ist aufgetreten.",
     },
@@ -2338,6 +2346,14 @@ export const translations: Record<Language, any> = {
       bunnyDocNoTemplateId: "No BunnyDoc template ID configured. Please add it in settings.",
       bunnyDocError: "BunnyDoc error: {detail}",
       signatureAlreadyCompleted: "Completed signature requests cannot be cancelled.",
+      // Product submission
+      confirmCompletenessFirst: "Please confirm the completeness of the documents in the Seal tab before submitting the product.",
+      // Image errors
+      imageReadError: "The image could not be read. Please check if the file is corrupted.",
+      // General
+      invalidProductId: "Invalid product ID.",
+      logoUploadNoPermission: "No permission for logo upload.",
+      dbConnectionUnavailable: "Database connection unavailable.",
       // Fallback
       unknownError: "An unknown error occurred.",
     },

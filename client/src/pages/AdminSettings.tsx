@@ -118,7 +118,7 @@ export default function AdminSettings() {
   const utils = trpc.useUtils();
   const updateMyTenantMutation = trpc.tenant.updateMyTenant.useMutation({
     onSuccess: () => {
-      toast.success("Portal-Einstellungen gespeichert");
+      toast.success(lang === "de" ? "Portal-Einstellungen gespeichert" : "Portal settings saved");
       utils.tenant.getCurrent.invalidate();
     },
     onError: (e: any) => toast.error(translateError(e.message, t)),
@@ -132,19 +132,19 @@ export default function AdminSettings() {
 
   const uploadLogoMutation = trpc.tenant.uploadLogo.useMutation({
     onSuccess: (data) => {
-      toast.success("Logo hochgeladen", { description: "Das Logo erscheint jetzt auf dem Siegel-Etikett." });
+      toast.success(lang === "de" ? "Logo hochgeladen" : "Logo uploaded", { description: lang === "de" ? "Das Logo erscheint jetzt auf dem Siegel-Etikett." : "The logo will now appear on the seal label." });
       setLogoPreview(null);
       utils.tenant.getCurrent.invalidate();
     },
     onError: (e: any) => {
-      toast.error("Upload fehlgeschlagen", { description: translateError(e.message, t) });
+      toast.error(lang === "de" ? "Upload fehlgeschlagen" : "Upload failed", { description: translateError(e.message, t) });
       setLogoUploading(false);
     },
   });
 
   const removeLogoMutation = trpc.tenant.updateMyTenant.useMutation({
     onSuccess: () => {
-      toast.success("Logo entfernt");
+      toast.success(lang === "de" ? "Logo entfernt" : "Logo removed");
       setLogoPreview(null);
       utils.tenant.getCurrent.invalidate();
     },
@@ -187,7 +187,7 @@ export default function AdminSettings() {
     base64Reader.readAsDataURL(file);
   }
   const saveSealSettingMutation = trpc.admin.setSystemSetting.useMutation({
-    onSuccess: () => toast.success("Siegel-Einstellungen gespeichert"),
+    onSuccess: () => toast.success(lang === "de" ? "Siegel-Einstellungen gespeichert" : "Seal settings saved"),
     onError: (e: any) => toast.error(translateError(e.message, t)),
   });
   // Sync state when query resolves (only once on first load)
@@ -235,11 +235,11 @@ export default function AdminSettings() {
   });
 
   const handleSaveKontor = () => {
-    toast.success("Kontor-API-Einstellungen gespeichert");
+    toast.success(lang === "de" ? "Kontor-API-Einstellungen gespeichert" : "Kontor API settings saved");
   };
 
   const handleSaveNotifications = () => {
-    toast.success("Benachrichtigungseinstellungen gespeichert");
+    toast.success(lang === "de" ? "Benachrichtigungseinstellungen gespeichert" : "Notification settings saved");
   };
 
   const handleTestConnection = () => {
@@ -530,7 +530,7 @@ export default function AdminSettings() {
                   <div
                     className="w-8 h-8 rounded-full border shadow-sm shrink-0"
                     style={{ backgroundColor: portalPrimaryColor }}
-                    title="Vorschau"
+                    title={lang === "de" ? "Vorschau" : "Preview"}
                   />
                   <button
                     type="button"

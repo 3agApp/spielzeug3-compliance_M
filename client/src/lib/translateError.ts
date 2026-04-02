@@ -25,6 +25,7 @@ export function translateError(rawMessage: string | undefined, tOrLang: Translat
 
   // Database
   if (msg.toLowerCase().includes("db unavailable") || msg.toLowerCase().includes("database unavailable")) return t.errors.dbUnavailable;
+  if (msg.includes("Datenbankverbindung nicht verfügbar") || msg.includes("Database connection unavailable")) return (t.errors as any).dbConnectionUnavailable ?? t.errors.dbUnavailable;
 
   // Notifications
   if (msg === "Notification title is required.") return t.errors.notifTitleRequired;
@@ -57,6 +58,16 @@ export function translateError(rawMessage: string | undefined, tOrLang: Translat
   // Permissions (German originals that may come through)
   if (msg.includes("Nur Administratoren") || msg.includes("Only administrators")) return t.errors.adminOnly;
   if (msg.includes("Nur Lieferanten") || msg.includes("Only suppliers")) return t.errors.supplierOnly;
+
+  // Product submission
+  if (msg.includes("Bitte bestätigen Sie zuerst die Vollständigkeit") || msg.includes("Please confirm the completeness")) return (t.errors as any).confirmCompletenessFirst ?? msg;
+
+  // Image errors
+  if (msg.includes("Das Bild konnte nicht gelesen werden") || msg.includes("image could not be read")) return (t.errors as any).imageReadError ?? msg;
+
+  // General validation
+  if (msg.includes("Ungültige Produkt-ID") || msg.includes("Invalid product ID")) return (t.errors as any).invalidProductId ?? msg;
+  if (msg.includes("Keine Berechtigung für Logo-Upload") || msg.includes("No permission for logo upload")) return (t.errors as any).logoUploadNoPermission ?? msg;
 
   // Timeout / network
   if (msg.toLowerCase().includes("timeout") || msg.toLowerCase().includes("timed out")) return t.errors.timeout;
