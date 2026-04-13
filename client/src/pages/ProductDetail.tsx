@@ -1404,9 +1404,13 @@ function SealTab({
                 </div>
                 <div className="flex items-center gap-2">
                   <code className="text-xs bg-muted px-2 py-1 rounded flex-1 truncate">
-                    {seal.publicUrl}
+                    {seal.publicUuid ? `${window.location.origin}/p/${seal.publicUuid}` : seal.publicUrl}
                   </code>
-                  <a href={seal.publicUrl ?? ""} target="_blank" rel="noopener noreferrer">
+                  <a
+                    href={seal.publicUuid ? `${window.location.origin}/p/${seal.publicUuid}` : (seal.publicUrl ?? "")}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     <Button variant="ghost" size="sm" title={t.seal.openPage}>
                       <ExternalLink className="h-4 w-4" />
                     </Button>
@@ -1416,7 +1420,7 @@ function SealTab({
                 {/* Landingpage-Vorschau-Button */}
                 {canManage && (
                   <a
-                    href={seal.publicUrl ?? ""}
+                    href={seal.publicUuid ? `${window.location.origin}/p/${seal.publicUuid}` : (seal.publicUrl ?? "")}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -1502,7 +1506,7 @@ function SealTab({
                 <ProductEmbedCode
                   publicUuid={seal.publicUuid}
                   qrCodeUrl={seal.qrCodeUrl}
-                  publicUrl={seal.publicUrl ?? ""}
+                  publicUrl={`${window.location.origin}/p/${seal.publicUuid}`}
                   productName={productName}
                   sealStatus={sealStatus}
                 />
