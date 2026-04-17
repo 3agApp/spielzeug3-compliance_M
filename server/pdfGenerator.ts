@@ -128,6 +128,47 @@ const PDF_I18N = {
 
 type PdfLang = "de" | "en";
 
+// ─── Document type translation table ─────────────────────────────────────────
+const DOC_TYPE_LABELS: Record<string, { de: string; en: string }> = {
+  certificate:                  { de: "Zertifikat",                  en: "Certificate" },
+  test_report:                  { de: "Prüfbericht",                  en: "Test Report" },
+  declaration_of_conformity:    { de: "Konformitätserklärung",        en: "Declaration of Conformity" },
+  declaration:                  { de: "Konformitätserklärung",        en: "Declaration of Conformity" },
+  manual:                       { de: "Bedienungsanleitung",          en: "Manual" },
+  user_manual:                  { de: "Bedienungsanleitung",          en: "User Manual" },
+  safety_data_sheet:            { de: "Sicherheitsdatenblatt",        en: "Safety Data Sheet" },
+  sds:                          { de: "Sicherheitsdatenblatt",        en: "Safety Data Sheet" },
+  audit_report:                 { de: "Auditbericht",                 en: "Audit Report" },
+  inspection_report:            { de: "Prüfprotokoll",                en: "Inspection Report" },
+  approval:                     { de: "Zulassung",                    en: "Approval" },
+  label:                        { de: "Kennzeichnung",                en: "Label" },
+  reach_declaration:            { de: "REACH-Erklärung",              en: "REACH Declaration" },
+  rohs_declaration:             { de: "RoHS-Erklärung",               en: "RoHS Declaration" },
+  technical_file:               { de: "Technische Unterlagen",        en: "Technical File" },
+  technical_documentation:      { de: "Technische Dokumentation",     en: "Technical Documentation" },
+  risk_assessment:              { de: "Risikobeurteilung",            en: "Risk Assessment" },
+  quality_certificate:          { de: "Qualitätszertifikat",          en: "Quality Certificate" },
+  iso_certificate:              { de: "ISO-Zertifikat",               en: "ISO Certificate" },
+  ce_certificate:               { de: "CE-Zertifikat",                en: "CE Certificate" },
+  fsc_certificate:              { de: "FSC-Zertifikat",               en: "FSC Certificate" },
+  test_certificate:             { de: "Prüfzertifikat",               en: "Test Certificate" },
+  compliance_report:            { de: "Compliance-Bericht",           en: "Compliance Report" },
+  other:                        { de: "Sonstiges",                    en: "Other" },
+};
+
+/**
+ * Translate a document type key to the given language.
+ * Falls back to a capitalised version of the raw key if not found.
+ */
+export function translateDocType(type: string | undefined | null, lang: PdfLang): string {
+  if (!type) return lang === "de" ? "Unbekannt" : "Unknown";
+  const normalised = type.toLowerCase().replace(/[\s-]+/g, "_");
+  const entry = DOC_TYPE_LABELS[normalised];
+  if (entry) return entry[lang];
+  // Fallback: capitalise words and replace underscores with spaces
+  return type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 // ─── Color palette ────────────────────────────────────────────────────────────
 const COLORS = {
   primary: "#1e3a5f",       // Deep navy
@@ -588,7 +629,7 @@ export function generateAiAnalysisPdf(data: PdfReportData): Promise<Buffer> {
         doc.fontSize(11);
         const fileNameH = doc.heightOfString(fileNameStr, { width: pageW - 170 });
         doc.fontSize(8).fillColor(COLORS.muted).font("Helvetica")
-          .text(da.documentType ?? "", 80, y + fileNameH + 2);
+          .text(translateDocType(da.documentType, lang), 80, y + fileNameH + 2);
 
         // Score (right)
         doc.fontSize(13).fillColor(daColor).font("Helvetica-Bold")
@@ -776,7 +817,7 @@ export function generateAiAnalysisPdf(data: PdfReportData): Promise<Buffer> {
         doc.fontSize(7.5).font("Helvetica");
         doc.fillColor(COLORS.muted).text(`${idx + 1}`, colX.num, rowY + 5, { width: colNum, align: "center" });
         doc.fillColor(COLORS.text).text(displayName, colX.name, rowY + 5, { width: colName });
-        doc.fillColor(COLORS.muted).text(da.documentType ?? "", colX.type, rowY + 5, { width: colType });
+        doc.fillColor(COLORS.muted).text(translateDocType(da.documentType, lang), colX.type, rowY + 5, { width: colType });
         doc.fillColor(daColor).font("Helvetica-Bold")
           .text(`${daScore}/100`, colX.score, rowY + 5, { width: colScore, align: "center" });
         doc.fillColor(statusColor).font("Helvetica-Bold")

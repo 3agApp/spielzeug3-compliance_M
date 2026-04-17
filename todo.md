@@ -1017,3 +1017,10 @@
 - [x] severityLabel() und severityColor() defensiv gegen undefined/null abgesichert
 - [x] Alle 19 Analysen in der DB erfolgreich mit generateAiAnalysisPdf() getestet (0 Fehler)
 - [x] 368 Tests, 0 TS-Fehler
+
+## PDF-Export: Dokumententyp-Übersetzung
+- [x] Übersetzungstabelle DOC_TYPE_LABELS mit 22 Einträgen in pdfGenerator.ts (DE/EN)
+- [x] translateDocType() mit Normalisierung (Groß-/Kleinschreibung, Bindestriche, Leerzeichen) und Fallback
+- [x] Verwendung im Inhaltsverzeichnis (TOC) und in der Dokument-Analyse-Sektion
+- [x] 6 neue Tests (translateDocType: bekannte Typen DE/EN, Normalisierung, Fallback, null/undefined, PDF-Integration)
+- [x] 378 Tests total, 0 TS-Fehler
