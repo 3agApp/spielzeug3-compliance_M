@@ -127,6 +127,48 @@ describe("pdfGenerator – AI Analysis PDF localization", () => {
     expect(buf.slice(0, 4).toString()).toBe("%PDF");
   });
 
+  it("generates PDF with documentAnalysis section (per-document cards)", async () => {
+    const docAnalysis = [
+      {
+        documentId: 1,
+        fileName: "Bureau_Veritas_Certificate.pdf",
+        documentType: "certificate",
+        score: 40,
+        status: "critical",
+        legalBasis: "Toy Safety Directive 2009/48/EC",
+        positives: ["Certification body mentioned in filename"],
+        missingElements: ["Notified Body number", "Validity period"],
+        issues: ["Notified Body accreditation not referenced", "Validity period not included"],
+      },
+      {
+        documentId: 2,
+        fileName: "FSC_Bambus_Zertifikat_2024.pdf",
+        documentType: "certificate",
+        score: 85,
+        status: "compliant",
+        legalBasis: "Toy Safety Directive 2009/48/EC",
+        positives: ["Issued by accredited body", "Includes validity period"],
+        missingElements: ["Reference to toy safety directive"],
+        issues: [],
+      },
+    ];
+    const buf = await generateAiAnalysisPdf({
+      product: SAMPLE_PRODUCT,
+      analysis: { ...SAMPLE_ANALYSIS, documentAnalysis: docAnalysis },
+      lang: "de",
+    });
+    expect(buf).toBeInstanceOf(Buffer);
+    expect(buf.length).toBeGreaterThan(1000);
+    expect(buf.slice(0, 4).toString()).toBe("%PDF");
+    // PDF with documentAnalysis should be larger than without
+    const bufWithout = await generateAiAnalysisPdf({
+      product: SAMPLE_PRODUCT,
+      analysis: SAMPLE_ANALYSIS,
+      lang: "de",
+    });
+    expect(buf.length).toBeGreaterThan(bufWithout.length);
+  });
+
   it("handles mixed/unknown finding fields gracefully (no crash)", async () => {
     const mixedFindings = [
       { type: "critical", message: "Test" }, // minimal new format

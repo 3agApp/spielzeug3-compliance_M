@@ -130,6 +130,7 @@ export function registerPdfRoutes(app: Express) {
           summary: analysis.summary,
           findings: analysis.findings,
           recommendations: analysis.recommendations,
+          documentAnalysis: analysis.documentAnalysis,
           modelUsed: analysis.modelUsed,
           tokensUsed: analysis.tokensUsed,
           createdAt: analysis.createdAt,

@@ -30,6 +30,19 @@ const PDF_I18N = {
     findings: (n: number) => `Befunde (${n})`,
     findingFallback: (i: number) => `Befund ${i + 1}`,
     recommendations: "Empfehlungen",
+    documentAnalysisTitle: (n: number) => `Dokument-Analysen (${n})`,
+    docStatus: {
+      compliant: "Konform",
+      partial: "Teilweise konform",
+      critical: "Nicht konform",
+      pending: "Ausstehend",
+    },
+    docLabels: {
+      legalBasis: "Rechtsgrundlage",
+      positives: "Positive Punkte",
+      missingElements: "Fehlende Pflichtangaben",
+      issues: "Hinweise",
+    },
     footer: (id: number, page: number, total: number) =>
       `spielzeug3 AG · Supplier Compliance Portal · Bericht #${id} · Seite ${page} von ${total}`,
     scoreLabels: {
@@ -75,6 +88,19 @@ const PDF_I18N = {
     findings: (n: number) => `Findings (${n})`,
     findingFallback: (i: number) => `Finding ${i + 1}`,
     recommendations: "Recommendations",
+    documentAnalysisTitle: (n: number) => `Document Analyses (${n})`,
+    docStatus: {
+      compliant: "Compliant",
+      partial: "Partially Compliant",
+      critical: "Non-Compliant",
+      pending: "Pending",
+    },
+    docLabels: {
+      legalBasis: "Legal Basis",
+      positives: "Positive Points",
+      missingElements: "Missing Mandatory Elements",
+      issues: "Issues",
+    },
     footer: (id: number, page: number, total: number) =>
       `spielzeug3 AG · Supplier Compliance Portal · Report #${id} · Page ${page} of ${total}`,
     scoreLabels: {
@@ -224,6 +250,7 @@ export interface PdfReportData {
     summary?: string | null;
     findings?: any;
     recommendations?: any;
+    documentAnalysis?: any; // per-document analysis array
     modelUsed?: string | null;
     tokensUsed?: number | null;
     createdAt: Date;
@@ -476,6 +503,164 @@ export function generateAiAnalysisPdf(data: PdfReportData): Promise<Buffer> {
           .text(rec, 80, recY + 8, { width: pageW - 40 });
 
         doc.y = recY + recH + 5;
+      });
+    }
+
+    // ── DOCUMENT ANALYSES ─────────────────────────────────────────────────────
+    const docAnalyses: Array<{
+      documentId?: number;
+      fileName?: string;
+      documentType?: string;
+      score?: number;
+      status?: string;
+      legalBasis?: string;
+      positives?: string[];
+      missingElements?: string[];
+      issues?: string[];
+    }> = Array.isArray(analysis.documentAnalysis) ? analysis.documentAnalysis : [];
+
+    if (docAnalyses.length > 0) {
+      doc.addPage();
+
+      doc.fontSize(11).fillColor(COLORS.primary).font("Helvetica-Bold")
+        .text(i18n.documentAnalysisTitle(docAnalyses.length), 50, doc.y);
+      doc.moveDown(0.4);
+      drawHorizontalLine(doc, doc.y);
+      doc.moveDown(0.5);
+
+      docAnalyses.forEach((da) => {
+        const daScore = Math.round(Number(da.score ?? 0));
+        const daColor = scoreColor(daScore);
+        const daStatus = da.status ?? "pending";
+        // Status badge color
+        const statusBgColor = daStatus === "compliant" ? "#dcfce7"
+          : daStatus === "critical" ? "#fee2e2"
+          : daStatus === "partial" ? "#fef9c3"
+          : COLORS.bgLight;
+        const statusTextColor = daStatus === "compliant" ? COLORS.success
+          : daStatus === "critical" ? COLORS.danger
+          : daStatus === "partial" ? "#92400e"
+          : COLORS.muted;
+        const statusLabel = (i18n.docStatus as Record<string, string>)[daStatus] ?? daStatus;
+
+        // Calculate card height
+        const positives = Array.isArray(da.positives) ? da.positives : [];
+        const missing = Array.isArray(da.missingElements) ? da.missingElements : [];
+        const issues = Array.isArray(da.issues) ? da.issues : [];
+        const legalBasis = da.legalBasis ?? "";
+
+        // Estimate height: header(36) + score bar(22) + legalBasis(20) + items
+        doc.fontSize(9);
+        const posH = positives.length > 0 ? positives.reduce((acc, p) => acc + Math.max(16, doc.heightOfString(p, { width: pageW - 80 }) + 4), 22) : 0;
+        const misH = missing.length > 0 ? missing.reduce((acc, m) => acc + Math.max(18, doc.heightOfString(m, { width: pageW - 90 }) + 6), 24) : 0;
+        const issH = issues.length > 0 ? issues.reduce((acc, iss) => acc + Math.max(16, doc.heightOfString(iss, { width: pageW - 80 }) + 4), 22) : 0;
+        const legalH = legalBasis ? 20 : 0;
+        const cardH = Math.max(70, 44 + legalH + posH + misH + issH + 10);
+
+        // Page break if needed
+        if (doc.y + cardH > doc.page.height - 60) doc.addPage();
+
+        const cardY = doc.y;
+        const borderColor = daStatus === "compliant" ? COLORS.success
+          : daStatus === "critical" ? COLORS.danger
+          : daStatus === "partial" ? "#d97706"
+          : COLORS.border;
+
+        // Card background + border
+        drawFilledRect(doc, 50, cardY, pageW, cardH, COLORS.bgLight, 6);
+        doc.rect(50, cardY, pageW, cardH).strokeColor(borderColor).lineWidth(1).stroke();
+
+        // ── Card header ──
+        // File icon (simple rect)
+        drawFilledRect(doc, 58, cardY + 10, 14, 16, COLORS.border, 2);
+        doc.fontSize(7).fillColor(COLORS.muted).font("Helvetica-Bold")
+          .text("PDF", 59, cardY + 14, { width: 12, align: "center" });
+
+        // File name
+        doc.fontSize(10).fillColor(COLORS.primary).font("Helvetica-Bold")
+          .text(da.fileName ?? "-", 78, cardY + 10, { width: pageW - 180 });
+        // Document type
+        doc.fontSize(8).fillColor(COLORS.muted).font("Helvetica")
+          .text(da.documentType ?? "", 78, cardY + 23);
+
+        // Score (right side)
+        doc.fontSize(11).fillColor(daColor).font("Helvetica-Bold")
+          .text(`${daScore}/100`, doc.page.width - 110, cardY + 10, { width: 55, align: "right" });
+
+        // Status badge
+        const badgeX = doc.page.width - 50 - 80 - 60;
+        drawFilledRect(doc, badgeX, cardY + 8, 80, 18, statusBgColor, 4);
+        doc.rect(badgeX, cardY + 8, 80, 18).strokeColor(borderColor).lineWidth(0.5).stroke();
+        doc.fontSize(8).fillColor(statusTextColor).font("Helvetica-Bold")
+          .text(statusLabel, badgeX, cardY + 13, { width: 80, align: "center" });
+
+        // ── Score bar ──
+        const barY2 = cardY + 36;
+        const barW = pageW - 20;
+        const filledW = Math.max(0, (daScore / 100) * barW);
+        drawFilledRect(doc, 60, barY2, barW, 5, COLORS.border, 2);
+        if (filledW > 0) drawFilledRect(doc, 60, barY2, filledW, 5, daColor, 2);
+
+        let contentY = barY2 + 12;
+
+        // ── Legal basis ──
+        if (legalBasis) {
+          doc.fontSize(8).fillColor(COLORS.muted).font("Helvetica")
+            .text(legalBasis, 62, contentY, { width: pageW - 24 });
+          contentY = doc.y + 4;
+        }
+
+        // ── Positives ──
+        if (positives.length > 0) {
+          doc.fontSize(8).fillColor(COLORS.success).font("Helvetica-Bold")
+            .text(i18n.docLabels.positives, 62, contentY);
+          contentY = doc.y + 2;
+          positives.forEach((p) => {
+            if (contentY + 14 > cardY + cardH - 4) return;
+            // Green check circle
+            doc.circle(70, contentY + 5, 4).fillColor(COLORS.success).fill();
+            doc.fontSize(7).fillColor(COLORS.white).font("Helvetica-Bold")
+              .text("\u2713", 67, contentY + 2, { width: 6, align: "center" });
+            doc.fontSize(8).fillColor(COLORS.textSecondary).font("Helvetica")
+              .text(p, 80, contentY, { width: pageW - 40 });
+            contentY = doc.y + 2;
+          });
+          contentY += 2;
+        }
+
+        // ── Missing elements ──
+        if (missing.length > 0) {
+          if (contentY + 14 > cardY + cardH - 4) { doc.y = cardY + cardH + 6; return; }
+          doc.fontSize(8).fillColor(COLORS.danger).font("Helvetica-Bold")
+            .text(i18n.docLabels.missingElements + ":", 62, contentY);
+          contentY = doc.y + 2;
+          missing.forEach((m) => {
+            if (contentY + 14 > cardY + cardH - 4) return;
+            drawFilledRect(doc, 62, contentY, pageW - 24, Math.max(16, doc.heightOfString(m, { width: pageW - 90 }) + 6), "#fef2f2", 3);
+            doc.fontSize(8).fillColor(COLORS.danger).font("Helvetica-Bold")
+              .text("–", 68, contentY + 4, { continued: true });
+            doc.font("Helvetica").fillColor(COLORS.textSecondary)
+              .text(" " + m, { width: pageW - 50 });
+            contentY = doc.y + 2;
+          });
+          contentY += 2;
+        }
+
+        // ── Issues / warnings ──
+        if (issues.length > 0) {
+          if (contentY + 14 > cardY + cardH - 4) { doc.y = cardY + cardH + 6; return; }
+          issues.forEach((iss) => {
+            if (contentY + 14 > cardY + cardH - 4) return;
+            // Warning triangle (amber)
+            doc.fontSize(8).fillColor(COLORS.warning).font("Helvetica-Bold")
+              .text("⚠", 62, contentY, { continued: true });
+            doc.font("Helvetica").fillColor(COLORS.warning)
+              .text(" " + iss, { width: pageW - 30 });
+            contentY = doc.y + 2;
+          });
+        }
+
+        doc.y = cardY + cardH + 8;
       });
     }
 

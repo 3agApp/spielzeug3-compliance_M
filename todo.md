@@ -989,3 +989,10 @@
 - [x] pdfGenerator.ts: severityLabels um LLM-type-Werte erweitert (critical→Kritisch, warning→Warnung, positive→OK)
 - [x] pdfGenerator.ts: Findings-Karte zeigt jetzt auch Remediation und Affected Regulations an
 - [x] pdfLocalization.test.ts: 3 neue Regressions-Tests für neues LLM-Format (10 Tests total, alle grün)
+
+## PDF-Export: Dokument-Analyse-Karten
+- [x] pdfGenerator.ts: Neue Sektion "Dokument-Analysen" nach den Findings einfügen
+- [x] Pro Dokument: Dateiname, Typ, Score-Balken, Compliance-Status-Badge (Konform/Nicht konform/Teilweise konform)
+- [x] Pro Dokument: Rechtsgrundlage (legalBasis), positive Punkte, fehlende Elemente, Warnungen/Issues
+- [x] pdfRoutes.ts: documentAnalysis an generateAiAnalysisPdf übergeben
+- [x] pdfLocalization.test.ts: Test für documentAnalysis-Sektion im PDF (368 Tests total, alle grün)
