@@ -952,3 +952,12 @@
 - [x] Frontend: KI-Vorschlag-Panel mit Auto-Fill-Funktion (Felder übernehmen)
 - [x] Frontend: Konfidenz-Anzeige und Begründung der KI-Einschätzung
 - [x] Tests: incidentAiService Tests (9 Tests: suggestAssessment mit Mock-LLM – alle grün)
+
+## Produkt-Pflichtfeld im Schadensfall + Erweiterte KI-Bewertung
+- [ ] Frontend: Produkt-Suchfeld als Pflichtfeld in CreateIncidentDialog
+- [ ] Frontend: Produktvorschau-Karte nach Auswahl (Name, Art.Nr., Marke)
+- [ ] Backend: incidentAiService – Dokumente/Prüfberichte des Produkts laden
+- [ ] Backend: incidentAiService – Komponenten und Herstellervorgaben laden
+- [ ] Backend: incidentAiService – Zubehör-Compliance-Daten in Prompt einbauen
+- [ ] Backend: incidentAiService – Deklarationen/Konformitätsstatus in Prompt
+- [ ] Tests: aktualisierte incidentAiService Tests

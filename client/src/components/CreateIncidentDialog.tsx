@@ -2,8 +2,11 @@
  * client/src/components/CreateIncidentDialog.tsx
  * ─────────────────────────────────────────────────────────────────────────────
  * Dialog zum Erfassen eines neuen Schadensfalls.
+ * Das Produkt ist ein Pflichtfeld – nur so können alle Daten (Prüfberichte,
+ * Herstellervorgaben, Komponenten, Deklarationen) bei der KI-Bewertung
+ * berücksichtigt werden.
  */
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +28,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Package, Search, X, CheckCircle2, Info } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -36,10 +39,158 @@ interface Props {
   preselectedProductId?: number;
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+interface ProductHit {
+  id: number;
+  productName: string;
+  internalArticleNumber?: string | null;
+  brand?: string | null;
+  ean?: string | null;
+  category?: string | null;
+  ageGrading?: string | null;
+}
+
+// ─── Product Search Field ─────────────────────────────────────────────────────
+
+function ProductSearchField({
+  value,
+  onChange,
+  preselectedProductId,
+}: {
+  value: ProductHit | null;
+  onChange: (p: ProductHit | null) => void;
+  preselectedProductId?: number;
+}) {
+  const [query, setQuery] = useState("");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Load preselected product once on mount
+  const preselectedQuery = trpc.products.getById.useQuery(
+    { id: preselectedProductId! },
+    { enabled: !!preselectedProductId && !value }
+  );
+  useEffect(() => {
+    if (preselectedQuery.data && !value) {
+      onChange(preselectedQuery.data as ProductHit);
+    }
+  }, [preselectedQuery.data]);
+
+  // Search products
+  const searchQuery = trpc.products.list.useQuery(
+    { search: query.trim() || undefined },
+    { enabled: dropdownOpen && query.trim().length >= 1 }
+  );
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  // ── Selected product card ──
+  if (value) {
+    return (
+      <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 flex items-start gap-3">
+        <Package className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className="font-medium text-sm text-blue-900 truncate">{value.productName}</p>
+          <div className="flex flex-wrap gap-1.5 mt-1">
+            {value.internalArticleNumber && (
+              <span className="text-xs text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">
+                Art.Nr. {value.internalArticleNumber}
+              </span>
+            )}
+            {value.brand && (
+              <span className="text-xs text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">
+                {value.brand}
+              </span>
+            )}
+            {value.ageGrading && (
+              <span className="text-xs text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">
+                {value.ageGrading}
+              </span>
+            )}
+            {value.category && (
+              <span className="text-xs text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">
+                {value.category}
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-blue-600 mt-1.5 flex items-center gap-1">
+            <CheckCircle2 className="h-3 w-3" />
+            Prüfberichte, Herstellervorgaben und Komponentendaten werden bei der KI-Bewertung berücksichtigt
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-6 w-6 p-0 text-blue-500 hover:text-blue-700 shrink-0"
+          onClick={() => { onChange(null); setQuery(""); }}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+    );
+  }
+
+  // ── Search input + dropdown ──
+  return (
+    <div ref={containerRef} className="relative">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+        <Input
+          value={query}
+          onChange={(e) => { setQuery(e.target.value); setDropdownOpen(true); }}
+          onFocus={() => setDropdownOpen(true)}
+          placeholder="Produktname, Art.Nr. oder EAN suchen..."
+          className="pl-9"
+        />
+      </div>
+      {dropdownOpen && (
+        <div className="absolute z-50 top-full mt-1 w-full rounded-md border bg-popover text-popover-foreground shadow-lg max-h-64 overflow-y-auto">
+          {query.trim().length < 1 ? (
+            <p className="text-sm text-muted-foreground px-3 py-2.5">Mindestens 1 Zeichen eingeben...</p>
+          ) : searchQuery.isLoading ? (
+            <p className="text-sm text-muted-foreground px-3 py-2.5">Suche läuft...</p>
+          ) : !searchQuery.data || (searchQuery.data as any[]).length === 0 ? (
+            <p className="text-sm text-muted-foreground px-3 py-2.5">Keine Produkte gefunden.</p>
+          ) : (
+            (searchQuery.data as ProductHit[]).map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className="w-full text-left px-3 py-2 hover:bg-accent flex items-start gap-2.5 border-b last:border-0"
+                onClick={() => { onChange(p); setDropdownOpen(false); setQuery(""); }}
+              >
+                <Package className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">{p.productName}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {[p.internalArticleNumber && `Art.Nr. ${p.internalArticleNumber}`, p.brand, p.ageGrading].filter(Boolean).join(" · ")}
+                  </p>
+                </div>
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function CreateIncidentDialog({ open, onClose, onCreated, preselectedProductId }: Props) {
   const utils = trpc.useUtils();
+
+  // Product selection (required)
+  const [selectedProduct, setSelectedProduct] = useState<ProductHit | null>(null);
 
   // Form state
   const [incidentType, setIncidentType] = useState<string>("product_defect");
@@ -53,6 +204,7 @@ export default function CreateIncidentDialog({ open, onClose, onCreated, presele
   const [affectedVersions, setAffectedVersions] = useState("");
   const [affectedBatchNumbers, setAffectedBatchNumbers] = useState("");
   const [affectedUnitsEstimate, setAffectedUnitsEstimate] = useState("");
+
   // Injury fields
   const [injuryDescription, setInjuryDescription] = useState("");
   const [injuredPersonAge, setInjuredPersonAge] = useState("");
@@ -74,6 +226,7 @@ export default function CreateIncidentDialog({ open, onClose, onCreated, presele
   });
 
   function resetForm() {
+    setSelectedProduct(null);
     setIncidentType("product_defect");
     setSeverity("medium");
     setTitle("");
@@ -94,13 +247,16 @@ export default function CreateIncidentDialog({ open, onClose, onCreated, presele
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!selectedProduct) {
+      toast.error("Bitte ein Produkt auswählen – nur so können alle Daten bei der KI-Bewertung berücksichtigt werden.");
+      return;
+    }
     if (!title.trim() || !description.trim()) {
       toast.error("Titel und Beschreibung sind Pflichtfelder.");
       return;
     }
-
     createMutation.mutate({
-      productId: preselectedProductId,
+      productId: selectedProduct.id,
       incidentType: incidentType as any,
       severity: severity as any,
       title: title.trim(),
@@ -125,7 +281,7 @@ export default function CreateIncidentDialog({ open, onClose, onCreated, presele
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) { onClose(); resetForm(); } }}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -135,14 +291,32 @@ export default function CreateIncidentDialog({ open, onClose, onCreated, presele
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Typ & Schweregrad */}
+
+          {/* ── Produkt (Pflichtfeld) – immer als erstes ── */}
+          <div className="space-y-1.5">
+            <Label className="flex items-center gap-1.5 font-semibold">
+              <Package className="h-4 w-4 text-blue-600" />
+              Betroffenes Produkt *
+            </Label>
+            <ProductSearchField
+              value={selectedProduct}
+              onChange={setSelectedProduct}
+              preselectedProductId={preselectedProductId}
+            />
+            {!selectedProduct && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                <Info className="h-3 w-3 shrink-0" />
+                Pflichtfeld – ermöglicht vollständige KI-Bewertung mit Prüfberichten, Herstellervorgaben, Originalzubehör-Compliance und Komponentendaten
+              </p>
+            )}
+          </div>
+
+          {/* ── Vorfalltyp & Schweregrad ── */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Vorfalltyp *</Label>
               <Select value={incidentType} onValueChange={setIncidentType}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="personal_injury">Personenschaden</SelectItem>
                   <SelectItem value="property_damage">Sachschaden</SelectItem>
@@ -157,9 +331,7 @@ export default function CreateIncidentDialog({ open, onClose, onCreated, presele
             <div className="space-y-1.5">
               <Label>Schweregrad *</Label>
               <Select value={severity} onValueChange={setSeverity}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="critical">Kritisch (Tod / schwere Verletzung)</SelectItem>
                   <SelectItem value="high">Hoch (Verletzung / Krankenhausaufenthalt)</SelectItem>
@@ -170,7 +342,7 @@ export default function CreateIncidentDialog({ open, onClose, onCreated, presele
             </div>
           </div>
 
-          {/* Titel */}
+          {/* ── Titel ── */}
           <div className="space-y-1.5">
             <Label>Titel *</Label>
             <Input
@@ -181,7 +353,7 @@ export default function CreateIncidentDialog({ open, onClose, onCreated, presele
             />
           </div>
 
-          {/* Beschreibung */}
+          {/* ── Beschreibung ── */}
           <div className="space-y-1.5">
             <Label>Beschreibung *</Label>
             <Textarea
@@ -193,7 +365,7 @@ export default function CreateIncidentDialog({ open, onClose, onCreated, presele
             />
           </div>
 
-          {/* Melder */}
+          {/* ── Melder ── */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Gemeldet von (Name)</Label>
@@ -213,14 +385,11 @@ export default function CreateIncidentDialog({ open, onClose, onCreated, presele
               />
             </div>
           </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Melder-Typ</Label>
               <Select value={reportedByType} onValueChange={setReportedByType}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="customer">Kunde</SelectItem>
                   <SelectItem value="supplier">Lieferant</SelectItem>
@@ -241,7 +410,7 @@ export default function CreateIncidentDialog({ open, onClose, onCreated, presele
             </div>
           </div>
 
-          {/* Betroffene Versionen / Chargen */}
+          {/* ── Betroffene Versionen / Chargen ── */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Betroffene Versionen</Label>
@@ -260,7 +429,6 @@ export default function CreateIncidentDialog({ open, onClose, onCreated, presele
               />
             </div>
           </div>
-
           <div className="space-y-1.5">
             <Label>Geschätzte Anzahl betroffener Einheiten</Label>
             <Input
@@ -272,7 +440,7 @@ export default function CreateIncidentDialog({ open, onClose, onCreated, presele
             />
           </div>
 
-          {/* Personenschaden-Details */}
+          {/* ── Personenschaden-Details ── */}
           {incidentType === "personal_injury" && (
             <div className="border rounded-lg p-4 space-y-4 bg-red-50/50">
               <h3 className="font-medium text-sm text-red-800 flex items-center gap-2">
@@ -303,9 +471,7 @@ export default function CreateIncidentDialog({ open, onClose, onCreated, presele
                 <div className="space-y-1.5">
                   <Label>Personentyp</Label>
                   <Select value={injuredPersonType} onValueChange={setInjuredPersonType}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="child">Kind</SelectItem>
                       <SelectItem value="adult">Erwachsener</SelectItem>
@@ -336,10 +502,10 @@ export default function CreateIncidentDialog({ open, onClose, onCreated, presele
           )}
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={() => { onClose(); resetForm(); }}>
               Abbrechen
             </Button>
-            <Button type="submit" disabled={createMutation.isPending}>
+            <Button type="submit" disabled={createMutation.isPending || !selectedProduct}>
               {createMutation.isPending ? "Wird gespeichert..." : "Schadensfall erfassen"}
             </Button>
           </DialogFooter>

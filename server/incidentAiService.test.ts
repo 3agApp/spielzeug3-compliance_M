@@ -1,23 +1,20 @@
 /**
  * server/incidentAiService.test.ts
  * ─────────────────────────────────────────────────────────────────────────────
- * Tests für den KI-gestützten Fallbewertungs-Service.
+ * Tests für den KI-gestützten Fallbewertungs-Service (erweiterte Produktdaten).
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
-// Mock LLM
 vi.mock("../server/_core/llm", () => ({
   invokeLLM: vi.fn(),
 }));
 
-// Mock DB
 vi.mock("../server/db", () => ({
   getDb: vi.fn(),
 }));
 
-// Mock requireRole (no-op)
 vi.mock("../server/shared", () => ({
   requireRole: vi.fn(),
   Errors: {
@@ -31,7 +28,7 @@ import { invokeLLM } from "../server/_core/llm";
 import { getDb } from "../server/db";
 import { incidentAiService } from "../server/domains/incidents/incidentAiService";
 
-// ─── Test Fixtures ────────────────────────────────────────────────────────────
+// ─── Fixtures ─────────────────────────────────────────────────────────────────
 
 const mockUser = {
   id: 1,
@@ -46,7 +43,7 @@ const mockIncident = {
   incidentType: "personal_injury",
   severity: "high",
   title: "Kind hat Kleinteile verschluckt",
-  description: "Ein 2-jähriges Kind hat abgebrochene Kleinteile eines Spielzeugautos verschluckt. Eltern berichten von Würgereiz.",
+  description: "Ein 2-jähriges Kind hat abgebrochene Kleinteile eines Spielzeugautos verschluckt.",
   injuryDescription: "Verschlucken von Kleinteilen, Würgereiz",
   injuredPersonAge: 2,
   injuredPersonType: "child",
@@ -55,7 +52,7 @@ const mockIncident = {
   reportedToAuthority: false,
   authorityName: null,
   affectedVersions: JSON.stringify(["v1.2", "v1.3"]),
-  affectedBatchNumbers: JSON.stringify(["CH-2024-001", "CH-2024-002"]),
+  affectedBatchNumbers: JSON.stringify(["CH-2024-001"]),
 };
 
 const mockProduct = {
@@ -75,21 +72,51 @@ const mockSafety = {
   warningText: "Enthält Kleinteile – Erstickungsgefahr",
   ageGrading: "3+",
   materialInformation: "ABS-Kunststoff",
+  usageRestrictions: "Nur Originalzubehör verwenden. Nicht für Kinder unter 3 Jahren.",
 };
 
 const mockEvidences = [
+  { id: 1, evidenceType: "photo", fileName: "schadensfoto.jpg", description: "Foto" },
+  { id: 2, evidenceType: "customer_statement", fileName: "Kundenaussage.pdf", description: "Elternaussage" },
+];
+
+const mockDocs = [
+  { id: 1, documentType: "test_report", fileName: "EN71-Prüfbericht.pdf", reviewStatus: "approved", expiryDate: null, includeInAiAnalysis: true },
+  { id: 2, documentType: "declaration_of_conformity", fileName: "DoC-2024.pdf", reviewStatus: "approved", expiryDate: null, includeInAiAnalysis: true },
+];
+
+const mockDeclarations = [
   {
     id: 1,
-    evidenceType: "photo",
-    fileName: "schadensfoto.jpg",
-    description: "Foto des beschädigten Spielzeugautos",
+    docNumber: "DOC-SZ3-2024-0001",
+    version: 1,
+    status: "ai_validated",
+    standards: JSON.stringify(["EN 71-1", "EN 71-2", "EN 71-3"]),
+    euDirectives: JSON.stringify(["2009/48/EG"]),
+    chRegulations: JSON.stringify([]),
+    testReportRef: "TR-2024-001",
+    aiValidationPassed: true,
+    aiValidationSummary: "Alle Anforderungen erfüllt",
   },
-  {
-    id: 2,
-    evidenceType: "customer_statement",
-    fileName: "Kundenaussage – 15.04.2026",
-    description: "Aussage der Eltern",
-  },
+];
+
+const mockComponents = [
+  { id: 1, name: "Karosserie", materialType: "plastic", supplierName: "Plastik GmbH", partNumber: "P-001" },
+  { id: 2, name: "Räder", materialType: "rubber", supplierName: "Gummi AG", partNumber: "R-002" },
+];
+
+const mockComponentDocs = [
+  { id: 1, componentId: 1, documentType: "test_report", fileName: "Karosserie-Test.pdf" },
+];
+
+const mockBatches = [
+  { id: 1, batchNumber: "CH-2024-001", goodsReceiptDate: new Date("2024-03-01"), notes: "Charge 1" },
+];
+
+const mockLabellingChecks = [
+  { id: 1, label: "CE-Kennzeichnung", checked: true, isMandatory: true, checkKey: "ce_mark" },
+  { id: 2, label: "Altersangabe", checked: true, isMandatory: true, checkKey: "age_grading" },
+  { id: 3, label: "Warnhinweise", checked: false, isMandatory: true, checkKey: "warnings" },
 ];
 
 const mockAiResponse = {
@@ -97,68 +124,83 @@ const mockAiResponse = {
   recallRecommended: true,
   recallScope: "Freiwilliger Rückruf aller betroffenen Chargen",
   regulatoryObligation: true,
-  regulatoryObligationReason: "Gemäss GPSR Art. 9 und PrSG §10 besteht Meldepflicht bei Personenschäden durch Spielzeug",
+  regulatoryObligationReason: "Meldepflicht nach GPSR Art. 9 und PrSG §10",
   regulatoryDeadlineDays: 3,
-  applicableRegulations: ["EN 71-1", "GPSR 2023/988", "PrSG SR 930.11", "Spielzeugverordnung SR 817.023.11"],
-  requiredDocuments: ["Prüfbericht EN 71", "Konformitätserklärung", "Arztbericht", "Fotos des Schadens"],
-  assessmentText: "Das Produkt weist eine kritische Sicherheitslücke auf: Kleinteile können sich lösen und von Kleinkindern verschluckt werden. Da das Produkt mit Altersangabe 3+ gekennzeichnet ist, aber offensichtlich auch für jüngere Kinder zugänglich war, besteht erhöhtes Risiko.",
-  summary: "Kritischer Personenschaden durch Kleinteile – sofortiger Rückruf und Behördenmeldung erforderlich.",
+  applicableRegulations: ["EN 71-1", "GPSR 2023/988", "PrSG SR 930.11"],
+  requiredDocuments: ["Prüfbericht EN 71", "Konformitätserklärung", "Arztbericht"],
+  assessmentText: "Das Produkt weist eine kritische Sicherheitslücke auf.",
+  summary: "Kritischer Personenschaden – sofortiger Rückruf erforderlich.",
   confidence: "high",
-  caveats: ["Vollständiger Prüfbericht noch nicht vorliegend", "Anzahl betroffener Einheiten unbekannt"],
+  caveats: ["Vollständiger Prüfbericht noch nicht vorliegend"],
 };
 
-// ─── Helper: Mock DB Setup ────────────────────────────────────────────────────
+// ─── Mock DB Builder ──────────────────────────────────────────────────────────
 
-function makeDbMock(overrides: {
+/**
+ * Baut einen Mock-DB, der auf Basis von Drizzle-Tabellen-Symbolen antwortet.
+ * Da der Service viele parallele Abfragen macht, verwenden wir einen
+ * call-counter-basierten Ansatz.
+ */
+function makeDbMock(opts: {
   incident?: any;
   product?: any;
   safety?: any;
   evidences?: any[];
+  docs?: any[];
+  declarations?: any[];
+  components?: any[];
+  componentDocs?: any[];
+  batches?: any[];
+  labellingChecks?: any[];
 } = {}) {
-  const incident = overrides.incident ?? mockIncident;
-  const product = overrides.product ?? mockProduct;
-  const safety = overrides.safety ?? mockSafety;
-  const evidences = overrides.evidences ?? mockEvidences;
+  const incident = opts.incident !== undefined ? opts.incident : mockIncident;
+  const product = opts.product !== undefined ? opts.product : mockProduct;
+  const safety = opts.safety !== undefined ? opts.safety : mockSafety;
+  const evidences = opts.evidences ?? mockEvidences;
+  const docs = opts.docs ?? mockDocs;
+  const declarations_ = opts.declarations ?? mockDeclarations;
+  const components = opts.components ?? mockComponents;
+  const componentDocs = opts.componentDocs ?? mockComponentDocs;
+  const batches = opts.batches ?? mockBatches;
+  const labellingChecks = opts.labellingChecks ?? mockLabellingChecks;
 
-  let selectCallCount = 0;
+  let callCount = 0;
+
+  const makeChain = (returnValue: any) => ({
+    from: vi.fn().mockReturnThis(),
+    where: vi.fn().mockResolvedValue(returnValue),
+  });
 
   const mockDb = {
     select: vi.fn().mockImplementation(() => {
-      selectCallCount++;
-      const callNum = selectCallCount;
-      return {
-        from: vi.fn().mockReturnThis(),
-        where: vi.fn().mockImplementation(() => {
-          // Call 1: incidents query
-          if (callNum === 1) return Promise.resolve([incident]);
-          // Call 2: products query
-          if (callNum === 2) return Promise.resolve(product ? [product] : []);
-          // Call 3: productSafetyEntries query
-          if (callNum === 3) return Promise.resolve(safety ? [safety] : []);
-          return Promise.resolve([]);
-        }),
-      };
+      callCount++;
+      const c = callCount;
+
+      // Call order (sequential, not parallel for test purposes):
+      // 1: incidents (getById)
+      // 2: products (getById)
+      // 3: productSafetyEntries
+      // 4: incidentEvidences
+      // 5: documents
+      // 6: declarations
+      // 7: productComponents
+      // 8: batchRecords
+      // 9: productLabellingChecks
+      // 10+: componentDocuments (inArray)
+
+      if (c === 1) return makeChain(incident ? [incident] : []);
+      if (c === 2) return makeChain(product ? [product] : []);
+      if (c === 3) return makeChain(safety ? [safety] : []);
+      if (c === 4) return makeChain(evidences);
+      if (c === 5) return makeChain(docs);
+      if (c === 6) return makeChain(declarations_);
+      if (c === 7) return makeChain(components);
+      if (c === 8) return makeChain(batches);
+      if (c === 9) return makeChain(labellingChecks);
+      // componentDocs (inArray – uses .where with inArray)
+      return makeChain(componentDocs);
     }),
   };
-
-  // Evidences query uses a different pattern (no where clause on last select)
-  let evidenceCallDone = false;
-  const originalSelect = mockDb.select;
-  mockDb.select = vi.fn().mockImplementation(() => {
-    selectCallCount++;
-    const callNum = selectCallCount;
-    return {
-      from: vi.fn().mockReturnThis(),
-      where: vi.fn().mockImplementation(() => {
-        if (callNum === 1) return Promise.resolve([incident]);
-        if (callNum === 2) return Promise.resolve(product ? [product] : []);
-        if (callNum === 3) return Promise.resolve(safety ? [safety] : []);
-        // Call 4: evidences query
-        if (callNum === 4) return Promise.resolve(evidences);
-        return Promise.resolve([]);
-      }),
-    };
-  });
 
   return mockDb;
 }
@@ -206,7 +248,7 @@ describe("incidentAiService.suggestAssessment", () => {
     expect(callArgs.messages[1].role).toBe("user");
   });
 
-  it("enthält Produktdaten im User-Prompt", async () => {
+  it("enthält Produktdaten und Sicherheitsinfos im User-Prompt", async () => {
     (getDb as any).mockResolvedValue(makeDbMock());
     (invokeLLM as any).mockResolvedValue({
       choices: [{ message: { content: JSON.stringify(mockAiResponse) } }],
@@ -236,13 +278,73 @@ describe("incidentAiService.suggestAssessment", () => {
     expect(userPrompt).toContain("Kundenaussage");
   });
 
+  it("enthält Dokumente und Deklarationen im User-Prompt", async () => {
+    (getDb as any).mockResolvedValue(makeDbMock());
+    (invokeLLM as any).mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify(mockAiResponse) } }],
+    });
+
+    await incidentAiService.suggestAssessment(mockUser, 42);
+
+    const callArgs = (invokeLLM as any).mock.calls[0][0];
+    const userPrompt = callArgs.messages[1].content as string;
+    expect(userPrompt).toContain("EN71-Prüfbericht.pdf");
+    expect(userPrompt).toContain("DOC-SZ3-2024-0001");
+    expect(userPrompt).toContain("EN 71-1");
+  });
+
+  it("enthält Komponenten und Chargeninformationen im User-Prompt", async () => {
+    (getDb as any).mockResolvedValue(makeDbMock());
+    (invokeLLM as any).mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify(mockAiResponse) } }],
+    });
+
+    await incidentAiService.suggestAssessment(mockUser, 42);
+
+    const callArgs = (invokeLLM as any).mock.calls[0][0];
+    const userPrompt = callArgs.messages[1].content as string;
+    expect(userPrompt).toContain("Karosserie");
+    expect(userPrompt).toContain("CH-2024-001");
+  });
+
+  it("enthält Herstellervorgaben und Nutzungsbeschränkungen im Prompt", async () => {
+    (getDb as any).mockResolvedValue(makeDbMock());
+    (invokeLLM as any).mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify(mockAiResponse) } }],
+    });
+
+    await incidentAiService.suggestAssessment(mockUser, 42);
+
+    const callArgs = (invokeLLM as any).mock.calls[0][0];
+    const userPrompt = callArgs.messages[1].content as string;
+    expect(userPrompt).toContain("Originalzubehör");
+    expect(userPrompt).toContain("Herstellervorgaben");
+  });
+
+  it("meldet fehlende Dokumente wenn keine vorhanden", async () => {
+    (getDb as any).mockResolvedValue(makeDbMock({ docs: [] }));
+    (invokeLLM as any).mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify(mockAiResponse) } }],
+    });
+
+    await incidentAiService.suggestAssessment(mockUser, 42);
+
+    const callArgs = (invokeLLM as any).mock.calls[0][0];
+    const userPrompt = callArgs.messages[1].content as string;
+    expect(userPrompt).toContain("Keine Dokumente hinterlegt");
+  });
+
   it("wirft NOT_FOUND wenn Incident nicht existiert", async () => {
-    const dbMock = makeDbMock({ incident: null });
-    // Override: first select returns empty array
-    (dbMock.select as any).mockImplementationOnce(() => ({
-      from: vi.fn().mockReturnThis(),
-      where: vi.fn().mockResolvedValue([]),
-    }));
+    let firstCall = true;
+    const dbMock = {
+      select: vi.fn().mockImplementation(() => ({
+        from: vi.fn().mockReturnThis(),
+        where: vi.fn().mockImplementation(() => {
+          if (firstCall) { firstCall = false; return Promise.resolve([]); }
+          return Promise.resolve([]);
+        }),
+      })),
+    };
     (getDb as any).mockResolvedValue(dbMock);
 
     await expect(
@@ -259,10 +361,23 @@ describe("incidentAiService.suggestAssessment", () => {
     ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
   });
 
-  it("funktioniert auch ohne verknüpftes Produkt", async () => {
-    (getDb as any).mockResolvedValue(makeDbMock({ product: null, safety: null }));
+  it("gibt Fallback-Werte zurück wenn LLM-Antwort unvollständig ist", async () => {
+    (getDb as any).mockResolvedValue(makeDbMock());
+    (invokeLLM as any).mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify({ riskLevel: "high" }) } }],
+    });
+
+    const result = await incidentAiService.suggestAssessment(mockUser, 42);
+    expect(result.riskLevel).toBe("high");
+    expect(result.recallRecommended).toBe(false);
+    expect(result.regulatoryObligation).toBe(false);
+    expect(Array.isArray(result.applicableRegulations)).toBe(true);
+    expect(Array.isArray(result.requiredDocuments)).toBe(true);
+    expect(Array.isArray(result.caveats)).toBe(true);
+  });
+
+  it("funktioniert auch ohne verknüpftes Produkt (kein productId)", async () => {
     const noProductIncident = { ...mockIncident, productId: null };
-    // Rebuild mock for incident without product
     let callCount = 0;
     const dbMock = {
       select: vi.fn().mockImplementation(() => {
@@ -285,35 +400,8 @@ describe("incidentAiService.suggestAssessment", () => {
 
     const result = await incidentAiService.suggestAssessment(mockUser, 42);
     expect(result.riskLevel).toBe("medium");
-    // Kein Produktname im Prompt
     const callArgs = (invokeLLM as any).mock.calls[0][0];
     const userPrompt = callArgs.messages[1].content as string;
     expect(userPrompt).not.toContain("Spielzeugauto Turbo");
-  });
-
-  it("gibt Fallback-Werte zurück wenn LLM-Antwort unvollständig ist", async () => {
-    (getDb as any).mockResolvedValue(makeDbMock());
-    // LLM gibt unvollständige Antwort zurück
-    (invokeLLM as any).mockResolvedValue({
-      choices: [{ message: { content: JSON.stringify({ riskLevel: "high" }) } }],
-    });
-
-    const result = await incidentAiService.suggestAssessment(mockUser, 42);
-    expect(result.riskLevel).toBe("high");
-    expect(result.recallRecommended).toBe(false); // Fallback
-    expect(result.regulatoryObligation).toBe(false); // Fallback
-    expect(Array.isArray(result.applicableRegulations)).toBe(true);
-    expect(Array.isArray(result.requiredDocuments)).toBe(true);
-    expect(Array.isArray(result.caveats)).toBe(true);
-  });
-
-  it("parst JSON korrekt wenn LLM content ein String ist", async () => {
-    (getDb as any).mockResolvedValue(makeDbMock());
-    (invokeLLM as any).mockResolvedValue({
-      choices: [{ message: { content: JSON.stringify(mockAiResponse) } }], // String
-    });
-
-    const result = await incidentAiService.suggestAssessment(mockUser, 42);
-    expect(result.riskLevel).toBe("critical");
   });
 });

@@ -16,8 +16,14 @@ import {
   incidentEvidences,
   products,
   productSafetyEntries,
+  documents,
+  productComponents,
+  componentDocuments,
+  declarations,
+  batchRecords,
+  productLabellingChecks,
 } from "../../../drizzle/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { requireRole } from "../../shared";
 import { TRPCError } from "@trpc/server";
 
@@ -86,7 +92,13 @@ function buildUserPrompt(
   incident: any,
   product: any,
   safety: any,
-  evidences: any[]
+  evidences: any[],
+  docs: any[],
+  components: any[],
+  componentDocs: any[],
+  declarations: any[],
+  batches: any[],
+  labellingChecks: any[]
 ): string {
   const parts: string[] = [];
 
@@ -144,6 +156,75 @@ function buildUserPrompt(
     if (safety.materialInformation) parts.push(`**Materialangaben:** ${safety.materialInformation}`);
   }
 
+  // ── Dokumente des Produkts ──
+  if (docs.length > 0) {
+    parts.push(`\n## Vorhandene Produktdokumente (${docs.length})`);
+    docs.forEach((d) => {
+      const status = d.reviewStatus === "approved" ? "✓ genehmigt" : d.reviewStatus === "rejected" ? "✗ abgelehnt" : "ausstehend";
+      const expiry = d.expiryDate ? ` (gültig bis ${new Date(d.expiryDate).toLocaleDateString("de-CH")})` : "";
+      parts.push(`- ${d.documentType ?? "Dokument"}: ${d.fileName} [${status}]${expiry}`);
+    });
+  } else {
+    parts.push(`\n## Vorhandene Produktdokumente`);
+    parts.push(`Keine Dokumente hinterlegt – erhöhtes Risiko bei Behördenanfragen.`);
+  }
+
+  // ── Deklarationen (Konformitätserklärungen) ──
+  if (declarations.length > 0) {
+    parts.push(`\n## Konformitätserklärungen (${declarations.length})`);
+    declarations.forEach((d) => {
+      const standards = parseJsonField(d.standards);
+      const directives = parseJsonField(d.euDirectives);
+      parts.push(`- ${d.docNumber} (v${d.version}) Status: ${d.status}${d.aiValidationPassed !== null ? `, KI-Validierung: ${d.aiValidationPassed ? "bestanden" : "NICHT bestanden"}` : ""}`);
+      if (standards.length > 0) parts.push(`  Normen: ${standards.join(", ")}`);
+      if (directives.length > 0) parts.push(`  EU-Richtlinien: ${directives.join(", ")}`);
+      if (d.testReportRef) parts.push(`  Prüfbericht-Referenz: ${d.testReportRef}`);
+    });
+  } else {
+    parts.push(`\n## Konformitätserklärungen`);
+    parts.push(`Keine Konformitätserklärungen vorhanden – kritisch für Behördenanfragen.`);
+  }
+
+  // ── Komponenten ──
+  if (components.length > 0) {
+    parts.push(`\n## Produktkomponenten (${components.length})`);
+    components.forEach((c) => {
+      const cDocs = componentDocs.filter((cd) => cd.componentId === c.id);
+      const docSummary = cDocs.length > 0
+        ? ` [${cDocs.length} Dokument(e): ${cDocs.map((cd) => cd.documentType).join(", ")}]`
+        : " [KEINE Dokumente]";
+      parts.push(`- ${c.name} (${c.materialType ?? "Material unbekannt"})${c.supplierName ? `, Lieferant: ${c.supplierName}` : ""}${c.partNumber ? `, Teilenr.: ${c.partNumber}` : ""}${docSummary}`);
+    });
+  }
+
+  // ── Chargeninformationen ──
+  if (batches.length > 0) {
+    parts.push(`\n## Chargeninformationen (${batches.length} Chargen)`);
+    batches.forEach((b) => {
+      const receiptDate = b.goodsReceiptDate ? ` (Wareneingang: ${new Date(b.goodsReceiptDate).toLocaleDateString("de-CH")})` : "";
+      parts.push(`- Charge ${b.batchNumber}${receiptDate}${b.notes ? `: ${b.notes}` : ""}`);
+    });
+  }
+
+  // ── Kennzeichnungs-Checks ──
+  if (labellingChecks.length > 0) {
+    const checked = labellingChecks.filter((l) => l.checked).length;
+    const unchecked = labellingChecks.filter((l) => !l.checked && l.isMandatory).length;
+    parts.push(`\n## Kennzeichnungs-Prüfungen`);
+    parts.push(`${checked} abgehakt, ${unchecked} Pflichtprüfungen noch offen`);
+    if (unchecked > 0) {
+      const openChecks = labellingChecks.filter((l) => !l.checked && l.isMandatory);
+      parts.push(`Offene Pflichtprüfungen: ${openChecks.map((l) => l.label).join(", ")}`);
+    }
+  }
+
+  // ── Herstellervorgaben (aus Sicherheitsdaten) ──
+  if (safety?.usageRestrictions) {
+    parts.push(`\n## Herstellervorgaben und Nutzungsbeschränkungen`);
+    parts.push(safety.usageRestrictions);
+    parts.push(`**Wichtig:** Prüfen ob der Kunde die Herstellervorgaben (Altersangabe, Originalzubehör, Nutzungsbedingungen) eingehalten hat.`);
+  }
+
   if (evidences.length > 0) {
     parts.push(`\n## Vorliegende Beweise`);
     evidences.forEach((e, i) => {
@@ -158,7 +239,10 @@ Berücksichtige dabei:
 2. Ob ein Rückruf notwendig oder empfehlenswert ist
 3. Ob eine behördliche Meldepflicht besteht (BAZL Schweiz / RAPEX EU)
 4. Welche Normen und Gesetze relevant sind
-5. Welche Dokumente für die Fallbearbeitung benötigt werden`);
+5. Welche Dokumente für die Fallbearbeitung benötigt werden
+6. Ob vorhandene Prüfberichte und Konformitätserklärungen den Vorfall abdecken
+7. Ob der Kunde die Herstellervorgaben eingehalten hat (Altersangabe, Originalzubehör, Nutzungsbedingungen)
+8. Ob fehlende Dokumente (Komponenten ohne Prüfberichte, keine Deklarationen) das Risiko erhöhen`);
 
   return parts.join("\n");
 }
@@ -348,9 +432,102 @@ export const incidentAiService = {
       .from(incidentEvidences)
       .where(eq(incidentEvidences.incidentId, incidentId));
 
-    // ── 4. KI-Analyse ─────────────────────────────────────────────────────
+    // ── 4. Erweiterte Produktdaten laden (Dokumente, Komponenten, Deklarationen, Chargen) ──
+    let productDocs: any[] = [];
+    let productComponents_: any[] = [];
+    let componentDocs_: any[] = [];
+    let productDeclarations: any[] = [];
+    let productBatches: any[] = [];
+    let productLabellingChecks_: any[] = [];
+
+    if (incident.productId) {
+      // Dokumente
+      productDocs = await db
+        .select({
+          id: documents.id,
+          documentType: documents.documentType,
+          fileName: documents.fileName,
+          reviewStatus: documents.reviewStatus,
+          expiryDate: documents.expiryDate,
+          includeInAiAnalysis: documents.includeInAiAnalysis,
+        })
+        .from(documents)
+        .where(and(eq(documents.productId, incident.productId), eq(documents.isArchived, false)));
+
+      // Konformitätserklärungen
+      productDeclarations = await db
+        .select({
+          id: declarations.id,
+          docNumber: declarations.docNumber,
+          version: declarations.version,
+          status: declarations.status,
+          standards: declarations.standards,
+          euDirectives: declarations.euDirectives,
+          chRegulations: declarations.chRegulations,
+          testReportRef: declarations.testReportRef,
+          aiValidationPassed: declarations.aiValidationPassed,
+          aiValidationSummary: declarations.aiValidationSummary,
+        })
+        .from(declarations)
+        .where(eq(declarations.productId, incident.productId));
+
+      // Komponenten
+      productComponents_ = await db
+        .select({
+          id: productComponents.id,
+          name: productComponents.name,
+          materialType: productComponents.materialType,
+          supplierName: productComponents.supplierName,
+          partNumber: productComponents.partNumber,
+        })
+        .from(productComponents)
+        .where(and(eq(productComponents.productId, incident.productId), eq(productComponents.active, true)));
+
+      // Komponenten-Dokumente
+      if (productComponents_.length > 0) {
+        const componentIds = productComponents_.map((c) => c.id);
+        componentDocs_ = await db
+          .select({
+            id: componentDocuments.id,
+            componentId: componentDocuments.componentId,
+            documentType: componentDocuments.documentType,
+            fileName: componentDocuments.fileName,
+          })
+          .from(componentDocuments)
+          .where(inArray(componentDocuments.componentId, componentIds));
+      }
+
+      // Chargeninformationen
+      productBatches = await db
+        .select({
+          id: batchRecords.id,
+          batchNumber: batchRecords.batchNumber,
+          goodsReceiptDate: batchRecords.goodsReceiptDate,
+          notes: batchRecords.notes,
+        })
+        .from(batchRecords)
+        .where(eq(batchRecords.productId, incident.productId));
+
+      // Kennzeichnungs-Checks
+      productLabellingChecks_ = await db
+        .select({
+          id: productLabellingChecks.id,
+          label: productLabellingChecks.label,
+          checked: productLabellingChecks.checked,
+          isMandatory: productLabellingChecks.isMandatory,
+          checkKey: productLabellingChecks.checkKey,
+        })
+        .from(productLabellingChecks)
+        .where(eq(productLabellingChecks.productId, incident.productId));
+    }
+
+    // ── 5. KI-Analyse ─────────────────────────────────────────────────────
     const systemPrompt = buildSystemPrompt();
-    const userPrompt = buildUserPrompt(incident, product, safety, evidences);
+    const userPrompt = buildUserPrompt(
+      incident, product, safety, evidences,
+      productDocs, productComponents_, componentDocs_,
+      productDeclarations, productBatches, productLabellingChecks_
+    );
 
     let rawResult: any;
     try {
