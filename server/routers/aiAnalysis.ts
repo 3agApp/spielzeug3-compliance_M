@@ -7,7 +7,7 @@
 
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
-import { aiAnalysisService } from "../domains/ai/aiAnalysisService";
+import { aiAnalysisService, getAnalysisProgressByProduct } from "../domains/ai/aiAnalysisService";
 import { toTRPCError } from "../shared";
 
 export const aiAnalysisRouter = router({
@@ -90,5 +90,24 @@ export const aiAnalysisRouter = router({
       } catch (err) {
         throw toTRPCError(err);
       }
+    }),
+
+  /** Get live analysis progress for a product (in-memory, polling-friendly). */
+  getProgress: protectedProcedure
+    .input(z.object({ productId: z.number() }))
+    .query(async ({ ctx: _ctx, input }) => {
+      const progress = getAnalysisProgressByProduct(input.productId);
+      if (!progress) return null;
+      return {
+        analysisId: progress.analysisId,
+        productId: progress.productId,
+        status: progress.status,
+        totalDocs: progress.totalDocs,
+        processedDocs: progress.processedDocs,
+        currentBatch: progress.currentBatch,
+        totalBatches: progress.totalBatches,
+        phase: progress.phase,
+        startedAt: progress.startedAt,
+      };
     }),
 });

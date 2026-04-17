@@ -37,7 +37,7 @@ import {
   Sparkles,
   XCircle,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useLang } from "@/lib/i18n";
 import { translateError } from "@/lib/translateError";
@@ -801,6 +801,11 @@ export function AiAnalysisCard({ productId, canTrigger = false, supplierEmail, s
   const [sendTo, setSendTo] = useState("");
   const [sendSubject, setSendSubject] = useState("");
   const [sendBody, setSendBody] = useState("");
+  const [detectedComponents, setDetectedComponents] = useState<Array<{ componentName: string; documentCount: number }>>([]);
+  const [showComponentsNotice, setShowComponentsNotice] = useState(false);
+  // Polling for live progress
+  const [pollingEnabled, setPollingEnabled] = useState(false);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const sendEmailMutation = trpc.email.sendManufacturerEmail.useMutation({
     onSuccess: () => {
@@ -847,28 +852,155 @@ export function AiAnalysisCard({ productId, canTrigger = false, supplierEmail, s
   const aiConfigured = apiKeyStatusQuery.data?.configured ?? false;
   const utils = trpc.useUtils();
 
+  const progressQuery = trpc.aiAnalysis.getProgress.useQuery(
+    { productId },
+    { enabled: pollingEnabled, refetchInterval: pollingEnabled ? 2000 : false }
+  );
+
   const analyzeMutation = trpc.aiAnalysis.analyzeProduct.useMutation({
-    onSuccess: () => {
-      toast.success("AI analysis completed");
+    onMutate: () => {
+      setPollingEnabled(true);
+      setShowComponentsNotice(false);
+      setDetectedComponents([]);
+    },
+    onSuccess: (data: any) => {
+      toast.success(lang === "de" ? "KI-Analyse abgeschlossen" : "AI analysis completed");
+      setPollingEnabled(false);
       utils.aiAnalysis.getLatest.invalidate({ productId });
       utils.aiAnalysis.getHistory.invalidate({ productId });
+      // Show detected components notification
+      const detected = data?.result?.detectedComponents ?? [];
+      if (detected.length > 0) {
+        setDetectedComponents(detected);
+        setShowComponentsNotice(true);
+      }
     },
-    onError: (e: any) => toast.error(translateError(e.message, lang)),
+    onError: (e: any) => {
+      setPollingEnabled(false);
+      toast.error(translateError(e.message, lang));
+    },
   });
+
+  // Stop polling when progress is done/failed
+  useEffect(() => {
+    if (!pollingEnabled) return;
+    const p = progressQuery.data;
+    if (p && (p.status === "completed" || p.status === "failed")) {
+      setPollingEnabled(false);
+    }
+  }, [progressQuery.data, pollingEnabled]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, []);
 
   const analysis = latestQuery.data;
   const isRunning = analyzeMutation.isPending;
+  const progress = pollingEnabled ? progressQuery.data : null;
+
+  // Phase labels
+  function phaseLabel(phase: string | undefined): string {
+    if (lang === "de") {
+      switch (phase) {
+        case "extracting": return "Extrahiere Dokumenttexte...";
+        case "analyzing_docs": return "Analysiere Dokumente...";
+        case "detecting_components": return "Erkenne Komponenten...";
+        case "risk_assessment": return "Risikobewertung...";
+        case "done": return "Abgeschlossen";
+        default: return "Analyse läuft...";
+      }
+    } else {
+      switch (phase) {
+        case "extracting": return "Extracting document text...";
+        case "analyzing_docs": return "Analysing documents...";
+        case "detecting_components": return "Detecting components...";
+        case "risk_assessment": return "Risk assessment...";
+        case "done": return "Done";
+        default: return "Analysis running...";
+      }
+    }
+  }
 
   if (latestQuery.isLoading) {
     return (
       <Card>
         <CardContent className="py-10 flex items-center justify-center text-muted-foreground text-sm gap-2">
           <RefreshCw className="h-4 w-4 animate-spin" />
-          Loading analysis...
+          {lang === "de" ? "Lade Analyse..." : "Loading analysis..."}
         </CardContent>
       </Card>
     );
   }
+
+  // ── Progress Banner ──────────────────────────────────────────────────────
+  const progressBanner = isRunning ? (
+    <div className="rounded-lg border border-violet-200 bg-violet-50 dark:bg-violet-950/30 dark:border-violet-800 p-4 flex flex-col gap-2">
+      <div className="flex items-center gap-2 text-sm font-medium text-violet-800 dark:text-violet-300">
+        <RefreshCw className="h-4 w-4 animate-spin" />
+        {progress ? phaseLabel(progress.phase) : (lang === "de" ? "Analyse läuft..." : "Analysis running...")}
+      </div>
+      {progress && progress.totalDocs > 0 && (
+        <>
+          <div className="flex items-center justify-between text-xs text-violet-700 dark:text-violet-400">
+            <span>
+              {lang === "de"
+                ? `Dokument ${progress.processedDocs} / ${progress.totalDocs}`
+                : `Document ${progress.processedDocs} / ${progress.totalDocs}`}
+            </span>
+            {progress.totalBatches > 1 && (
+              <span>
+                {lang === "de"
+                  ? `Batch ${progress.currentBatch} / ${progress.totalBatches}`
+                  : `Batch ${progress.currentBatch} / ${progress.totalBatches}`}
+              </span>
+            )}
+          </div>
+          <div className="w-full bg-violet-200 dark:bg-violet-900 rounded-full h-1.5 overflow-hidden">
+            <div
+              className="bg-violet-600 h-1.5 rounded-full transition-all duration-500"
+              style={{ width: `${Math.round((progress.processedDocs / progress.totalDocs) * 100)}%` }}
+            />
+          </div>
+        </>
+      )}
+    </div>
+  ) : null;
+
+  // ── Detected Components Notice ────────────────────────────────────────────
+  const componentsNotice = showComponentsNotice && detectedComponents.length > 0 ? (
+    <div className="rounded-lg border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-800 p-4">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-start gap-2">
+          <CheckCircle2 className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
+          <div>
+            <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">
+              {lang === "de"
+                ? `${detectedComponents.length} Komponente${detectedComponents.length !== 1 ? "n" : ""} erkannt und angelegt`
+                : `${detectedComponents.length} component${detectedComponents.length !== 1 ? "s" : ""} detected and created`}
+            </p>
+            <ul className="mt-1 space-y-0.5">
+              {detectedComponents.map((c) => (
+                <li key={c.componentName} className="text-xs text-emerald-700 dark:text-emerald-400">
+                  • {c.componentName} ({c.documentCount} {lang === "de" ? "Dok." : "doc."})
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowComponentsNotice(false)}
+          className="text-emerald-600 hover:text-emerald-800 text-xs shrink-0"
+          aria-label="Schließen"
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+  ) : null;
 
   if (!analysis) {
     return (
@@ -896,7 +1028,9 @@ export function AiAnalysisCard({ productId, canTrigger = false, supplierEmail, s
               className="gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white disabled:opacity-50"
             >
               {isRunning ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              {isRunning ? "Analysing..." : "Start AI Analysis"}
+              {isRunning
+                ? (lang === "de" ? "Analysiere..." : "Analysing...")
+                : (lang === "de" ? "KI-Analyse starten" : "Start AI Analysis")}
             </Button>
           )}
         </CardContent>
@@ -910,12 +1044,14 @@ export function AiAnalysisCard({ productId, canTrigger = false, supplierEmail, s
 
   return (
     <div className="space-y-4">
+      {progressBanner}
+      {componentsNotice}
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <CardTitle className="text-base flex items-center gap-2">
               <Bot className="h-4 w-4 text-primary" />
-              AI Analysis
+              {lang === "de" ? "KI-Analyse" : "AI Analysis"}
             </CardTitle>
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs text-muted-foreground flex items-center gap-1">
@@ -977,7 +1113,9 @@ export function AiAnalysisCard({ productId, canTrigger = false, supplierEmail, s
                   className={`h-7 text-xs gap-1 ${!aiConfigured ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
                   {isRunning ? <RefreshCw className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
-                  {isRunning ? "Analysing..." : "Re-analyse"}
+                  {isRunning
+                    ? (lang === "de" ? "Analysiere..." : "Analysing...")
+                    : (lang === "de" ? "Neu analysieren" : "Re-analyse")}
                 </Button>
               )}
             </div>

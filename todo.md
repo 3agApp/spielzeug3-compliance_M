@@ -972,3 +972,14 @@
 - [x] Backend: products.list – brand-Filter-Parameter hinzufügen (falls noch nicht vorhanden)
 - [x] Backend: products.getBrands – Distinct-Marken-Liste für Dropdown
 - [x] Frontend: Marken-Filter-Dropdown in Produktliste neben Status-Filter
+
+### KI-Dokumentenanalyse-Verbesserungen
+- [x] Backend: Dokument-Limit aufheben (alle Dokumente analysieren, nicht nur 6)
+- [x] Backend: Batching-Mechanismus (DOC_BATCH_SIZE=6 pro LLM-Aufruf) für grosse Dokumentmengen
+- [x] Backend: Fortschritts-Tracking (in-memory progressStore: currentBatch, totalBatches, processedDocs, phase)
+- [x] Backend: getProgress tRPC-Prozedur (Polling-Endpunkt nach productId)
+- [x] Backend: KI-Komponenten-Erkennung aus Dokumentnamen (WiFi, BT, USB-Kabel, Batterie, NFC, Speaker, Display, EMC, PCB, ...)
+- [x] Backend: Automatische Komponenten-Anlage und Dokument-Zuweisung nach Erkennung (detectAndCreateComponents)
+- [x] Frontend: Fortschrittsbalken/Status-Banner während Analyse (Phase-Label + Fortschrittsbalken + Batch-Zähler)
+- [x] Frontend: Komponenten-Erkennungs-Benachrichtigung nach Analyse (grüne Info-Box mit Liste der erkannten Komponenten)
+- [x] Tests: Batching-Logik und Komponenten-Erkennung testen (aiAnalysisBatching.test.ts, 22 Tests)

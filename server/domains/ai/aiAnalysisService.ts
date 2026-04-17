@@ -18,6 +18,8 @@
 import {
   createAiAnalysis,
   createAuditLog,
+  createComponent,
+  createComponentDocument,
   getAiAnalysisHistory,
   getAllComponentDocumentsByProduct,
   getComponentsByProduct,
@@ -33,6 +35,34 @@ import { Errors, requireRole, assertSupplierOrInternal, ADMIN_ROLES } from "../.
 import type { UserContext } from "../../shared/tenantGuard";
 import { extractDocumentText } from "./documentExtractor";
 import { invokeTenantLLM, getTenantAIConfig, testTenantAIKey } from "./tenantLLM";
+
+// ─── Batch size for document analysis ────────────────────────────────────────
+const DOC_BATCH_SIZE = 6;
+
+// ─── In-memory progress store (per analysisId) ───────────────────────────────
+interface AnalysisProgress {
+  analysisId: number;
+  productId: number;
+  status: "running" | "completed" | "failed";
+  totalDocs: number;
+  processedDocs: number;
+  currentBatch: number;
+  totalBatches: number;
+  phase: "extracting" | "analyzing_docs" | "risk_assessment" | "detecting_components" | "done";
+  startedAt: number;
+}
+const progressStore = new Map<number, AnalysisProgress>();
+
+export function getAnalysisProgress(analysisId: number): AnalysisProgress | undefined {
+  return progressStore.get(analysisId);
+}
+
+export function getAnalysisProgressByProduct(productId: number): AnalysisProgress | undefined {
+  for (const p of Array.from(progressStore.values())) {
+    if (p.productId === productId && p.status === "running") return p;
+  }
+  return undefined;
+}
 
 // ─── Legal requirements per document type ─────────────────────────────────────
 
@@ -433,13 +463,29 @@ export const aiAnalysisService = {
       triggeredByUserId: user.id,
     } as any);
 
+    // Initialise progress tracking
+    const totalBatches = Math.ceil(docs.length / DOC_BATCH_SIZE);
+    const progress: AnalysisProgress = {
+      analysisId,
+      productId,
+      status: "running",
+      totalDocs: docs.length,
+      processedDocs: 0,
+      currentBatch: 0,
+      totalBatches,
+      phase: "extracting",
+      startedAt: Date.now(),
+    };
+    progressStore.set(analysisId, progress);
+
     try {
       // ── Step 1: Per-document analysis with EU/CH legal requirements ────────
       let documentAnalysis: any[] = [];
       let emailTemplate: any = null;
 
       if (docs.length > 0) {
-        // Extract text from each document (PDF) in parallel
+        // Phase 1: Extract text from all documents in parallel
+        progress.phase = "extracting";
         const extractedTexts = new Map<number, string>();
         await Promise.all(
           docs.map(async (doc) => {
@@ -450,78 +496,75 @@ export const aiAnalysisService = {
           })
         );
 
-        const docPrompt = buildDocumentAnalysisPrompt(product, docs, extractedTexts);
-        const docResponse = await invokeTenantLLM({
-          messages: [
-            {
-              role: "system",
-              content:
-                "You are a senior toy industry compliance expert. Respond ONLY with valid JSON, no markdown, no extra text. ALL text values in your JSON response MUST be in English – never German or any other language. The internal review status (pending/approved/rejected) is a workflow status only – do NOT penalise documents for having 'pending' status.",
-            },
-            { role: "user", content: docPrompt },
-          ],
-          response_format: {
-            type: "json_schema",
-            json_schema: {
-              name: "document_analysis",
-              strict: true,
-              schema: {
-                type: "object",
+        // Phase 2: Analyse documents in batches of DOC_BATCH_SIZE
+        progress.phase = "analyzing_docs";
+        const docSchema = {
+          type: "object" as const,
+          properties: {
+            documentAnalysis: {
+              type: "array" as const,
+              items: {
+                type: "object" as const,
                 properties: {
-                  documentAnalysis: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        documentId: { type: "number" },
-                        documentType: { type: "string" },
-                        fileName: { type: "string" },
-                        score: { type: "number" },
-                        status: { type: "string" },
-                        legalBasis: { type: "string" },
-                        issues: { type: "array", items: { type: "string" } },
-                        positives: { type: "array", items: { type: "string" } },
-                        missingElements: { type: "array", items: { type: "string" } },
-                        emailTemplate: { type: "string" },
-                      },
-                      required: [
-                        "documentId",
-                        "documentType",
-                        "fileName",
-                        "score",
-                        "status",
-                        "legalBasis",
-                        "issues",
-                        "positives",
-                        "missingElements",
-                        "emailTemplate",
-                      ],
-                      additionalProperties: false,
-                    },
-                  },
+                  documentId: { type: "number" as const },
+                  documentType: { type: "string" as const },
+                  fileName: { type: "string" as const },
+                  score: { type: "number" as const },
+                  status: { type: "string" as const },
+                  legalBasis: { type: "string" as const },
+                  issues: { type: "array" as const, items: { type: "string" as const } },
+                  positives: { type: "array" as const, items: { type: "string" as const } },
+                  missingElements: { type: "array" as const, items: { type: "string" as const } },
+                  emailTemplate: { type: "string" as const },
                 },
-                required: ["documentAnalysis"],
+                required: ["documentId","documentType","fileName","score","status","legalBasis","issues","positives","missingElements","emailTemplate"],
                 additionalProperties: false,
               },
             },
           },
-        });
+          required: ["documentAnalysis"],
+          additionalProperties: false,
+        };
 
-        const docContent = docResponse.content;
-        const docParsed = JSON.parse(docContent);
-        documentAnalysis = (docParsed.documentAnalysis ?? []).map((d: any) => {
-          // Post-processing: enforce score consistency with status
-          // If status is "ok" and there are no issues or missing elements, score must be 100
-          if (
-            d.status === "ok" &&
-            (!d.issues || d.issues.length === 0) &&
-            (!d.missingElements || d.missingElements.length === 0) &&
-            d.score < 100
-          ) {
-            return { ...d, score: 100 };
-          }
-          return d;
-        });
+        for (let batchIdx = 0; batchIdx < totalBatches; batchIdx++) {
+          const batchDocs = docs.slice(batchIdx * DOC_BATCH_SIZE, (batchIdx + 1) * DOC_BATCH_SIZE);
+          progress.currentBatch = batchIdx + 1;
+
+          const docPrompt = buildDocumentAnalysisPrompt(product, batchDocs, extractedTexts);
+          const docResponse = await invokeTenantLLM({
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are a senior toy industry compliance expert. Respond ONLY with valid JSON, no markdown, no extra text. ALL text values in your JSON response MUST be in English – never German or any other language. The internal review status (pending/approved/rejected) is a workflow status only – do NOT penalise documents for having 'pending' status.",
+              },
+              { role: "user", content: docPrompt },
+            ],
+            response_format: {
+              type: "json_schema",
+              json_schema: {
+                name: "document_analysis",
+                strict: true,
+                schema: docSchema,
+              },
+            },
+          });
+
+          const docParsed = JSON.parse(docResponse.content);
+          const batchResults = (docParsed.documentAnalysis ?? []).map((d: any) => {
+            if (
+              d.status === "ok" &&
+              (!d.issues || d.issues.length === 0) &&
+              (!d.missingElements || d.missingElements.length === 0) &&
+              d.score < 100
+            ) {
+              return { ...d, score: 100 };
+            }
+            return d;
+          });
+          documentAnalysis = documentAnalysis.concat(batchResults);
+          progress.processedDocs = Math.min(docs.length, (batchIdx + 1) * DOC_BATCH_SIZE);
+        }
 
         // Build combined email template for all documents with issues
         const docsWithIssues = documentAnalysis.filter(
@@ -535,7 +578,20 @@ export const aiAnalysisService = {
         }
       }
 
-      // ── Step 2: Overall risk assessment ────────────────────────────────────
+      // ── Step 2: KI-Komponenten-Erkennung aus Dokumentnamen ───────────────
+      progress.phase = "detecting_components";
+      let detectedComponents: any[] = [];
+      if (docs.length > 0 && components.length === 0) {
+        // Only auto-detect if no components exist yet
+        try {
+          detectedComponents = await detectAndCreateComponents(productId, docs, user.id);
+        } catch (_e) {
+          // Non-fatal – continue with analysis
+        }
+      }
+
+      // ── Step 3: Overall risk assessment ────────────────────────────────────
+      progress.phase = "risk_assessment";
       const riskPrompt = buildRiskAssessmentPrompt(product, docs, safety, components, componentDocs, documentAnalysis);
       const riskResponse = await invokeTenantLLM({
         messages: [
@@ -666,6 +722,12 @@ export const aiAnalysisService = {
         performedByUserId: user.id,
       });
 
+      progress.phase = "done";
+      progress.status = "completed";
+      progress.processedDocs = docs.length;
+      // Clean up after 10 minutes
+      setTimeout(() => progressStore.delete(analysisId), 10 * 60 * 1000);
+
       return {
         success: true,
         analysisId,
@@ -673,6 +735,7 @@ export const aiAnalysisService = {
           ...parsed,
           documentAnalysis,
           emailTemplate,
+          detectedComponents,
         },
       };
     } catch (err) {
@@ -680,6 +743,11 @@ export const aiAnalysisService = {
         status: "failed",
         errorMessage: err instanceof Error ? err.message : "Unknown error",
       });
+      if (progressStore.has(analysisId)) {
+        const p = progressStore.get(analysisId)!;
+        p.status = "failed";
+        setTimeout(() => progressStore.delete(analysisId), 5 * 60 * 1000);
+      }
       throw err;
     }
   },
@@ -722,6 +790,108 @@ export const aiAnalysisService = {
     return { success: true };
   },
 };
+
+// ─── Component detection from document names ─────────────────────────────────
+
+/**
+ * Component keywords mapped to materialType.
+ * Matches against document file names to suggest components.
+ */
+const COMPONENT_PATTERNS: Array<{ regex: RegExp; name: string; materialType: string }> = [
+  { regex: /wifi|wlan|wireless/i,        name: "WiFi Module",      materialType: "electronic" },
+  { regex: /bluetooth|bt[_\s-]/i,        name: "Bluetooth Module", materialType: "electronic" },
+  { regex: /nfc/i,                        name: "NFC Module",       materialType: "electronic" },
+  { regex: /battery|batterie|akku|18650/i, name: "Battery",         materialType: "electronic" },
+  { regex: /usb[_\s-]?cable|usb.*kabel/i, name: "USB Cable",        materialType: "electronic" },
+  { regex: /charger|ladekabel|netzteil/i,  name: "Charger / Power Adapter", materialType: "electronic" },
+  { regex: /speaker|lautsprecher/i,        name: "Speaker",         materialType: "electronic" },
+  { regex: /display|screen|lcd|oled/i,     name: "Display",         materialType: "electronic" },
+  { regex: /emc|emv|electromagnetic/i,     name: "EMC Module",      materialType: "electronic" },
+  { regex: /cybersecurity|cyber/i,         name: "Cybersecurity Component", materialType: "electronic" },
+  { regex: /pcb|circuit|platine/i,         name: "PCB / Circuit Board", materialType: "electronic" },
+  { regex: /plastic|kunststoff/i,          name: "Plastic Housing", materialType: "plastic" },
+  { regex: /textile|stoff|fabric/i,        name: "Textile Component", materialType: "textile" },
+  { regex: /rubber|gummi/i,                name: "Rubber Component", materialType: "rubber" },
+  { regex: /paint|lacquer|farbe/i,         name: "Paint / Coating", materialType: "paint_coating" },
+];
+
+/**
+ * Detect components from document file names and create them in the DB.
+ * Also links each document to the detected component.
+ * Returns the list of created components.
+ */
+async function detectAndCreateComponents(
+  productId: number,
+  docs: any[],
+  createdByUserId: number
+): Promise<Array<{ componentName: string; documentCount: number }>> {
+  // Map: componentName → { materialType, docIds[] }
+  const componentMap = new Map<string, { materialType: string; docIds: number[] }>();
+
+  for (const doc of docs) {
+    const fileName = (doc.fileName ?? "").toLowerCase();
+    for (const pattern of COMPONENT_PATTERNS) {
+      if (pattern.regex.test(fileName)) {
+        const existing = componentMap.get(pattern.name);
+        if (existing) {
+          existing.docIds.push(doc.id);
+        } else {
+          componentMap.set(pattern.name, { materialType: pattern.materialType, docIds: [doc.id] });
+        }
+        break; // Only assign to first matching component
+      }
+    }
+  }
+
+  if (componentMap.size === 0) return [];
+
+  const created: Array<{ componentName: string; documentCount: number }> = [];
+
+  for (const [name, { materialType, docIds }] of Array.from(componentMap.entries())) {
+    try {
+      // Insert component
+      const insertResult = await createComponent({
+        productId,
+        name,
+        materialType: materialType as any,
+        sortOrder: 0,
+        active: true,
+        createdByUserId,
+      });
+      // Drizzle insert returns ResultSetHeader for MySQL
+      const componentId = (insertResult as any).insertId as number;
+      if (!componentId) continue;
+
+      // Link documents to component
+      for (const docId of docIds) {
+        // Find the original doc to copy metadata
+        const originalDoc = docs.find((d) => d.id === docId);
+        if (!originalDoc) continue;
+        try {
+          await createComponentDocument({
+            componentId,
+            productId,
+            documentType: originalDoc.documentType ?? "other",
+            standard: originalDoc.standard ?? null,
+            fileName: originalDoc.fileName ?? "unknown",
+            fileUrl: originalDoc.fileUrl ?? "",
+            fileKey: originalDoc.fileKey ?? "",
+            mimeType: originalDoc.mimeType ?? "application/pdf",
+            fileSizeBytes: originalDoc.fileSizeBytes ?? null,
+            uploadedByUserId: createdByUserId,
+          } as any);
+        } catch (_e) {
+          // Non-fatal if document link fails
+        }
+      }
+      created.push({ componentName: name, documentCount: docIds.length });
+    } catch (_e) {
+      // Non-fatal if component creation fails
+    }
+  }
+
+  return created;
+}
 
 // ─── Email template builder ───────────────────────────────────────────────────
 
