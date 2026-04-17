@@ -138,6 +138,8 @@ export const productsRouter = router({
         kontorId: z.string().optional(),
         categoryId: z.number().optional(),
         templateId: z.number().optional(),
+        versionNumber: z.string().max(64).optional(),
+        parentProductId: z.number().int().positive().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -156,6 +158,8 @@ export const productsRouter = router({
           ean: input.ean,
           brand: input.brand,
           tenantId: ctx.user.tenantId ?? 1,
+          versionNumber: input.versionNumber,
+          parentProductId: input.parentProductId,
         });
 
         // Template-specific logic: apply required documents
@@ -232,6 +236,8 @@ export const productsRouter = router({
         categoryId: z.number().nullable().optional(),
         templateId: z.number().nullable().optional(),
         kontorId: z.string().optional(),
+        versionNumber: z.string().max(64).nullable().optional(),
+        parentProductId: z.number().int().positive().nullable().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -239,6 +245,31 @@ export const productsRouter = router({
         const { id, ...data } = input;
         await productService.update(ctx.user as any, { productId: id, ...data });
         return { success: true };
+      } catch (err) {
+        throw toTRPCError(err);
+      }
+    }),
+
+  getVersions: protectedProcedure
+    .input(z.object({ productId: z.number().int().positive() }))
+    .query(async ({ ctx, input }) => {
+      try {
+        return await productService.getVersions(ctx.user, input.productId);
+      } catch (err) {
+        throw toTRPCError(err);
+      }
+    }),
+
+  createVersion: protectedProcedure
+    .input(
+      z.object({
+        sourceProductId: z.number().int().positive(),
+        versionNumber: z.string().min(1).max(64),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        return await productService.createVersion(ctx.user as any, input);
       } catch (err) {
         throw toTRPCError(err);
       }

@@ -58,6 +58,10 @@ export interface CreateProductInput {
   productCategoryId?: number;
   templateId?: number;
   tenantId?: number;
+  /** Optional version label, e.g. "v1", "v2", "2024", "EU" */
+  versionNumber?: string;
+  /** FK to the root/parent product when this is a variant */
+  parentProductId?: number;
 }
 
 export interface UpdateProductInput {
@@ -75,6 +79,10 @@ export interface UpdateProductInput {
   categoryId?: number | null;
   templateId?: number | null;
   kontorId?: string;
+  /** Update the version label */
+  versionNumber?: string | null;
+  /** Re-link to a different parent product */
+  parentProductId?: number | null;
 }
 
 export interface WorkflowActionInput {
@@ -311,6 +319,71 @@ export const productService = {
       });
     }
     return { success: true };
+  },
+
+  // ─── Versioning ───────────────────────────────────────────────────────────
+
+  /**
+   * Return all versions of a product family (same parentProductId or self as root).
+   * The root product is the one where parentProductId IS NULL and id matches.
+   */
+  async getVersions(user: UserContext, productId: number) {
+    const product = await getProductById(productId);
+    if (!product) throw Errors.notFound("Product", productId);
+    assertSupplierOrInternal(user, product.supplierId);
+
+    // Determine the root id: if this product has a parentProductId, use that; otherwise use self
+    const rootId = (product as any).parentProductId ?? product.id;
+
+    // Fetch all products that share this root (root itself + all children)
+    const allProducts = await getAllProducts({});
+    const family = allProducts.filter(
+      (p: any) =>
+        p.id === rootId ||
+        p.parentProductId === rootId
+    );
+    return family;
+  },
+
+  /**
+   * Create a new version of an existing product.
+   * Copies core metadata; components and documents are NOT copied (they differ per version).
+   */
+  async createVersion(
+    user: UserContext & { id: number },
+    input: { sourceProductId: number; versionNumber: string }
+  ) {
+    requireRole(user.complianceRole, ["administrator", "compliance_manager", "internal_employee"]);
+    const source = await getProductById(input.sourceProductId);
+    if (!source) throw Errors.notFound("Product", input.sourceProductId);
+
+    // The root of the family is either the source itself or its parent
+    const rootId = (source as any).parentProductId ?? source.id;
+
+    const newProductId = await createProduct({
+      productName: source.productName,
+      supplierId: source.supplierId,
+      internalArticleNumber: source.internalArticleNumber ?? undefined,
+      supplierArticleNumber: source.supplierArticleNumber ?? undefined,
+      orderNumber: source.orderNumber ?? undefined,
+      ean: source.ean ?? undefined,
+      brand: source.brand ?? undefined,
+      tenantId: source.tenantId ?? 1,
+      status: "open",
+      versionNumber: input.versionNumber,
+      parentProductId: rootId,
+    } as any);
+
+    const newId = typeof newProductId === "number" ? newProductId : (newProductId as any).insertId;
+
+    await createAuditLog({
+      entityType: "product",
+      entityId: newId ?? 0,
+      action: "version_created",
+      performedByUserId: user.id,
+      payloadSnapshot: { sourceProductId: input.sourceProductId, versionNumber: input.versionNumber } as any,
+    });
+    return { success: true, productId: newId };
   },
 
   /**

@@ -461,7 +461,7 @@
 
 ## Produkt-Landingpage für Endkunden (QR-Code-Scan)
 - [ ] DB-Schema: publicDownload (boolean, default false) in documents-Tabelle
-- [ ] Migration: ALTER TABLE documents ADD publicDownload
+- [x] Migration: ALTER TABLE documents ADD publicDownload
 - [ ] Backend: tenant.getPublicProduct gibt freigegebene Dokumente zurück (nur approved + publicDownload=true)
 - [ ] Backend: publicDownload-Feld in documents-Router (toggle für Betreiber)
 - [ ] Frontend: Neues Landingpage-Design (PublicProductPage.tsx) – Hero, Siegel-Badge, Dokument-Download-Sektion
@@ -875,3 +875,16 @@
 - [x] Tests aktualisiert + CH-Konformitäts-Test hinzugefügt (267 Tests, alle grün)
 - [ ] Seal-Vorschau: QR-Code und Link zur öffentlichen Produktseite im Seal & QR Code Tab anzeigen (auch vor Aktivierung als Preview-Modus)
 - [x] Seal-Vorschau: QR-Code und Link zur öffentlichen Produktseite im Seal & QR Code Tab anzeigen (auch vor Aktivierung als Preview-Modus)
+
+## Produktversionierung (versionNumber + parentProductId)
+- [x] Schema: versionNumber (varchar 64, optional) und parentProductId (int, FK auf products.id) zur products-Tabelle hinzufügen
+- [x] Migration: ALTER TABLE products ausführen
+- [x] Backend: products.list und products.getById um versionNumber/parentProductId erweitern
+- [x] Backend: products.create und products.update um versionNumber/parentProductId erweitern
+- [x] Backend: products.getVersions Prozedur (alle Versionen eines Produkts via parentProductId)
+- [x] Backend: products.createVersion Prozedur (neue Version eines bestehenden Produkts anlegen, Komponenten/Dokumente optional kopieren)
+- [x] Frontend: Produktliste – Versionsnummer als Badge neben Produktnamen anzeigen
+- [x] Frontend: Produktdetail – Versionsnummer im Header anzeigen und editierbar machen
+- [ ] Frontend: Produktdetail – "Andere Versionen"-Panel mit Links zu Geschwisterversionen
+- [x] Frontend: Produkt erstellen – Versionsnummer als optionales Feld
+- [ ] Laravel-Modul: ProductVersion Migration, Model, Controller, Routes als ZIP exportieren

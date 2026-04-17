@@ -104,6 +104,9 @@ export const products = mysqlTable("products", {
   // Supplier declaration of completeness
   supplierConfirmedAt: timestamp("supplierConfirmedAt"),       // When supplier confirmed completeness
   supplierConfirmedBy: varchar("supplierConfirmedBy", { length: 255 }), // Name of confirming user
+  // Product versioning
+  versionNumber: varchar("versionNumber", { length: 64 }),              // e.g. "v1", "v2", "2024", "EU"
+  parentProductId: int("parentProductId"),                              // FK → products.id (null = root version)
   lastUpdatedAt: timestamp("lastUpdatedAt").defaultNow().onUpdateNow().notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });

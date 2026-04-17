@@ -545,6 +545,11 @@ export default function Products() {
                         </td>
                         <td>
                           <div className="font-medium">{p.productName}</div>
+                          {(p as any).versionNumber && (
+                            <span className="inline-block text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 px-1.5 py-0.5 rounded font-mono mt-0.5">
+                              {(p as any).versionNumber}
+                            </span>
+                          )}
                           {p.ean && (
                             <div className="text-xs text-muted-foreground mt-0.5">
                               EAN: {p.ean}

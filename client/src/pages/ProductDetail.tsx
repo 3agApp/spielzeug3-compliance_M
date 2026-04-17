@@ -143,6 +143,7 @@ export default function ProductDetail() {
     categoryId: string;
     templateId: string;
     kontorId: string;
+    versionNumber: string;
   }>({
     productName: "",
     internalArticleNumber: "",
@@ -154,6 +155,7 @@ export default function ProductDetail() {
     categoryId: "",
     templateId: "",
     kontorId: "",
+    versionNumber: "",
   });
 
   const suppliersQuery = trpc.suppliers.list.useQuery(
@@ -191,6 +193,7 @@ export default function ProductDetail() {
       categoryId: product.categoryId ? String(product.categoryId) : "",
       templateId: product.templateId ? String(product.templateId) : "",
       kontorId: product.kontorId ?? "",
+      versionNumber: (product as any).versionNumber ?? "",
     });
     setShowEditDialog(true);
   }
@@ -208,6 +211,7 @@ export default function ProductDetail() {
       categoryId: editForm.categoryId ? parseInt(editForm.categoryId) : null,
       templateId: editForm.templateId ? parseInt(editForm.templateId) : null,
       kontorId: editForm.kontorId || undefined,
+      versionNumber: editForm.versionNumber || null,
     });
   }
 
@@ -282,7 +286,14 @@ export default function ProductDetail() {
         </Button>
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold">{product.productName}</h1>
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="text-2xl font-semibold">{product.productName}</h1>
+              {(product as any).versionNumber && (
+                <span className="text-sm bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 px-2 py-0.5 rounded font-mono">
+                  {(product as any).versionNumber}
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-3 mt-2 flex-wrap">
               <StatusBadge status={product.status} />
               {/* Seal status badge */}
@@ -888,6 +899,16 @@ export default function ProductDetail() {
                 className="mt-1"
                 value={editForm.kontorId}
                 onChange={(e) => setEditForm((f) => ({ ...f, kontorId: e.target.value }))}
+              />
+            </div>
+            {/* Versionsnummer */}
+            <div>
+              <Label>{lang === "de" ? "Versionsnummer" : "Version Number"}</Label>
+              <Input
+                className="mt-1 font-mono"
+                placeholder={lang === "de" ? "z.B. v1, v2, 2024, EU" : "e.g. v1, v2, 2024, EU"}
+                value={editForm.versionNumber}
+                onChange={(e) => setEditForm((f) => ({ ...f, versionNumber: e.target.value }))}
               />
             </div>
             {/* Lieferant */}

@@ -141,6 +141,13 @@
       "when": 1774799945288,
       "tag": "0019_burly_warlock",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "5",
+      "when": 1776435769510,
+      "tag": "0020_broad_frightful_four",
+      "breakpoints": true
     }
   ]
 }

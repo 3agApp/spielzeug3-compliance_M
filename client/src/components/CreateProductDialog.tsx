@@ -77,6 +77,7 @@ export default function CreateProductDialog({ open, onOpenChange, onSuccess }: P
   const [orderNumber, setOrderNumber]                     = useState("");
   const [ean, setEan]                                     = useState("");
   const [brand, setBrand]                                 = useState("");
+  const [versionNumber, setVersionNumber]                 = useState("");
   const [selectedCategoryId, setSelectedCategoryId]       = useState<number | null>(null);
   const [selectedTemplateId, setSelectedTemplateId]       = useState<number | null>(null);
 
@@ -119,6 +120,7 @@ export default function CreateProductDialog({ open, onOpenChange, onSuccess }: P
     setOrderNumber("");
     setEan("");
     setBrand("");
+    setVersionNumber("");
     setSelectedCategoryId(null);
     setSelectedTemplateId(null);
     onOpenChange(false);
@@ -134,6 +136,7 @@ export default function CreateProductDialog({ open, onOpenChange, onSuccess }: P
       orderNumber: orderNumber || undefined,
       ean: ean || undefined,
       brand: brand || undefined,
+      versionNumber: versionNumber || undefined,
       categoryId: selectedCategoryId ?? undefined,
       templateId: selectedTemplateId ?? undefined,
     });
@@ -286,6 +289,18 @@ export default function CreateProductDialog({ open, onOpenChange, onSuccess }: P
                   value={brand}
                   onChange={(e) => setBrand(e.target.value)}
                   placeholder={t.inline.zb_mueller_kids}
+                />
+              </div>
+              <div className="col-span-2 space-y-1.5">
+                <Label className="text-sm font-medium">
+                  {lang === "de" ? "Versionsnummer" : "Version Number"}
+                  <span className="ml-1 text-xs text-muted-foreground font-normal">({lang === "de" ? "optional" : "optional"})</span>
+                </Label>
+                <Input
+                  className="font-mono"
+                  value={versionNumber}
+                  onChange={(e) => setVersionNumber(e.target.value)}
+                  placeholder={lang === "de" ? "z.B. v1, v2, 2024, EU" : "e.g. v1, v2, 2024, EU"}
                 />
               </div>
             </div>
