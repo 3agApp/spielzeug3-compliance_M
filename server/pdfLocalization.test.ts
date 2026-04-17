@@ -56,6 +56,31 @@ const SAMPLE_ASSESSMENT = {
   createdAt: new Date("2026-01-15T10:00:00Z"),
 };
 
+// New LLM format findings (type/message/detail/remediation/affectedRegulations)
+const NEW_FORMAT_FINDINGS = [
+  {
+    type: "critical",
+    message: "Missing CE marking documentation",
+    detail: "The product lacks proper CE marking documentation required by EU Toy Safety Directive.",
+    remediation: "Obtain CE marking certificate from accredited body.",
+    affectedRegulations: ["Toy Safety Directive 2009/48/EC Art. 4", "EN 71-1:2014"],
+  },
+  {
+    type: "warning",
+    message: "Incomplete REACH compliance",
+    detail: "REACH declaration does not cover all substances.",
+    remediation: "Update REACH declaration to include all relevant substances.",
+    affectedRegulations: ["REACH Regulation EC 1907/2006"],
+  },
+  {
+    type: "positive",
+    message: "Valid test report present",
+    detail: "EN 71-1 test report is present and valid.",
+    remediation: null,
+    affectedRegulations: ["EN 71-1:2014"],
+  },
+];
+
 describe("pdfGenerator – AI Analysis PDF localization", () => {
   it("generates a non-empty PDF buffer in German (default)", async () => {
     const buf = await generateAiAnalysisPdf({
@@ -76,6 +101,43 @@ describe("pdfGenerator – AI Analysis PDF localization", () => {
     });
     expect(buf).toBeInstanceOf(Buffer);
     expect(buf.length).toBeGreaterThan(1000);
+    expect(buf.slice(0, 4).toString()).toBe("%PDF");
+  });
+
+  it("generates PDF with new LLM format findings (type/message/detail) without crash", async () => {
+    // Regression test: LLM returns type/message/detail, old code expected severity/category/description
+    const buf = await generateAiAnalysisPdf({
+      product: SAMPLE_PRODUCT,
+      analysis: { ...SAMPLE_ANALYSIS, findings: NEW_FORMAT_FINDINGS },
+      lang: "de",
+    });
+    expect(buf).toBeInstanceOf(Buffer);
+    expect(buf.length).toBeGreaterThan(1000);
+    expect(buf.slice(0, 4).toString()).toBe("%PDF");
+  });
+
+  it("generates PDF with new LLM format findings in English", async () => {
+    const buf = await generateAiAnalysisPdf({
+      product: SAMPLE_PRODUCT,
+      analysis: { ...SAMPLE_ANALYSIS, findings: NEW_FORMAT_FINDINGS },
+      lang: "en",
+    });
+    expect(buf).toBeInstanceOf(Buffer);
+    expect(buf.length).toBeGreaterThan(1000);
+    expect(buf.slice(0, 4).toString()).toBe("%PDF");
+  });
+
+  it("handles mixed/unknown finding fields gracefully (no crash)", async () => {
+    const mixedFindings = [
+      { type: "critical", message: "Test" }, // minimal new format
+      { severity: "high", category: "Cat", description: "Desc" }, // old format
+      {}, // empty object
+    ];
+    const buf = await generateAiAnalysisPdf({
+      product: SAMPLE_PRODUCT,
+      analysis: { ...SAMPLE_ANALYSIS, findings: mixedFindings },
+    });
+    expect(buf).toBeInstanceOf(Buffer);
     expect(buf.slice(0, 4).toString()).toBe("%PDF");
   });
 

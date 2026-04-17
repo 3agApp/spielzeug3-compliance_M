@@ -983,3 +983,9 @@
 - [x] Frontend: Fortschrittsbalken/Status-Banner während Analyse (Phase-Label + Fortschrittsbalken + Batch-Zähler)
 - [x] Frontend: Komponenten-Erkennungs-Benachrichtigung nach Analyse (grüne Info-Box mit Liste der erkannten Komponenten)
 - [x] Tests: Batching-Logik und Komponenten-Erkennung testen (aiAnalysisBatching.test.ts, 22 Tests)
+
+## Bugfix: PDF-Export KI-Analyse
+- [x] pdfGenerator.ts: normaliseFinding() – Feldnamen-Mapping von neuem LLM-Format (type/message/detail/remediation/affectedRegulations) auf altes Format (severity/category/description)
+- [x] pdfGenerator.ts: severityLabels um LLM-type-Werte erweitert (critical→Kritisch, warning→Warnung, positive→OK)
+- [x] pdfGenerator.ts: Findings-Karte zeigt jetzt auch Remediation und Affected Regulations an
+- [x] pdfLocalization.test.ts: 3 neue Regressions-Tests für neues LLM-Format (10 Tests total, alle grün)

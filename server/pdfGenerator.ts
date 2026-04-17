@@ -42,6 +42,9 @@ const PDF_I18N = {
       medium: "Mittel",
       low: "Gering",
       info: "Info",
+      critical: "Kritisch",
+      warning: "Warnung",
+      positive: "OK",
     },
   },
   en: {
@@ -84,6 +87,9 @@ const PDF_I18N = {
       medium: "Medium",
       low: "Low",
       info: "Info",
+      critical: "Critical",
+      warning: "Warning",
+      positive: "OK",
     },
   },
 } as const;
@@ -116,6 +122,36 @@ function scoreLabel(score: number, lang: PdfLang): string {
   if (score >= 75) return labels.plausible;
   if (score >= 50) return labels.partial;
   return labels.critical;
+}
+
+/**
+ * Normalise a finding to a canonical { severity, category, description, remediation, affectedRegulations }.
+ * Supports both the old format (severity/category/description) and the current LLM format
+ * (type/message/detail/remediation/affectedRegulations).
+ */
+function normaliseFinding(f: any): {
+  severity: string;
+  category: string;
+  description: string;
+  remediation: string | null;
+  affectedRegulations: string[];
+} {
+  // Map LLM "type" to canonical severity
+  const rawSeverity: string = f.severity ?? f.type ?? "info";
+  let severity: string;
+  switch (rawSeverity) {
+    case "critical": severity = "high"; break;
+    case "warning":  severity = "medium"; break;
+    case "positive": severity = "low"; break;
+    default:         severity = rawSeverity; // high / medium / low / info
+  }
+  return {
+    severity,
+    category: f.category ?? f.message ?? "",
+    description: f.description ?? f.detail ?? "",
+    remediation: f.remediation ?? null,
+    affectedRegulations: Array.isArray(f.affectedRegulations) ? f.affectedRegulations : [],
+  };
 }
 
 function severityColor(severity: string): string {
@@ -214,8 +250,9 @@ export function generateAiAnalysisPdf(data: PdfReportData): Promise<Buffer> {
     const contentScore = Math.round(Number(analysis.contentPlausibilityScore ?? 0));
     const formalScore = Math.round(Number(analysis.formalCorrectnessScore ?? 0));
     const consistencyScore = Math.round(Number(analysis.consistencyScore ?? 0));
-    const findings: Array<{ category: string; severity: string; description: string }> =
-      Array.isArray(analysis.findings) ? analysis.findings : [];
+    // Normalise findings: support both old (severity/category/description) and
+    // new LLM format (type/message/detail/remediation/affectedRegulations)
+    const findings = (Array.isArray(analysis.findings) ? analysis.findings : []).map(normaliseFinding);
     const recommendations: string[] =
       Array.isArray(analysis.recommendations) ? analysis.recommendations : [];
     const pageW = doc.page.width - 100; // usable width (50 margin each side)
@@ -356,7 +393,14 @@ export function generateAiAnalysisPdf(data: PdfReportData): Promise<Buffer> {
         const fY = doc.y;
         const sColor = severityColor(finding.severity);
         doc.fontSize(9);
-        const descH = Math.max(40, doc.heightOfString(finding.description ?? "", { width: pageW - 80 }) + 30);
+
+        // Calculate block height: description + optional remediation + optional regulations
+        const descText = finding.description ?? "";
+        const remText = finding.remediation ? (lang === "de" ? `Ma\u00dfnahme: ${finding.remediation}` : `Remediation: ${finding.remediation}`) : "";
+        const regsText = finding.affectedRegulations.length
+          ? finding.affectedRegulations.join(" \u00b7 ") : "";
+        const combinedText = [descText, remText, regsText].filter(Boolean).join("\n");
+        const descH = Math.max(50, doc.heightOfString(combinedText || " ", { width: pageW - 80 }) + 36);
 
         // Background
         drawFilledRect(doc, 50, fY, pageW, descH, COLORS.bgLight, 6);
@@ -365,17 +409,37 @@ export function generateAiAnalysisPdf(data: PdfReportData): Promise<Buffer> {
 
         // Severity badge
         doc.fontSize(7).fillColor(COLORS.white).font("Helvetica-Bold");
-        const badgeW = 48;
+        const badgeW = 52;
+        const labelText = severityLabel(finding.severity, lang).toUpperCase();
         drawFilledRect(doc, doc.page.width - 50 - badgeW - 4, fY + 8, badgeW, 14, sColor, 3);
-        doc.text(severityLabel(finding.severity, lang).toUpperCase(), doc.page.width - 50 - badgeW, fY + 11, { width: badgeW, align: "center" });
+        doc.text(labelText, doc.page.width - 50 - badgeW, fY + 11, { width: badgeW, align: "center" });
 
-        // Category
+        // Category / headline
         doc.fontSize(9).fillColor(COLORS.primary).font("Helvetica-Bold")
-          .text(finding.category ?? i18n.findingFallback(i), 62, fY + 8, { width: pageW - 80 });
+          .text(finding.category || i18n.findingFallback(i), 62, fY + 8, { width: pageW - 80 });
 
         // Description
-        doc.fontSize(9).fillColor(COLORS.textSecondary).font("Helvetica")
-          .text(finding.description ?? "", 62, fY + 22, { width: pageW - 80 });
+        let textY = fY + 22;
+        if (descText) {
+          doc.fontSize(9).fillColor(COLORS.textSecondary).font("Helvetica")
+            .text(descText, 62, textY, { width: pageW - 80 });
+          textY = doc.y + 4;
+        }
+
+        // Remediation (if present)
+        if (finding.remediation) {
+          doc.fontSize(8).fillColor(COLORS.accent).font("Helvetica-Bold")
+            .text(lang === "de" ? "Ma\u00dfnahme: " : "Remediation: ", 62, textY, { continued: true, width: pageW - 80 });
+          doc.font("Helvetica").fillColor(COLORS.textSecondary)
+            .text(finding.remediation, { width: pageW - 80 });
+          textY = doc.y + 2;
+        }
+
+        // Affected regulations (if present)
+        if (finding.affectedRegulations.length) {
+          doc.fontSize(7).fillColor(COLORS.muted).font("Helvetica")
+            .text(finding.affectedRegulations.join(" \u00b7 "), 62, textY, { width: pageW - 80 });
+        }
 
         doc.y = fY + descH + 6;
       });
