@@ -474,11 +474,15 @@ export const productsRouter = router({
       try {
         const db = await getDb();
         if (!db) return [];
+        const { products: productsTable } = await import("../../drizzle/schema");
+        const { asc } = await import("drizzle-orm");
         const tenantId = (ctx.user as any).tenantId ?? 1;
-        const rows = await db.execute(
-          sql.raw(`SELECT DISTINCT brand FROM products WHERE tenant_id = ${tenantId} AND brand IS NOT NULL AND brand != '' ORDER BY brand ASC`)
-        );
-        return (rows as any[]).map((r: any) => r.brand as string).filter(Boolean);
+        const rows = await db
+          .selectDistinct({ brand: productsTable.brand })
+          .from(productsTable)
+          .where(sql`${productsTable.tenantId} = ${tenantId} AND ${productsTable.brand} IS NOT NULL AND ${productsTable.brand} != ''`)
+          .orderBy(asc(productsTable.brand));
+        return rows.map((r) => r.brand as string).filter(Boolean);
       } catch (err) {
         throw toTRPCError(err);
       }
