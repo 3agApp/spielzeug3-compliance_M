@@ -188,6 +188,7 @@ export default function Products() {
   const [, setLocation] = useLocation();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [brandFilter, setBrandFilter] = useState<string>("all");
 
   // Checkbox selection
   const [selected, setSelected] = useState<Set<number>>(new Set());
@@ -208,8 +209,12 @@ export default function Products() {
   const role = (user as any)?.complianceRole ?? "internal_employee";
   const canRunAi = ["administrator", "compliance_manager", "internal_employee"].includes(role);
 
+  const brandsQuery = trpc.products.getBrands.useQuery();
+  const brands = brandsQuery.data ?? [];
+
   const productsQuery = trpc.products.list.useQuery({
     status: statusFilter === "all" ? undefined : statusFilter,
+    brand: brandFilter === "all" ? undefined : brandFilter,
     search: search || undefined,
   });
 
@@ -443,6 +448,19 @@ export default function Products() {
                 ))}
               </SelectContent>
             </Select>
+            {brands.length > 0 && (
+              <Select value={brandFilter} onValueChange={setBrandFilter}>
+                <SelectTrigger className="w-full sm:w-44">
+                  <SelectValue placeholder={lang === "de" ? "Alle Marken" : "All Brands"} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{lang === "de" ? "Alle Marken" : "All Brands"}</SelectItem>
+                  {brands.map((b) => (
+                    <SelectItem key={b} value={b}>{b}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
 
             {/* Hint when nothing selected */}
             {canRunAi && !someSelected && products.length > 0 && (

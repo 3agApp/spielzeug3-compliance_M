@@ -465,11 +465,26 @@ export const productsRouter = router({
         }
         await db.execute(sql.raw(`DELETE FROM products WHERE id = ${productId}`));
       }
-      return { success: true, deleted: input.productIds.length };
+       return { success: true, deleted: input.productIds.length };
     }),
 
-  // ─── Supplier Confirmation (delegated to productService) ──────────────────
+  // ─── Get distinct brands (for filter dropdown) ──────────────────────────────
+  getBrands: protectedProcedure
+    .query(async ({ ctx }) => {
+      try {
+        const db = await getDb();
+        if (!db) return [];
+        const tenantId = (ctx.user as any).tenantId ?? 1;
+        const rows = await db.execute(
+          sql.raw(`SELECT DISTINCT brand FROM products WHERE tenant_id = ${tenantId} AND brand IS NOT NULL AND brand != '' ORDER BY brand ASC`)
+        );
+        return (rows as any[]).map((r: any) => r.brand as string).filter(Boolean);
+      } catch (err) {
+        throw toTRPCError(err);
+      }
+    }),
 
+  // ─── Supplier Confirmation (delegated to productService) ──────────────────────────────
   supplierConfirm: protectedProcedure
     .input(z.object({ productId: z.number().int().positive() }))
     .mutation(async ({ ctx, input }) => {

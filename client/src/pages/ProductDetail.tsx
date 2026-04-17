@@ -20,6 +20,8 @@ import ComponentsTab from "@/components/ComponentsTab";
 import ProductImagesGallery from "@/components/ProductImagesGallery";
 import SignatureRequestDialog from "@/components/SignatureRequestDialog";
 import { CopyProductDataDialog } from "@/components/CopyProductDataDialog";
+import CreateIncidentDialog from "@/components/CreateIncidentDialog";
+import ProductIncidentsTab from "@/components/ProductIncidentsTab";
 import SignatureRequestList from "@/components/SignatureRequestList";
 import { SealStatusPill } from "@/components/SealBadge";
 import type { SealStatus } from "@/components/SealBadge";
@@ -59,6 +61,7 @@ import {
   Mail,
   Tag,
   X,
+  AlertTriangle,
 } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
@@ -81,6 +84,7 @@ export default function ProductDetail() {
   const { user } = useAuth();
   const { t, lang } = useLang();
   const [activeTab, setActiveTab] = useState("documents");
+  const [showCreateIncidentDialog, setShowCreateIncidentDialog] = useState(false);
   const [, setLocation] = useLocation();
   const role = (user as any)?.complianceRole ?? "internal_employee";
   const isInternalRole = ["administrator", "compliance_manager", "internal_employee", "super_admin"].includes(role);
@@ -552,6 +556,12 @@ export default function ProductDetail() {
               {lang === "de" ? "Konformitätserklärungen" : "Declarations"}
             </TabsTrigger>
           )}
+          {isInternalRole && (
+            <TabsTrigger value="incidents" className="gap-2">
+              <AlertTriangle className="h-4 w-4" />
+              {lang === "de" ? "Schadensfälle" : "Incidents"}
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* Images Tab */}
@@ -848,6 +858,15 @@ export default function ProductDetail() {
         {isInternalRole && (
           <TabsContent value="declarations" className="mt-4">
             <DeclarationsTab productId={productId} lang={lang} />
+          </TabsContent>
+        )}
+        {isInternalRole && (
+          <TabsContent value="incidents" className="mt-4">
+            <ProductIncidentsTab
+              productId={productId}
+              lang={lang}
+              onCreateNew={() => setShowCreateIncidentDialog(true)}
+            />
           </TabsContent>
         )}
        </Tabs>

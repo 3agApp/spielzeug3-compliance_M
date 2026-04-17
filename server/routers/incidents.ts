@@ -253,10 +253,17 @@ export const incidentsRouter = router({
       return incidentService.getTimeline(ctx.user, input.incidentId);
     }),
 
-  // ── KI-gestützte Fallbewertung ───────────────────────────────────────────
+  // ── KI-gestützte Fallbewertung ───────────────────────────────────────────────
   suggestAssessment: protectedProcedure
     .input(z.object({ incidentId: z.number().int().positive() }))
     .mutation(async ({ ctx, input }) => {
       return incidentAiService.suggestAssessment(ctx.user, input.incidentId);
+    }),
+
+  // ── Get by Product (für Produktdetail-Tab) ───────────────────────────────
+  getByProduct: protectedProcedure
+    .input(z.object({ productId: z.number().int().positive() }))
+    .query(async ({ ctx, input }) => {
+      return incidentService.list(ctx.user, { productId: input.productId });
     }),
 });

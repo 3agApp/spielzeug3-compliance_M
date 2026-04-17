@@ -961,3 +961,14 @@
 - [ ] Backend: incidentAiService – Zubehör-Compliance-Daten in Prompt einbauen
 - [ ] Backend: incidentAiService – Deklarationen/Konformitätsstatus in Prompt
 - [ ] Tests: aktualisierte incidentAiService Tests
+
+## Schadensfälle-Tab in ProductDetail
+- [ ] Backend: incidents.getByProduct tRPC-Prozedur (Liste aller Vorfälle für ein Produkt)
+- [ ] Frontend: Tab „Schadensfälle" in ProductDetail.tsx (Status-Badge, Schweregrad, Link zur Fallakte)
+- [ ] Frontend: Leerzustand mit „Neuer Schadensfall"-Button (vorausgefülltes Produkt)
+- [ ] Tests: getByProduct-Prozedur testen
+
+## Marken-Filter in Produktliste
+- [x] Backend: products.list – brand-Filter-Parameter hinzufügen (falls noch nicht vorhanden)
+- [x] Backend: products.getBrands – Distinct-Marken-Liste für Dropdown
+- [x] Frontend: Marken-Filter-Dropdown in Produktliste neben Status-Filter
