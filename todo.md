@@ -996,3 +996,12 @@
 - [x] Pro Dokument: Rechtsgrundlage (legalBasis), positive Punkte, fehlende Elemente, Warnungen/Issues
 - [x] pdfRoutes.ts: documentAnalysis an generateAiAnalysisPdf übergeben
 - [x] pdfLocalization.test.ts: Test für documentAnalysis-Sektion im PDF (368 Tests total, alle grün)
+
+## PDF-Export: Dokument-Analyse-Sektion Überarbeitung
+- [x] 1 Dokument pro Seite (doc.addPage() vor jedem Dokument-Block)
+- [x] Dynamische Höhe statt fester cardH (kein Abschneiden mehr)
+- [x] Encoding-Fix: ⚠-Symbol durch ASCII "(!)" ersetzen (PDFKit-kompatibel)
+- [x] Status-Mapping erweitern: "ok"→Konform, "warning"→Teilweise konform, "non-compliant"→Nicht konform
+- [x] Dateinamen mit Zeilenumbruch (wordWrap) für lange Namen
+- [x] Alle Inhalte vollständig ausgeben (positives, missingElements, issues)
+- [x] Phantom-Seiten-Bug behoben: doc.flushPages() vor Footer-Loop (46 → 23 Seiten für 22 Dokumente)

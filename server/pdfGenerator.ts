@@ -507,6 +507,7 @@ export function generateAiAnalysisPdf(data: PdfReportData): Promise<Buffer> {
     }
 
     // ── DOCUMENT ANALYSES ─────────────────────────────────────────────────────
+    // One full page per document for clarity and completeness.
     const docAnalyses: Array<{
       documentId?: number;
       fileName?: string;
@@ -519,20 +520,29 @@ export function generateAiAnalysisPdf(data: PdfReportData): Promise<Buffer> {
       issues?: string[];
     }> = Array.isArray(analysis.documentAnalysis) ? analysis.documentAnalysis : [];
 
+    // Helper: normalise doc status string to a known key
+    const normaliseDocStatus = (raw: string): string => {
+        const s = (raw ?? "").toLowerCase();
+        if (s === "compliant" || s === "ok") return "compliant";
+        if (s === "critical" || s === "non-compliant" || s === "noncompliant") return "critical";
+        if (s === "partial" || s === "warning" || s === "partially compliant") return "partial";
+        return "pending";
+    };
+
     if (docAnalyses.length > 0) {
-      doc.addPage();
+      docAnalyses.forEach((da, idx) => {
+        // Every document starts on a fresh page
+        doc.addPage();
 
-      doc.fontSize(11).fillColor(COLORS.primary).font("Helvetica-Bold")
-        .text(i18n.documentAnalysisTitle(docAnalyses.length), 50, doc.y);
-      doc.moveDown(0.4);
-      drawHorizontalLine(doc, doc.y);
-      doc.moveDown(0.5);
-
-      docAnalyses.forEach((da) => {
         const daScore = Math.round(Number(da.score ?? 0));
         const daColor = scoreColor(daScore);
-        const daStatus = da.status ?? "pending";
-        // Status badge color
+        const daStatus = normaliseDocStatus(da.status ?? "");
+        const positives = Array.isArray(da.positives) ? da.positives : [];
+        const missing = Array.isArray(da.missingElements) ? da.missingElements : [];
+        const issues = Array.isArray(da.issues) ? da.issues : [];
+        const legalBasis = da.legalBasis ?? "";
+
+        // Status badge colours
         const statusBgColor = daStatus === "compliant" ? "#dcfce7"
           : daStatus === "critical" ? "#fee2e2"
           : daStatus === "partial" ? "#fef9c3"
@@ -541,130 +551,123 @@ export function generateAiAnalysisPdf(data: PdfReportData): Promise<Buffer> {
           : daStatus === "critical" ? COLORS.danger
           : daStatus === "partial" ? "#92400e"
           : COLORS.muted;
-        const statusLabel = (i18n.docStatus as Record<string, string>)[daStatus] ?? daStatus;
-
-        // Calculate card height
-        const positives = Array.isArray(da.positives) ? da.positives : [];
-        const missing = Array.isArray(da.missingElements) ? da.missingElements : [];
-        const issues = Array.isArray(da.issues) ? da.issues : [];
-        const legalBasis = da.legalBasis ?? "";
-
-        // Estimate height: header(36) + score bar(22) + legalBasis(20) + items
-        doc.fontSize(9);
-        const posH = positives.length > 0 ? positives.reduce((acc, p) => acc + Math.max(16, doc.heightOfString(p, { width: pageW - 80 }) + 4), 22) : 0;
-        const misH = missing.length > 0 ? missing.reduce((acc, m) => acc + Math.max(18, doc.heightOfString(m, { width: pageW - 90 }) + 6), 24) : 0;
-        const issH = issues.length > 0 ? issues.reduce((acc, iss) => acc + Math.max(16, doc.heightOfString(iss, { width: pageW - 80 }) + 4), 22) : 0;
-        const legalH = legalBasis ? 20 : 0;
-        const cardH = Math.max(70, 44 + legalH + posH + misH + issH + 10);
-
-        // Page break if needed
-        if (doc.y + cardH > doc.page.height - 60) doc.addPage();
-
-        const cardY = doc.y;
         const borderColor = daStatus === "compliant" ? COLORS.success
           : daStatus === "critical" ? COLORS.danger
           : daStatus === "partial" ? "#d97706"
           : COLORS.border;
+        const statusLabel = (i18n.docStatus as Record<string, string>)[daStatus] ?? daStatus;
 
-        // Card background + border
-        drawFilledRect(doc, 50, cardY, pageW, cardH, COLORS.bgLight, 6);
-        doc.rect(50, cardY, pageW, cardH).strokeColor(borderColor).lineWidth(1).stroke();
-
-        // ── Card header ──
-        // File icon (simple rect)
-        drawFilledRect(doc, 58, cardY + 10, 14, 16, COLORS.border, 2);
-        doc.fontSize(7).fillColor(COLORS.muted).font("Helvetica-Bold")
-          .text("PDF", 59, cardY + 14, { width: 12, align: "center" });
-
-        // File name
-        doc.fontSize(10).fillColor(COLORS.primary).font("Helvetica-Bold")
-          .text(da.fileName ?? "-", 78, cardY + 10, { width: pageW - 180 });
-        // Document type
+        // ── Page header: document counter ──
         doc.fontSize(8).fillColor(COLORS.muted).font("Helvetica")
-          .text(da.documentType ?? "", 78, cardY + 23);
+          .text(
+            `${i18n.documentAnalysisTitle(docAnalyses.length)} – ${idx + 1} / ${docAnalyses.length}`,
+            50, 50, { width: pageW }
+          );
+        drawHorizontalLine(doc, 62);
 
-        // Score (right side)
-        doc.fontSize(11).fillColor(daColor).font("Helvetica-Bold")
-          .text(`${daScore}/100`, doc.page.width - 110, cardY + 10, { width: 55, align: "right" });
+        let y = 72;
+
+        // ── File icon + name ──
+        drawFilledRect(doc, 50, y, 22, 26, COLORS.border, 3);
+        doc.fontSize(7).fillColor(COLORS.muted).font("Helvetica-Bold")
+          .text("PDF", 51, y + 9, { width: 20, align: "center" });
+
+        // File name – allow wrapping for long names
+        const fileNameStr = (da.fileName ?? "-").replace(/\u00fc/g, "ue").replace(/\u00f6/g, "oe")
+          .replace(/\u00e4/g, "ae").replace(/\u00dc/g, "Ue").replace(/\u00d6/g, "Oe")
+          .replace(/\u00c4/g, "Ae").replace(/\u00df/g, "ss");
+        doc.fontSize(11).fillColor(COLORS.primary).font("Helvetica-Bold")
+          .text(fileNameStr, 80, y, { width: pageW - 170 });
+        doc.fontSize(11);
+        const fileNameH = doc.heightOfString(fileNameStr, { width: pageW - 170 });
+        doc.fontSize(8).fillColor(COLORS.muted).font("Helvetica")
+          .text(da.documentType ?? "", 80, y + fileNameH + 2);
+
+        // Score (right)
+        doc.fontSize(13).fillColor(daColor).font("Helvetica-Bold")
+          .text(`${daScore}/100`, doc.page.width - 110, y, { width: 55, align: "right" });
 
         // Status badge
-        const badgeX = doc.page.width - 50 - 80 - 60;
-        drawFilledRect(doc, badgeX, cardY + 8, 80, 18, statusBgColor, 4);
-        doc.rect(badgeX, cardY + 8, 80, 18).strokeColor(borderColor).lineWidth(0.5).stroke();
+        const badgeW = 90;
+        const badgeX = doc.page.width - 50 - badgeW - 60;
+        drawFilledRect(doc, badgeX, y, badgeW, 20, statusBgColor, 4);
+        doc.rect(badgeX, y, badgeW, 20).strokeColor(borderColor).lineWidth(0.5).stroke();
         doc.fontSize(8).fillColor(statusTextColor).font("Helvetica-Bold")
-          .text(statusLabel, badgeX, cardY + 13, { width: 80, align: "center" });
+          .text(statusLabel, badgeX, y + 6, { width: badgeW, align: "center" });
+
+        y += Math.max(30, fileNameH + 14);
 
         // ── Score bar ──
-        const barY2 = cardY + 36;
-        const barW = pageW - 20;
+        const barW = pageW;
         const filledW = Math.max(0, (daScore / 100) * barW);
-        drawFilledRect(doc, 60, barY2, barW, 5, COLORS.border, 2);
-        if (filledW > 0) drawFilledRect(doc, 60, barY2, filledW, 5, daColor, 2);
-
-        let contentY = barY2 + 12;
+        drawFilledRect(doc, 50, y, barW, 6, COLORS.border, 3);
+        if (filledW > 0) drawFilledRect(doc, 50, y, filledW, 6, daColor, 3);
+        y += 14;
 
         // ── Legal basis ──
         if (legalBasis) {
           doc.fontSize(8).fillColor(COLORS.muted).font("Helvetica")
-            .text(legalBasis, 62, contentY, { width: pageW - 24 });
-          contentY = doc.y + 4;
+            .text(legalBasis, 50, y, { width: pageW });
+          y = doc.y + 8;
         }
 
         // ── Positives ──
         if (positives.length > 0) {
-          doc.fontSize(8).fillColor(COLORS.success).font("Helvetica-Bold")
-            .text(i18n.docLabels.positives, 62, contentY);
-          contentY = doc.y + 2;
+          doc.fontSize(9).fillColor(COLORS.success).font("Helvetica-Bold")
+            .text(i18n.docLabels.positives, 50, y);
+          y = doc.y + 4;
           positives.forEach((p) => {
-            if (contentY + 14 > cardY + cardH - 4) return;
-            // Green check circle
-            doc.circle(70, contentY + 5, 4).fillColor(COLORS.success).fill();
-            doc.fontSize(7).fillColor(COLORS.white).font("Helvetica-Bold")
-              .text("\u2713", 67, contentY + 2, { width: 6, align: "center" });
+            // Page break if needed
+            if (y > doc.page.height - 80) { doc.addPage(); y = 50; }
+            doc.circle(58, y + 5, 5).fillColor(COLORS.success).fill();
+            doc.fontSize(8).fillColor(COLORS.white).font("Helvetica-Bold")
+              .text("v", 55, y + 2, { width: 6, align: "center" });
             doc.fontSize(8).fillColor(COLORS.textSecondary).font("Helvetica")
-              .text(p, 80, contentY, { width: pageW - 40 });
-            contentY = doc.y + 2;
+              .text(p, 70, y, { width: pageW - 22 });
+            y = doc.y + 3;
           });
-          contentY += 2;
+          y += 4;
         }
 
         // ── Missing elements ──
         if (missing.length > 0) {
-          if (contentY + 14 > cardY + cardH - 4) { doc.y = cardY + cardH + 6; return; }
-          doc.fontSize(8).fillColor(COLORS.danger).font("Helvetica-Bold")
-            .text(i18n.docLabels.missingElements + ":", 62, contentY);
-          contentY = doc.y + 2;
+          if (y > doc.page.height - 80) { doc.addPage(); y = 50; }
+          doc.fontSize(9).fillColor(COLORS.danger).font("Helvetica-Bold")
+            .text(i18n.docLabels.missingElements + ":", 50, y);
+          y = doc.y + 4;
           missing.forEach((m) => {
-            if (contentY + 14 > cardY + cardH - 4) return;
-            drawFilledRect(doc, 62, contentY, pageW - 24, Math.max(16, doc.heightOfString(m, { width: pageW - 90 }) + 6), "#fef2f2", 3);
-            doc.fontSize(8).fillColor(COLORS.danger).font("Helvetica-Bold")
-              .text("–", 68, contentY + 4, { continued: true });
+            if (y > doc.page.height - 80) { doc.addPage(); y = 50; }
+            const rowH = Math.max(18, doc.heightOfString(m, { width: pageW - 40 }) + 8);
+            drawFilledRect(doc, 50, y, pageW, rowH, "#fef2f2", 3);
+            doc.fontSize(9).fillColor(COLORS.danger).font("Helvetica-Bold")
+              .text("-", 58, y + (rowH - 10) / 2, { continued: true });
             doc.font("Helvetica").fillColor(COLORS.textSecondary)
-              .text(" " + m, { width: pageW - 50 });
-            contentY = doc.y + 2;
+              .text(" " + m, { width: pageW - 30 });
+            y = doc.y + 3;
           });
-          contentY += 2;
+          y += 4;
         }
 
         // ── Issues / warnings ──
         if (issues.length > 0) {
-          if (contentY + 14 > cardY + cardH - 4) { doc.y = cardY + cardH + 6; return; }
+          if (y > doc.page.height - 80) { doc.addPage(); y = 50; }
           issues.forEach((iss) => {
-            if (contentY + 14 > cardY + cardH - 4) return;
-            // Warning triangle (amber)
-            doc.fontSize(8).fillColor(COLORS.warning).font("Helvetica-Bold")
-              .text("⚠", 62, contentY, { continued: true });
+            if (y > doc.page.height - 80) { doc.addPage(); y = 50; }
+            // Use ASCII "(!)" instead of Unicode warning triangle to avoid encoding issues
+            doc.fontSize(9).fillColor(COLORS.warning).font("Helvetica-Bold")
+              .text("(!)", 50, y, { continued: true });
             doc.font("Helvetica").fillColor(COLORS.warning)
-              .text(" " + iss, { width: pageW - 30 });
-            contentY = doc.y + 2;
+              .text(" " + iss, { width: pageW - 20 });
+            y = doc.y + 3;
           });
         }
-
-        doc.y = cardY + cardH + 8;
       });
     }
 
-    // ── FOOTER on all pages ────────────────────────────────────────────────────
+    // ── FOOTER on all pages ─────────────────────────────────────────────────────
+    // IMPORTANT: call flushPages() before iterating buffered pages to prevent
+    // PDFKit from appending phantom duplicate pages after switchToPage().
+    doc.flushPages();
     const totalPages = doc.bufferedPageRange().count;
     for (let i = 0; i < totalPages; i++) {
       doc.switchToPage(i);
@@ -677,6 +680,5 @@ export function generateAiAnalysisPdf(data: PdfReportData): Promise<Buffer> {
         );
     }
 
-    doc.end();
-  });
+    doc.end();  });
 }
