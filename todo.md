@@ -915,3 +915,32 @@
 - [x] Frontend: CopyProductDataDialog.tsx (Quellprodukt-Anzeige, Datenkategorien auswählen, Zielprodukte suchen/auswählen, Fortschrittsanzeige)
 - [x] Frontend: "Daten übertragen"-Button in Produktdetail-Header
 - [x] Tests: copyProductDataService Tests (12 Tests, alle grün)
+
+## Schadenfall- und Rückruf-Management (Incident & Recall Module)
+
+### DB-Schema
+- [x] incidents-Tabelle (id, tenantId, productId, incidentType, severity, status, title, description, reportedByName, reportedByEmail, reportedAt, affectedVersions JSON, affectedBatchNumbers JSON, injuryDescription, injuredPersonAge, injuredPersonType, reportedToAuthority, authorityName, authorityReportDate, createdByUserId, createdAt, updatedAt)
+- [x] incident_evidences-Tabelle (id, incidentId, evidenceType, fileName, fileUrl, fileKey, mimeType, fileSizeBytes, description, sourceType, uploadedByUserId, uploadedAt)
+- [x] incident_assessments-Tabelle (id, incidentId, assessedByUserId, assessmentType, riskLevel, recallRecommended, recallScope, assessmentText, regulatoryObligation, regulatoryDeadline, requiredDocuments JSON, createdAt, updatedAt)
+- [x] incident_recalls-Tabelle (id, incidentId, recallType, recallScope, status, announcementText, affectedUnitsCount, recallStartDate, recallEndDate, authorityNotified, authorityNotifiedAt, publicAnnouncement, publicAnnouncementUrl, createdByUserId, createdAt, updatedAt)
+- [x] incident_timeline-Tabelle (id, incidentId, action, performedByUserId, performedByName, note, createdAt)
+- [x] Migration ausführen
+
+### Backend
+- [x] incidentService.ts (CRUD, Evidenz-Upload, Bewertung, Rückruf-Entscheidung)
+- [x] incidents tRPC-Router (list, getById, create, update, addEvidence, addAssessment, initiateRecall, updateRecallStatus, getTimeline)
+- [x] Router in routers.ts registrieren
+- [x] S3-Upload für Evidenz-Dateien (Bilder, Dokumente, Kundenaussagen)
+
+### Frontend
+- [x] IncidentList.tsx – Übersichtsliste aller Vorfälle mit Status-Filter, Schweregrad-Badge, Rückruf-Indikator
+- [x] IncidentDetail.tsx – Vollständige Fallakte: Tabs für Übersicht, Beweise, Bewertungen, Rückruf, Timeline
+- [x] CreateIncidentDialog.tsx – Neuen Vorfall erfassen (Typ, Schweregrad, Produkt, Beschreibung, betroffene Versionen/Chargen)
+- [x] EvidenceUploadSection – Bilder/Dokumente hochladen (Kundenaussagen, interne Fotos, Behördenkorrespondenz)
+- [x] AssessmentForm – Interne Bewertung: Risikoeinschätzung, Rückruf-Empfehlung, Behördenpflicht, benötigte Dokumente
+- [x] RecallManagementPanel – Rückruf einleiten/verwalten: Umfang, Ankündigungstext, betroffene Einheiten, Behörden-Meldung
+- [x] Navigation: "Schadensfälle" in ComplianceLayout für compliance_manager und admin
+- [x] Routing in App.tsx (/incidents, /incidents/:id)
+
+### Tests
+- [x] incidentService Tests (12 Tests: list, create, getStats, addAssessment, initiateRecall – alle grün)

@@ -31,6 +31,8 @@ import AboutSealPage from "./pages/AboutSealPage";
 import SealInfoPage from "./pages/SealInfoPage";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import ManufacturerPortal from "./pages/ManufacturerPortal";
+import IncidentList from "./pages/IncidentList";
+import IncidentDetail from "./pages/IncidentDetail";
 
 // Wrapper that applies the ComplianceLayout to protected routes
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
@@ -97,6 +99,13 @@ function Router() {
       </Route>
       <Route path="/admin/templates">
         {() => <ProtectedRoute component={TemplatesManager} />}
+      </Route>
+      {/* Incidents & Recalls */}
+      <Route path="/incidents">
+        {() => <ProtectedRoute component={IncidentList} />}
+      </Route>
+      <Route path="/incidents/:id">
+        {() => <ProtectedRoute component={IncidentDetail} />}
       </Route>
       {/* Super-Admin */}
       <Route path="/super-admin">

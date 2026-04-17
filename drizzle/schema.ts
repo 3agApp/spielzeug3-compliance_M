@@ -796,3 +796,186 @@ export const declarationStatusHistory = mysqlTable("declaration_status_history",
 });
 export type DeclarationStatusHistory = typeof declarationStatusHistory.$inferSelect;
 export type InsertDeclarationStatusHistory = typeof declarationStatusHistory.$inferInsert;
+
+// ─── Incident & Recall Management ────────────────────────────────────────────
+
+export const incidents = mysqlTable("incidents", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").default(1).notNull(),
+  productId: int("productId"),                          // FK → products.id (nullable: incident may not be linked yet)
+  incidentType: mysqlEnum("incidentType", [
+    "personal_injury",      // Personenschaden
+    "property_damage",      // Sachschaden
+    "near_miss",            // Beinahe-Vorfall
+    "product_defect",       // Produktmangel ohne Verletzung
+    "regulatory_complaint", // Behördenbeschwerde
+    "customer_complaint",   // Kundenbeschwerde
+    "other",
+  ]).notNull(),
+  severity: mysqlEnum("severity", [
+    "critical",   // Schwerwiegend (Tod, schwere Verletzung)
+    "high",       // Hoch (Verletzung, Krankenhausaufenthalt)
+    "medium",     // Mittel (leichte Verletzung, Arztbesuch)
+    "low",        // Niedrig (kein Personenschaden)
+  ]).notNull(),
+  status: mysqlEnum("status", [
+    "open",             // Neu erfasst
+    "under_review",     // In Prüfung
+    "assessed",         // Bewertet
+    "recall_initiated", // Rückruf eingeleitet
+    "recall_completed", // Rückruf abgeschlossen
+    "closed",           // Abgeschlossen (kein Rückruf)
+    "archived",
+  ]).default("open").notNull(),
+  title: varchar("title", { length: 512 }).notNull(),
+  description: text("description").notNull(),
+  // Reporter info (may be customer, supplier, or internal)
+  reportedByName: varchar("reportedByName", { length: 255 }),
+  reportedByEmail: varchar("reportedByEmail", { length: 320 }),
+  reportedByType: mysqlEnum("reportedByType", ["customer", "supplier", "internal", "authority", "other"]).default("customer"),
+  reportedAt: timestamp("reportedAt").notNull(),        // When the incident actually occurred/was reported
+  // Affected product scope
+  affectedVersions: json("affectedVersions").$type<string[]>().default([]),      // e.g. ["v1", "v2"]
+  affectedBatchNumbers: json("affectedBatchNumbers").$type<string[]>().default([]), // e.g. ["B-2026-001"]
+  affectedUnitsEstimate: int("affectedUnitsEstimate"),  // Estimated number of affected units
+  // Injury details (only for personal_injury)
+  injuryDescription: text("injuryDescription"),
+  injuredPersonAge: int("injuredPersonAge"),
+  injuredPersonType: mysqlEnum("injuredPersonType", ["child", "adult", "unknown"]),
+  medicalTreatmentRequired: boolean("medicalTreatmentRequired").default(false),
+  hospitalisation: boolean("hospitalisation").default(false),
+  // Authority reporting
+  reportedToAuthority: boolean("reportedToAuthority").default(false),
+  authorityName: varchar("authorityName", { length: 255 }),
+  authorityReportDate: timestamp("authorityReportDate"),
+  authorityReferenceNumber: varchar("authorityReferenceNumber", { length: 128 }),
+  // Internal tracking
+  assignedToUserId: int("assignedToUserId"),
+  createdByUserId: int("createdByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Incident = typeof incidents.$inferSelect;
+export type InsertIncident = typeof incidents.$inferInsert;
+
+// ─── Incident Evidences (Beweise: Fotos, Dokumente, Aussagen) ─────────────────
+
+export const incidentEvidences = mysqlTable("incident_evidences", {
+  id: int("id").autoincrement().primaryKey(),
+  incidentId: int("incidentId").notNull(),
+  evidenceType: mysqlEnum("evidenceType", [
+    "photo",              // Foto des Schadens / Produkts
+    "customer_statement", // Kundenaussage (Text oder Dokument)
+    "internal_report",    // Interner Prüfbericht
+    "medical_report",     // Arztbericht / Krankenhausbericht
+    "authority_document", // Behördendokument
+    "product_sample",     // Produktprobe-Dokumentation
+    "video",              // Video
+    "other",
+  ]).notNull(),
+  fileName: varchar("fileName", { length: 512 }).notNull(),
+  fileUrl: text("fileUrl").notNull(),
+  fileKey: varchar("fileKey", { length: 512 }).notNull(),
+  mimeType: varchar("mimeType", { length: 128 }),
+  fileSizeBytes: int("fileSizeBytes"),
+  description: text("description"),                     // Optional context for this evidence
+  sourceType: mysqlEnum("sourceType", ["upload", "link", "text"]).default("upload"),
+  textContent: text("textContent"),                     // For text-based statements (no file)
+  uploadedByUserId: int("uploadedByUserId"),
+  uploadedAt: timestamp("uploadedAt").defaultNow().notNull(),
+});
+export type IncidentEvidence = typeof incidentEvidences.$inferSelect;
+export type InsertIncidentEvidence = typeof incidentEvidences.$inferInsert;
+
+// ─── Incident Assessments (Interne Bewertungen) ───────────────────────────────
+
+export const incidentAssessments = mysqlTable("incident_assessments", {
+  id: int("id").autoincrement().primaryKey(),
+  incidentId: int("incidentId").notNull(),
+  assessedByUserId: int("assessedByUserId").notNull(),
+  assessmentType: mysqlEnum("assessmentType", [
+    "initial",    // Erstbewertung
+    "technical",  // Technische Prüfung
+    "legal",      // Rechtliche Bewertung
+    "final",      // Abschlussbewertung
+  ]).default("initial"),
+  riskLevel: mysqlEnum("riskLevel", ["critical", "high", "medium", "low", "none"]).notNull(),
+  recallRecommended: boolean("recallRecommended").default(false).notNull(),
+  recallScope: mysqlEnum("recallScope", [
+    "none",
+    "targeted",   // Gezielte Rückholung (bekannte Kunden)
+    "voluntary",  // Freiwilliger Rückruf
+    "mandatory",  // Behördlich angeordneter Rückruf
+  ]).default("none"),
+  assessmentText: text("assessmentText").notNull(),     // Detailed assessment narrative
+  regulatoryObligation: boolean("regulatoryObligation").default(false), // Meldepflicht gegenüber Behörden
+  regulatoryDeadline: timestamp("regulatoryDeadline"),  // Frist für Behördenmeldung
+  regulatoryBasis: text("regulatoryBasis"),             // Rechtliche Grundlage (z.B. PrSG §5, GPSR Art. 20)
+  requiredDocuments: json("requiredDocuments").$type<string[]>().default([]), // List of required document types
+  internalNotes: text("internalNotes"),                 // Internal-only notes
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type IncidentAssessment = typeof incidentAssessments.$inferSelect;
+export type InsertIncidentAssessment = typeof incidentAssessments.$inferInsert;
+
+// ─── Incident Recalls (Rückruf-Verwaltung) ────────────────────────────────────
+
+export const incidentRecalls = mysqlTable("incident_recalls", {
+  id: int("id").autoincrement().primaryKey(),
+  incidentId: int("incidentId").notNull().unique(),     // 1:1 per incident
+  recallType: mysqlEnum("recallType", [
+    "voluntary",  // Freiwilliger Rückruf
+    "mandatory",  // Behördlich angeordnet
+    "targeted",   // Gezielte Rückholung
+  ]).notNull(),
+  recallScope: text("recallScope").notNull(),           // Description of affected scope
+  status: mysqlEnum("status", [
+    "planned",    // Geplant
+    "announced",  // Angekündigt (Pressemitteilung etc.)
+    "active",     // Aktiv laufend
+    "completed",  // Abgeschlossen
+    "cancelled",  // Abgebrochen
+  ]).default("planned").notNull(),
+  announcementText: text("announcementText"),           // Public announcement text
+  affectedUnitsCount: int("affectedUnitsCount"),
+  recallStartDate: timestamp("recallStartDate"),
+  recallEndDate: timestamp("recallEndDate"),
+  // Authority notifications
+  authorityNotified: boolean("authorityNotified").default(false),
+  authorityNotifiedAt: timestamp("authorityNotifiedAt"),
+  authorityNames: json("authorityNames").$type<string[]>().default([]), // e.g. ["SECO", "Stiftung Warentest"]
+  // Public communication
+  publicAnnouncement: boolean("publicAnnouncement").default(false),
+  publicAnnouncementUrl: text("publicAnnouncementUrl"),
+  pressReleaseUrl: text("pressReleaseUrl"),
+  // Remediation
+  remediationAction: mysqlEnum("remediationAction", [
+    "refund",       // Rückerstattung
+    "replacement",  // Ersatz
+    "repair",       // Reparatur
+    "disposal",     // Entsorgung
+    "other",
+  ]),
+  remediationInstructions: text("remediationInstructions"),
+  createdByUserId: int("createdByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type IncidentRecall = typeof incidentRecalls.$inferSelect;
+export type InsertIncidentRecall = typeof incidentRecalls.$inferInsert;
+
+// ─── Incident Timeline (Audit Trail) ─────────────────────────────────────────
+
+export const incidentTimeline = mysqlTable("incident_timeline", {
+  id: int("id").autoincrement().primaryKey(),
+  incidentId: int("incidentId").notNull(),
+  action: varchar("action", { length: 128 }).notNull(),  // e.g. "created", "evidence_added", "assessed", "recall_initiated"
+  performedByUserId: int("performedByUserId"),
+  performedByName: varchar("performedByName", { length: 255 }),
+  note: text("note"),
+  metadata: json("metadata"),                            // Additional context (e.g. { recallType: "voluntary" })
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type IncidentTimelineEntry = typeof incidentTimeline.$inferSelect;
+export type InsertIncidentTimelineEntry = typeof incidentTimeline.$inferInsert;

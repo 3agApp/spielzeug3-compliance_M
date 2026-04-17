@@ -43,6 +43,7 @@ import {
   Activity,
   RefreshCw,
   Crown,
+  AlertTriangle,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -69,6 +70,7 @@ function getMenuItems(role: ComplianceRole, t: any) {
     { icon: ClipboardList, label: t.nav.reviewQueue, path: "/review-queue" },
     { icon: Building2, label: t.nav.suppliers, path: "/suppliers" },
     { icon: CalendarClock, label: t.nav.expiryTracker, path: "/expiry" },
+    { icon: AlertTriangle, label: "Schadensfälle", path: "/incidents" },
     { icon: Bell, label: t.nav.notifications, path: "/notifications" },
   ];
 
@@ -79,6 +81,7 @@ function getMenuItems(role: ComplianceRole, t: any) {
     { icon: Building2, label: t.nav.suppliers, path: "/suppliers" },
     { icon: CheckCircle2, label: t.nav.approvals, path: "/approvals" },
     { icon: CalendarClock, label: t.nav.expiryTracker, path: "/expiry" },
+    { icon: AlertTriangle, label: "Schadensfälle", path: "/incidents" },
     { icon: Layers, label: t.nav.templates, path: "/admin/templates" },
     { icon: RefreshCw, label: t.nav.syncLogs, path: "/sync" },
     { icon: Bell, label: t.nav.notifications, path: "/notifications" },
@@ -90,6 +93,7 @@ function getMenuItems(role: ComplianceRole, t: any) {
     { icon: ClipboardList, label: t.nav.reviewQueue, path: "/review-queue" },
     { icon: Building2, label: t.nav.suppliers, path: "/suppliers" },
     { icon: CalendarClock, label: t.nav.expiryTracker, path: "/expiry" },
+    { icon: AlertTriangle, label: "Schadensfälle", path: "/incidents" },
     { icon: Users, label: t.nav.users, path: "/admin/users" },
     { icon: UserPlus, label: t.nav.invitations, path: "/admin/invitations" },
     { icon: Layers, label: t.nav.templates, path: "/admin/templates" },
