@@ -245,3 +245,73 @@ describe("riskReportPdf – Risk Report PDF localization", () => {
     expect(buf.length).toBeGreaterThan(500);
   });
 });
+
+describe("generateAiAnalysisPdf – defensive normalization (regression)", () => {
+  it("handles findings with undefined severity (old DB format: only type field)", async () => {
+    const buf = await generateAiAnalysisPdf({
+      product: SAMPLE_PRODUCT,
+      analysis: {
+        ...SAMPLE_ANALYSIS,
+        findings: [
+          // Old format: only type/message, no severity/category/description
+          { type: "critical", message: "Missing EN 71 test report." },
+          { type: "warning", message: "Validity period not specified." },
+          { type: "positive", message: "Document issued by accredited body." },
+        ],
+      },
+      lang: "de",
+    });
+    expect(buf).toBeInstanceOf(Buffer);
+    expect(buf.length).toBeGreaterThan(1000);
+    expect(buf.slice(0, 4).toString()).toBe("%PDF");
+  });
+
+  it("handles findings with completely missing severity and type (does not crash)", async () => {
+    const buf = await generateAiAnalysisPdf({
+      product: SAMPLE_PRODUCT,
+      analysis: {
+        ...SAMPLE_ANALYSIS,
+        findings: [
+          // Worst case: no severity, no type at all
+          { message: "Some finding without type." },
+        ],
+      },
+      lang: "de",
+    });
+    expect(buf).toBeInstanceOf(Buffer);
+    expect(buf.length).toBeGreaterThan(1000);
+  });
+
+  it("handles findings with new LLM format (type/message/detail/remediation/affectedRegulations)", async () => {
+    const buf = await generateAiAnalysisPdf({
+      product: SAMPLE_PRODUCT,
+      analysis: {
+        ...SAMPLE_ANALYSIS,
+        findings: [
+          {
+            type: "critical",
+            message: "Missing mandatory elements",
+            detail: "Notified Body number not referenced",
+            remediation: "Add Notified Body accreditation number",
+            affectedRegulations: ["EN 71-1", "2009/48/EC"],
+            regulatoryQuotes: [],
+          },
+        ],
+      },
+      lang: "en",
+    });
+    expect(buf).toBeInstanceOf(Buffer);
+    expect(buf.length).toBeGreaterThan(1000);
+    expect(buf.slice(0, 4).toString()).toBe("%PDF");
+  });
+
+  it("handles null/empty findings array gracefully", async () => {
+    const buf = await generateAiAnalysisPdf({
+      product: SAMPLE_PRODUCT,
+      analysis: { ...SAMPLE_ANALYSIS, findings: null },
+      lang: "de",
+    });
+    expect(buf).toBeInstanceOf(Buffer);
+    expect(buf.length).toBeGreaterThan(500);
+  });
+});

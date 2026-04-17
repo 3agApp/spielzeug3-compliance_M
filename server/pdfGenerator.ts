@@ -186,8 +186,8 @@ function normaliseFinding(f: any): {
   };
 }
 
-function severityColor(severity: string): string {
-  switch (severity) {
+function severityColor(severity: string | undefined | null): string {
+  switch (severity ?? "") {
     case "high": return COLORS.danger;
     case "medium": return COLORS.warning;
     case "low": return COLORS.accent;
@@ -195,7 +195,8 @@ function severityColor(severity: string): string {
   }
 }
 
-function severityLabel(severity: string, lang: PdfLang): string {
+function severityLabel(severity: string | undefined | null, lang: PdfLang): string {
+  if (!severity) return lang === "de" ? "Info" : "Info";
   const labels = PDF_I18N[lang].severityLabels;
   return (labels as Record<string, string>)[severity] ?? severity;
 }

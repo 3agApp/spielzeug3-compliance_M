@@ -1011,3 +1011,9 @@
 - [x] Tabelle: Nr., Dokumentname, Typ, Score (farbig), Status-Badge, Seitenverweis
 - [x] i18n-Strings für Inhaltsverzeichnis (DE/EN: "Inhaltsverzeichnis" / "Table of Contents")
 - [x] 368 Tests, 0 TS-Fehler
+
+## Bugfix: toUpperCase-Fehler bei bestehenden Analysen
+- [x] Fehlerursache diagnostiziert: Fehler trat vor den normaliseFinding()-Fixes auf, nicht mehr reproduzierbar
+- [x] severityLabel() und severityColor() defensiv gegen undefined/null abgesichert
+- [x] Alle 19 Analysen in der DB erfolgreich mit generateAiAnalysisPdf() getestet (0 Fehler)
+- [x] 368 Tests, 0 TS-Fehler
