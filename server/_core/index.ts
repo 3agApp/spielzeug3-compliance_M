@@ -11,6 +11,7 @@ import { registerPdfRoutes } from "../pdfRoutes";
 import { registerSealBatchExportRoute } from "../sealBatchExport";
 import { registerWebhookRoutes } from "../webhookRoutes";
 import { registerPublicApiRoutes } from "../publicApiRoutes";
+import { registerProductImportRoutes } from "../productImportRoutes";
 import { startRevokeExpiredPublicDocsCron } from "../cron/revokeExpiredPublicDocsCron";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -47,6 +48,8 @@ async function startServer() {
   registerWebhookRoutes(app);
   // Public REST API (WooCommerce / external integrations)
   registerPublicApiRoutes(app);
+  // Product CSV/Excel import upload endpoint
+  registerProductImportRoutes(app);
   // tRPC API
   app.use(
     "/api/trpc",

@@ -25,6 +25,7 @@ import { emailLogsRouter } from "./routers/emailLogs";
 import { labellingChecksRouter } from "./routers/labellingChecks";
 import { translateRouter } from "./routers/translate";
 import { declarationsRouter } from "./routers/declarations";
+import { productImportRouter } from "./routers/productImport";
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -59,6 +60,7 @@ export const appRouter = router({
   labellingChecks: labellingChecksRouter,
   translate: translateRouter,
   declarations: declarationsRouter,
+  productImport: productImportRouter,
 });
 
 export type AppRouter = typeof appRouter;

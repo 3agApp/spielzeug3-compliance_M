@@ -19,10 +19,12 @@ import {
   RefreshCw,
   Search,
   Tag,
+  Upload,
   XCircle,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useLocation, useParams } from "wouter";
+import { ProductImportDialog } from "@/components/ProductImportDialog";
 
 // ─── Status badge ─────────────────────────────────────────────────────────────
 function StatusBadge({ status }: { status: string }) {
@@ -94,6 +96,8 @@ export default function SupplierDetail() {
 
   const [search, setSearch]           = useState("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const utils = trpc.useUtils();
 
   const supplierQuery = trpc.suppliers.getById.useQuery({ id: supplierId });
   const productsQuery = trpc.products.list.useQuery({ supplierId });
@@ -207,13 +211,23 @@ export default function SupplierDetail() {
             </div>
           </div>
 
-          {/* Overall compliance score */}
-          <div className="rounded-xl border p-4 text-center min-w-[120px]">
+          {/* Import button + Overall compliance score */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowImportDialog(true)}
+            >
+              <Upload className="mr-1.5 h-4 w-4" />
+              {lang === "de" ? "Produkte importieren" : "Import Products"}
+            </Button>
+            <div className="rounded-xl border p-4 text-center min-w-[120px]">
             <p className={`text-3xl font-bold ${scoreColor}`}>{stats.avgScore}%</p>
             <p className="text-xs text-muted-foreground mt-0.5">{t.inline.compliancescore}</p>
             <div className="mt-2">
               <CompletenessBar score={stats.avgScore} />
             </div>
+          </div>
           </div>
         </div>
       </div>
@@ -586,6 +600,14 @@ export default function SupplierDetail() {
           </div>
         </TabsContent>
       </Tabs>
+
+      <ProductImportDialog
+        supplierId={supplier.id}
+        supplierName={supplier.name}
+        open={showImportDialog}
+        onClose={() => setShowImportDialog(false)}
+        onImported={() => utils.products.list.invalidate()}
+      />
     </div>
   );
 }

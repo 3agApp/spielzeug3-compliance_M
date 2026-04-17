@@ -104,6 +104,9 @@ export const products = mysqlTable("products", {
   // Supplier declaration of completeness
   supplierConfirmedAt: timestamp("supplierConfirmedAt"),       // When supplier confirmed completeness
   supplierConfirmedBy: varchar("supplierConfirmedBy", { length: 255 }), // Name of confirming user
+  // Origin & customs
+  countryOfOrigin: varchar("countryOfOrigin", { length: 8 }),         // ISO 3166-1 alpha-2, e.g. "CN", "DE"
+  customsTariffNumber: varchar("customsTariffNumber", { length: 32 }), // e.g. "85182200"
   // Product versioning
   versionNumber: varchar("versionNumber", { length: 64 }),              // e.g. "v1", "v2", "2024", "EU"
   parentProductId: int("parentProductId"),                              // FK → products.id (null = root version)

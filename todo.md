@@ -888,3 +888,14 @@
 - [ ] Frontend: Produktdetail – "Andere Versionen"-Panel mit Links zu Geschwisterversionen
 - [x] Frontend: Produkt erstellen – Versionsnummer als optionales Feld
 - [ ] Laravel-Modul: ProductVersion Migration, Model, Controller, Routes als ZIP exportieren
+
+## CSV/Excel-Produktimport (Tigermedia-Format)
+- [x] DB: countryOfOrigin und customsTariffNumber Spalten in products-Tabelle (Migration angewendet)
+- [x] Backend: productImportService.ts (parseImportBuffer, previewImport, importFromBuffer)
+- [x] Backend: productImportRoutes.ts (Multer-Upload-Endpoint POST /api/import/products/upload)
+- [x] Backend: productImport.ts tRPC-Router (preview + commit Prozeduren)
+- [x] Backend: Router in routers.ts als productImport registriert
+- [x] Backend: Upload-Route in server/_core/index.ts registriert
+- [x] Frontend: ProductImportDialog.tsx (3-Schritt-Dialog: Upload → Vorschau → Bestätigen → Fertig)
+- [x] Frontend: Import-Button in SupplierDetail.tsx (Produkte importieren / Import Products)
+- [x] Tests: productImport.test.ts (8 Tests: Spalten-Mapping, leere Zeilen, Gross-/Kleinschreibung, Vorschau-Limits)
