@@ -28,6 +28,7 @@ import {
   Loader2,
   Copy,
 } from "lucide-react";
+import AiValidationPanel from "@/components/AiValidationPanel";
 
 interface Props {
   productId: number;
@@ -280,23 +281,13 @@ export default function DeclarationsTab({ productId, lang }: Props) {
 
                           {/* AI Validation Result */}
                           {selected.aiValidationResult && (
-                            <div className={`rounded-lg p-3 text-sm ${selected.aiValidationPassed ? "bg-green-50 dark:bg-green-900/20" : "bg-amber-50 dark:bg-amber-900/20"}`}>
-                              <p className="font-medium mb-1 flex items-center gap-2">
-                                <Bot className="h-4 w-4" />
-                                {lang === "de" ? "KI-Validierungsergebnis" : "AI Validation Result"}
-                              </p>
-                              <p className="text-muted-foreground">{selected.aiValidationSummary}</p>
-                              {selected.aiValidationResult.issues?.length > 0 && (
-                                <ul className="mt-2 space-y-1">
-                                  {selected.aiValidationResult.issues.map((issue: string, i: number) => (
-                                    <li key={i} className="flex items-start gap-1 text-amber-700 dark:text-amber-400">
-                                      <AlertCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                                      {issue}
-                                    </li>
-                                  ))}
-                                </ul>
-                              )}
-                            </div>
+                            <AiValidationPanel
+                              result={selected.aiValidationResult}
+                              summary={selected.aiValidationSummary}
+                              passed={selected.aiValidationPassed}
+                              validatedAt={selected.aiValidatedAt}
+                              lang={lang}
+                            />
                           )}
 
                           {/* Portal link */}

@@ -26,7 +26,7 @@ import {
 import { Errors, requireRole } from "../../shared";
 import type { UserContext } from "../../shared/tenantGuard";
 import { invokeLLM } from "../../_core/llm";
-import { storagePut } from "../../storage";
+import { storagePut, storageGet } from "../../storage";
 import { emailService } from "../email/emailService";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -462,10 +462,38 @@ export const declarationService = {
 
     const [product] = await db.select().from(products).where(eq(products.id, decl.productId));
 
-    const prompt = buildAiValidationPrompt(decl, product);
+    // Resolve a fresh presigned URL for the signed PDF so GPT-4o can read it
+    let pdfUrl: string | null = decl.signedPdfUrl ?? null;
+    if (decl.signedPdfKey) {
+      try {
+        const { url } = await storageGet(decl.signedPdfKey);
+        pdfUrl = url;
+      } catch {
+        // fallback to stored URL
+      }
+    }
+
+    const systemPrompt = `You are a senior compliance expert specialising in EU and Swiss toy safety regulations.
+Your task is to review the attached Declaration of Conformity (DoC) PDF and verify it against the metadata provided.
+Be precise and strict – this document has legal significance. Respond only with the requested JSON.`;
+
+    const userContent: any[] = [
+      { type: "text", text: buildAiValidationPrompt(decl, product) },
+    ];
+
+    // Attach the actual signed PDF so GPT-4o can read the document content
+    if (pdfUrl) {
+      userContent.push({
+        type: "file_url",
+        file_url: { url: pdfUrl, mime_type: "application/pdf" },
+      });
+    }
 
     const response = await invokeLLM({
-      messages: [{ role: "user", content: prompt }],
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userContent },
+      ],
       response_format: {
         type: "json_schema",
         json_schema: {
@@ -614,23 +642,48 @@ function buildManufacturerEmail(decl: Declaration, portalUrl: string, expiryStr:
 // ─── AI validation prompt ─────────────────────────────────────────────────────
 
 function buildAiValidationPrompt(decl: Declaration, product: any): string {
-  return `You are a compliance expert reviewing a Declaration of Conformity (DoC) for a toy product.
+  const directives = (decl.euDirectives as string[] ?? []).map((d: string) => `  - ${d}`).join("\n") || "  (none specified)";
+  const chRegs = (decl.chRegulations as string[] ?? []).map((r: string) => `  - ${r}`).join("\n") || "  (none specified)";
+  const standards = (decl.standards as string[] ?? []).map((s: string) => `  - ${s}`).join("\n") || "  (none specified)";
 
-Product: ${decl.effectiveProductName ?? product?.productName ?? "Unknown"}
-Article Number: ${product?.internalArticleNumber ?? "Unknown"}
+  return `Please review the attached Declaration of Conformity (DoC) PDF for the following product and verify its completeness and correctness.
+
+=== EXPECTED METADATA (from our compliance system) ===
+Product Name: ${decl.effectiveProductName ?? product?.productName ?? "Unknown"}
+Internal Article No.: ${product?.internalArticleNumber ?? "Unknown"}
+Age Grading: ${decl.effectiveAgeGrading ?? "Not specified"}
+Issued Date: ${decl.issuedDate ? new Date(decl.issuedDate).toLocaleDateString("de-CH") : "Not specified"}
+Issued Place: ${decl.issuedPlace ?? "Not specified"}
 Signed by: ${decl.signedByName ?? "Unknown"} (${decl.signedByPosition ?? "Unknown"})
-Signed at: ${decl.signedAt?.toISOString() ?? "Unknown"}
-EU Directives declared: ${JSON.stringify(decl.euDirectives)}
-CH Regulations declared: ${JSON.stringify(decl.chRegulations)}
-Standards declared: ${JSON.stringify(decl.standards)}
-Test Report Ref: ${decl.testReportRef ?? "Not provided"}
+Signed at: ${decl.signedAt ? new Date(decl.signedAt).toLocaleDateString("de-CH") : "Unknown"}
+Test Report Reference: ${decl.testReportRef ?? "Not provided"}
 Notified Body: ${decl.notifiedBody ?? "Not provided"}
-Issued Date: ${decl.issuedDate?.toISOString() ?? "Not provided"}
-Issued Place: ${decl.issuedPlace ?? "Not provided"}
-Age Grading: ${decl.effectiveAgeGrading ?? "Not provided"}
+CH Conformity Body: ${decl.chConformityBody ?? "Not provided"}
 
-Based on the metadata above, assess whether this Declaration of Conformity appears complete and valid.
-Return a JSON object evaluating each field. Set "passed" to true only if all critical checks pass
-(is_signed, signatory_name_present, directives_complete, standards_complete, product_name_matches).
-Provide a "summary" with a brief overall assessment (2-3 sentences) and an "issues" array listing any problems.`;
+Expected EU Directives:
+${directives}
+
+Expected CH Regulations:
+${chRegs}
+
+Expected Standards:
+${standards}
+
+=== YOUR TASK ===
+Carefully read the attached PDF and check each of the following:
+1. Is the document actually signed (wet or digital signature visible)?
+2. Is the signatory name present and does it match "${decl.signedByName ?? "Unknown"}"?
+3. Is the signatory position/title present?
+4. Is the issue date present and correct?
+5. Does the product name in the PDF match the expected product name?
+6. Is the article number present in the PDF?
+7. Are all expected EU directives listed in the PDF?
+8. Are the CH regulations present (if applicable)?
+9. Are all expected standards listed?
+10. Is the age grading mentioned?
+11. Is a notified body referenced (if required by the directives)?
+
+For each issue found, provide a clear, actionable description in English.
+Set "passed" to true only if checks 1, 2, 5, 7, and 9 all pass.
+Provide a concise "summary" (2-3 sentences) with an overall assessment.`;
 }
