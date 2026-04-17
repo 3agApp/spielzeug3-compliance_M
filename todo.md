@@ -1024,3 +1024,17 @@
 - [x] Verwendung im Inhaltsverzeichnis (TOC) und in der Dokument-Analyse-Sektion
 - [x] 6 neue Tests (translateDocType: bekannte Typen DE/EN, Normalisierung, Fallback, null/undefined, PDF-Integration)
 - [x] 378 Tests total, 0 TS-Fehler
+
+## Produktversionen
+- [x] DB: product_versions-Tabelle (id, productId, versionNumber, label, notes, isActive, createdAt)
+- [x] DB: productVersionId-FK-Spalte in documents-Tabelle
+- [x] DB: productVersionId-FK-Spalte in ai_analysis_results-Tabelle
+- [x] Backend: versions.list, versions.create, versions.update, versions.delete, versions.getWithDocuments
+- [x] Backend: versions.assignDocument, versions.assignDocuments, versions.assignAnalysis
+- [x] Backend: versions.getProductDocumentsWithVersions, versions.getProductAnalysesWithVersions
+- [x] Frontend: Versionen-Tab in Produktdetail (ProductVersionsTab.tsx)
+- [x] Frontend: Version anlegen/bearbeiten Dialog mit versionNumber, label, notes, isActive
+- [x] Frontend: Dokumente und Analysen einer Version zuordnen (Checkbox-Liste in Dialog)
+- [x] Seed: Version 7.4 (Swiss-Edition) für tigerbox TOUCH PLUS (gelb, id=120008) angelegt, 23 Dokumente + 1 Analyse zugeordnet
+- [x] Tests: versions.test.ts (10 Tests: Schema-Validierung, Zuweisung, Lösch-Guard, isActive)
+- [x] 388 Tests total, 0 TS-Fehler

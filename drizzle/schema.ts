@@ -195,6 +195,8 @@ export const documents = mysqlTable("documents", {
   reviewedAt: timestamp("reviewedAt"),
   uploadedAt: timestamp("uploadedAt").defaultNow().notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
+  /** FK to product_versions – which product version this document belongs to */
+  productVersionId: int("productVersionId"),
 });
 
 export type Document = typeof documents.$inferSelect;
@@ -385,6 +387,8 @@ export const aiAnalysisResults = mysqlTable("ai_analysis_results", {
   triggeredByUserId: int("triggeredByUserId"),
   completedAt: timestamp("completedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
+  /** FK to product_versions – which product version this analysis belongs to */
+  productVersionId: int("productVersionId"),
 });
 
 export type AiAnalysisResult = typeof aiAnalysisResults.$inferSelect;
@@ -979,3 +983,18 @@ export const incidentTimeline = mysqlTable("incident_timeline", {
 });
 export type IncidentTimelineEntry = typeof incidentTimeline.$inferSelect;
 export type InsertIncidentTimelineEntry = typeof incidentTimeline.$inferInsert;
+
+// ─── Product Versions ─────────────────────────────────────────────────────────
+export const productVersions = mysqlTable("product_versions", {
+  id: int("id").autoincrement().primaryKey(),
+  productId: int("productId").notNull(),
+  versionNumber: varchar("versionNumber", { length: 64 }).notNull(), // e.g. "7.4", "2.1.0", "Rev. B"
+  label: varchar("label", { length: 255 }),                          // optional display name
+  notes: text("notes"),                                              // change notes / description
+  isActive: boolean("isActive").default(true).notNull(),             // current/active version
+  createdByUserId: int("createdByUserId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ProductVersion = typeof productVersions.$inferSelect;
+export type InsertProductVersion = typeof productVersions.$inferInsert;

@@ -22,6 +22,7 @@ import SignatureRequestDialog from "@/components/SignatureRequestDialog";
 import { CopyProductDataDialog } from "@/components/CopyProductDataDialog";
 import CreateIncidentDialog from "@/components/CreateIncidentDialog";
 import ProductIncidentsTab from "@/components/ProductIncidentsTab";
+import { ProductVersionsTab } from "@/components/ProductVersionsTab";
 import SignatureRequestList from "@/components/SignatureRequestList";
 import { SealStatusPill } from "@/components/SealBadge";
 import type { SealStatus } from "@/components/SealBadge";
@@ -562,6 +563,12 @@ export default function ProductDetail() {
               {lang === "de" ? "Schadensfälle" : "Incidents"}
             </TabsTrigger>
           )}
+          {isInternalRole && (
+            <TabsTrigger value="versions" className="gap-2">
+              <Tag className="h-4 w-4" />
+              {lang === "de" ? "Versionen" : "Versions"}
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* Images Tab */}
@@ -867,6 +874,11 @@ export default function ProductDetail() {
               lang={lang}
               onCreateNew={() => setShowCreateIncidentDialog(true)}
             />
+          </TabsContent>
+        )}
+        {isInternalRole && (
+          <TabsContent value="versions" className="mt-4">
+            <ProductVersionsTab productId={productId} />
           </TabsContent>
         )}
        </Tabs>

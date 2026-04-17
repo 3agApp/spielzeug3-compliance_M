@@ -28,6 +28,7 @@ import { declarationsRouter } from "./routers/declarations";
 import { productImportRouter } from "./routers/productImport";
 import { productCopyRouter } from "./routers/productCopy";
 import { incidentsRouter } from "./routers/incidents";
+import { versionsRouter } from "./routers/versions";
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -65,6 +66,7 @@ export const appRouter = router({
   productImport: productImportRouter,
   productCopy: productCopyRouter,
   incidents: incidentsRouter,
+  versions: versionsRouter,
 });
 
 export type AppRouter = typeof appRouter;
