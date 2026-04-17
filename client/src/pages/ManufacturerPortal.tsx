@@ -7,9 +7,11 @@
  * 3. Upload the signed PDF
  * 4. Confirm legal acceptance
  *
+ * After upload, the page polls for automatic AI validation and shows the result.
+ *
  * Accessed via: /declaration/portal/:token
  */
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useParams } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -24,7 +26,105 @@ import {
   Loader2,
   Clock,
   Shield,
+  Brain,
+  XCircle,
 } from "lucide-react";
+
+// ─── AI Validation Result Panel ───────────────────────────────────────────────
+
+function AiResultPanel({ declaration }: { declaration: any }) {
+  const result = declaration.aiValidationResult as any;
+  const passed = declaration.aiValidationPassed;
+
+  if (!result) return null;
+
+  const checks = [
+    { key: "is_signed", label: "Document signed / Dokument unterzeichnet" },
+    { key: "signatory_name_present", label: "Signatory name / Unterzeichner-Name" },
+    { key: "signatory_position_present", label: "Signatory position / Position" },
+    { key: "date_present", label: "Issue date / Ausstellungsdatum" },
+    { key: "product_name_matches", label: "Product name matches / Produktname korrekt" },
+    { key: "article_number_present", label: "Article number / Artikelnummer" },
+    { key: "directives_complete", label: "EU Directives / EU-Richtlinien" },
+    { key: "ch_regulations_present", label: "CH Regulations / CH-Vorschriften" },
+    { key: "standards_complete", label: "Standards / Normen" },
+    { key: "age_grading_present", label: "Age grading / Altersangabe" },
+    { key: "notified_body_present", label: "Notified body / Benannte Stelle" },
+  ];
+
+  return (
+    <Card className={passed
+      ? "border-green-200 bg-green-50 dark:bg-green-900/20"
+      : "border-amber-200 bg-amber-50 dark:bg-amber-900/20"
+    }>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-semibold flex items-center gap-2">
+          <Brain className={`h-4 w-4 ${passed ? "text-green-600" : "text-amber-600"}`} />
+          AI Validation Result / KI-Validierungsergebnis
+          {passed ? (
+            <span className="ml-auto text-xs font-medium text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-900 px-2 py-0.5 rounded-full">
+              ✓ Passed
+            </span>
+          ) : (
+            <span className="ml-auto text-xs font-medium text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900 px-2 py-0.5 rounded-full">
+              ⚠ Issues found
+            </span>
+          )}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {/* Summary */}
+        {result.summary && (
+          <p className="text-sm text-muted-foreground italic">{result.summary}</p>
+        )}
+
+        {/* Checklist */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+          {checks.map(({ key, label }) => {
+            const ok = result[key] === true;
+            return (
+              <div key={key} className="flex items-center gap-2 text-xs">
+                {ok
+                  ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
+                  : <XCircle className="h-3.5 w-3.5 text-red-400 shrink-0" />
+                }
+                <span className={ok ? "text-foreground" : "text-muted-foreground line-through"}>
+                  {label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Issues */}
+        {result.issues && result.issues.length > 0 && (
+          <div className="mt-2 space-y-1">
+            <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">
+              Issues / Probleme:
+            </p>
+            <ul className="space-y-1">
+              {result.issues.map((issue: string, i: number) => (
+                <li key={i} className="text-xs text-amber-800 dark:text-amber-300 flex items-start gap-1.5">
+                  <span className="mt-0.5 shrink-0">•</span>
+                  {issue}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {declaration.aiValidatedAt && (
+          <p className="text-xs text-muted-foreground flex items-center gap-1 mt-2">
+            <Clock className="h-3 w-3" />
+            Validated / Validiert: {new Date(declaration.aiValidatedAt).toLocaleString("de-CH")}
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function ManufacturerPortal() {
   const { token } = useParams<{ token: string }>();
@@ -34,17 +134,36 @@ export default function ManufacturerPortal() {
   const [uploadDone, setUploadDone] = useState(false);
   const [signatoryName, setSignatoryName] = useState("");
   const [signatoryPosition, setSignatoryPosition] = useState("");
+  // Polling state: true while waiting for AI validation after upload
+  const [pollingForAi, setPollingForAi] = useState(false);
 
   const portalQuery = trpc.declarations.getByToken.useQuery(
     { token: token ?? "" },
-    { enabled: !!token }
+    {
+      enabled: !!token,
+      // Poll every 4 seconds while waiting for AI validation
+      refetchInterval: pollingForAi ? 4000 : false,
+    }
   );
   const declaration = portalQuery.data as any;
+
+  // Stop polling once AI validation is done
+  useEffect(() => {
+    if (!pollingForAi) return;
+    const status = declaration?.status;
+    if (status === "ai_validated" || status === "archived") {
+      setPollingForAi(false);
+    }
+    // Also stop after 3 minutes (45 polls × 4 s) to avoid infinite polling
+    const timeout = setTimeout(() => setPollingForAi(false), 3 * 60 * 1000);
+    return () => clearTimeout(timeout);
+  }, [pollingForAi, declaration?.status]);
 
   const uploadMutation = trpc.declarations.submitSignedPdf.useMutation({
     onSuccess: () => {
       setUploadDone(true);
-      toast.success("Signed declaration uploaded successfully.");
+      setPollingForAi(true);
+      toast.success("Signed declaration uploaded. AI validation is running…");
       portalQuery.refetch();
     },
     onError: (e) => {
@@ -119,6 +238,7 @@ export default function ManufacturerPortal() {
     : false;
 
   const alreadySigned = ["signed", "ai_validated", "archived"].includes(declaration.status);
+  const aiValidated = ["ai_validated", "archived"].includes(declaration.status);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -223,24 +343,66 @@ export default function ManufacturerPortal() {
 
         {/* Already signed */}
         {alreadySigned ? (
-          <Card className="border-green-200 bg-green-50 dark:bg-green-900/20">
-            <CardContent className="pt-6 text-center">
-              <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-3" />
-              <h3 className="font-semibold text-green-700 dark:text-green-400">
-                Declaration signed / Erklärung unterzeichnet
-              </h3>
-              <p className="text-sm text-muted-foreground mt-2">
-                Thank you. The signed declaration has been received and is being processed.<br />
-                Vielen Dank. Die unterzeichnete Erklärung wurde empfangen und wird verarbeitet.
-              </p>
-              {declaration.signedAt && (
-                <p className="text-xs text-muted-foreground mt-2 flex items-center justify-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {new Date(declaration.signedAt).toLocaleString("de-CH")}
+          <div className="space-y-4">
+            <Card className="border-green-200 bg-green-50 dark:bg-green-900/20">
+              <CardContent className="pt-6 text-center">
+                <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-3" />
+                <h3 className="font-semibold text-green-700 dark:text-green-400">
+                  Declaration signed / Erklärung unterzeichnet
+                </h3>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Thank you. The signed declaration has been received and is being processed.<br />
+                  Vielen Dank. Die unterzeichnete Erklärung wurde empfangen und wird verarbeitet.
                 </p>
-              )}
-            </CardContent>
-          </Card>
+                {declaration.signedAt && (
+                  <p className="text-xs text-muted-foreground mt-2 flex items-center justify-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {new Date(declaration.signedAt).toLocaleString("de-CH")}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* AI validation: running banner */}
+            {!aiValidated && pollingForAi && (
+              <Card className="border-blue-200 bg-blue-50 dark:bg-blue-900/20">
+                <CardContent className="pt-4 flex items-center gap-3">
+                  <Loader2 className="h-5 w-5 text-blue-500 animate-spin shrink-0" />
+                  <div className="text-sm">
+                    <p className="font-medium text-blue-700 dark:text-blue-400">
+                      AI validation running / KI-Validierung läuft…
+                    </p>
+                    <p className="text-blue-600 dark:text-blue-500 text-xs mt-0.5">
+                      The document is being automatically reviewed by our AI compliance system.
+                      This usually takes 15–60 seconds.<br />
+                      Das Dokument wird automatisch von unserem KI-Compliance-System geprüft.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* AI validation: signed but not yet validated (polling stopped or just signed) */}
+            {!aiValidated && !pollingForAi && declaration.status === "signed" && uploadDone && (
+              <Card className="border-slate-200 bg-slate-50 dark:bg-slate-900/20">
+                <CardContent className="pt-4 flex items-center gap-3">
+                  <Brain className="h-5 w-5 text-slate-500 shrink-0" />
+                  <div className="text-sm">
+                    <p className="font-medium text-slate-700 dark:text-slate-400">
+                      AI validation pending / KI-Validierung ausstehend
+                    </p>
+                    <p className="text-slate-600 dark:text-slate-500 text-xs mt-0.5">
+                      The compliance team will review the document shortly.<br />
+                      Das Compliance-Team wird das Dokument in Kürze prüfen.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* AI validation result */}
+            {aiValidated && <AiResultPanel declaration={declaration} />}
+          </div>
         ) : (
           <>
             {/* Step 1: Download PDF */}

@@ -899,3 +899,11 @@
 - [x] Frontend: ProductImportDialog.tsx (3-Schritt-Dialog: Upload → Vorschau → Bestätigen → Fertig)
 - [x] Frontend: Import-Button in SupplierDetail.tsx (Produkte importieren / Import Products)
 - [x] Tests: productImport.test.ts (8 Tests: Spalten-Mapping, leere Zeilen, Gross-/Kleinschreibung, Vorschau-Limits)
+
+## Automatische KI-Validierung nach Hersteller-Upload
+- [x] Backend: submitSignedPdf löst validateWithAiInternal (ohne User-Auth) automatisch aus
+- [x] Backend: validateWithAiInternal – interne Variante ohne requireRole-Guard
+- [x] Backend: autoValidationStatus-Feld in submitSignedPdf-Response (triggering/skipped)
+- [x] Frontend: ManufacturerPortal zeigt "KI-Validierung läuft..." Banner nach Upload
+- [x] Frontend: getByToken-Query pollt Status bis ai_validated oder Fehler
+- [x] Tests: submitSignedPdf löst Auto-Validierung aus (Mock)

@@ -442,7 +442,130 @@ export const declarationService = {
     await addHistory(decl.id, "signed", decl.status, "signed", null, input.signatoryName,
       `Signed by ${input.signatoryName} (${input.signatoryPosition})`);
 
-    return { success: true };
+    // ── Trigger AI validation automatically (fire-and-forget) ─────────────
+    // We do not await this so the manufacturer gets an immediate response.
+    // The validation runs in the background and updates the DB when done.
+    setImmediate(() => {
+      this.validateWithAiInternal(decl.id).catch((err) => {
+        console.error(`[autoAiValidation] Declaration #${decl.id} failed:`, err?.message ?? err);
+      });
+    });
+
+    return { success: true, autoValidationTriggered: true };
+  },
+
+  // ── Internal AI validation (no user auth – used for auto-trigger) ─────────
+  async validateWithAiInternal(declarationId: number) {
+    const db = await getDb();
+    if (!db) throw new Error("Database unavailable");
+
+    const [decl] = await db
+      .select()
+      .from(declarations)
+      .where(eq(declarations.id, declarationId));
+    if (!decl) throw new Error(`Declaration #${declarationId} not found`);
+    if (decl.status !== "signed") {
+      // Already validated or archived – skip silently
+      return null;
+    }
+
+    const [product] = await db.select().from(products).where(eq(products.id, decl.productId));
+
+    // Resolve a fresh presigned URL for the signed PDF so GPT-4o can read it
+    let pdfUrl: string | null = decl.signedPdfUrl ?? null;
+    if (decl.signedPdfKey) {
+      try {
+        const { url } = await storageGet(decl.signedPdfKey);
+        pdfUrl = url;
+      } catch {
+        // fallback to stored URL
+      }
+    }
+
+    const systemPrompt = `You are a senior compliance expert specialising in EU and Swiss toy safety regulations.
+Your task is to review the attached Declaration of Conformity (DoC) PDF and verify it against the metadata provided.
+Be precise and strict – this document has legal significance. Respond only with the requested JSON.`;
+
+    const userContent: any[] = [
+      { type: "text", text: buildAiValidationPrompt(decl, product) },
+    ];
+
+    if (pdfUrl) {
+      userContent.push({
+        type: "file_url",
+        file_url: { url: pdfUrl, mime_type: "application/pdf" },
+      });
+    }
+
+    const response = await invokeLLM({
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userContent },
+      ],
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "doc_validation",
+          strict: true,
+          schema: {
+            type: "object",
+            properties: {
+              is_signed: { type: "boolean" },
+              signatory_name_present: { type: "boolean" },
+              signatory_position_present: { type: "boolean" },
+              date_present: { type: "boolean" },
+              product_name_matches: { type: "boolean" },
+              article_number_present: { type: "boolean" },
+              directives_complete: { type: "boolean" },
+              ch_regulations_present: { type: "boolean" },
+              standards_complete: { type: "boolean" },
+              age_grading_present: { type: "boolean" },
+              notified_body_present: { type: "boolean" },
+              issues: { type: "array", items: { type: "string" } },
+              summary: { type: "string" },
+              passed: { type: "boolean" },
+            },
+            required: [
+              "is_signed", "signatory_name_present", "signatory_position_present",
+              "date_present", "product_name_matches", "article_number_present",
+              "directives_complete", "ch_regulations_present", "standards_complete",
+              "age_grading_present", "notified_body_present", "issues", "summary", "passed",
+            ],
+            additionalProperties: false,
+          },
+        },
+      } as any,
+    });
+
+    const content = response.choices[0]?.message?.content;
+    let result: any = {};
+    try {
+      result = typeof content === "string" ? JSON.parse(content) : content;
+    } catch {
+      result = { passed: false, summary: "AI validation failed to parse response", issues: [] };
+    }
+
+    const newStatus = result.passed ? "ai_validated" : "signed";
+    await db.update(declarations).set({
+      status: newStatus as any,
+      aiValidationPassed: result.passed,
+      aiValidationResult: result,
+      aiValidationSummary: result.summary,
+      aiValidatedAt: new Date(),
+    }).where(eq(declarations.id, declarationId));
+
+    await addHistory(
+      declarationId,
+      "ai_validated",
+      "signed",
+      newStatus,
+      null,
+      "AI System (auto)",
+      result.passed ? "Auto AI validation passed" : "Auto AI validation found issues"
+    );
+
+    console.log(`[autoAiValidation] Declaration #${declarationId} → ${newStatus}`);
+    return result;
   },
 
   // ── AI validation of signed declaration ──────────────────────────────────
