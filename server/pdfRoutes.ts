@@ -1,5 +1,7 @@
 import type { Express } from "express";
 import { sdk } from "./_core/sdk";
+import { declarationService } from "./domains/declarations/declarationService";
+import { generateDeclarationPdf } from "./domains/declarations/declarationPdfService";
 import QRCode from "qrcode";
 import * as fs from "fs";
 import * as os from "os";
@@ -427,6 +429,36 @@ export function registerPdfRoutes(app: Express) {
     } catch (err: any) {
       console.error("[PDF] Risk report generation failed:", err);
       res.status(500).json({ error: "PDF-Generierung fehlgeschlagen", details: err.message });
+    }
+  });
+
+  /**
+   * GET /api/declarations/pdf/:token
+   * Public endpoint – returns the pre-filled DoC PDF for the manufacturer portal.
+   * Token acts as the credential (no login required).
+   */
+  app.get("/api/declarations/pdf/:token", async (req, res) => {
+    try {
+      const token = req.params.token ?? "";
+      const declaration = await declarationService.getByToken(token);
+      if (!declaration) {
+        res.status(404).json({ error: "Declaration not found" });
+        return;
+      }
+      const rawLang = String(req.query.lang ?? "").toLowerCase();
+      const lang: "de" | "en" = rawLang === "en" ? "en" : "de";
+      const pdfBuffer = await generateDeclarationPdf(declaration, lang);
+      const safeName = (declaration.effectiveProductName ?? declaration.productName ?? "doc")
+        .replace(/[^a-zA-Z0-9äöüÄÖÜß\-_]/g, "_")
+        .slice(0, 50);
+      const filename = `DoC_${declaration.docNumber ?? safeName}_${new Date().toISOString().slice(0, 10)}.pdf`;
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `inline; filename="${filename}"`);
+      res.setHeader("Content-Length", pdfBuffer.length);
+      res.send(pdfBuffer);
+    } catch (err: any) {
+      console.error("[PDF] Declaration PDF generation failed:", err);
+      res.status(500).json({ error: "PDF generation failed", details: err.message });
     }
   });
 }

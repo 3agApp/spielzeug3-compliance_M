@@ -693,3 +693,103 @@ export const riskAssessmentTranslations = mysqlTable("risk_assessment_translatio
 });
 export type RiskAssessmentTranslation = typeof riskAssessmentTranslations.$inferSelect;
 export type InsertRiskAssessmentTranslation = typeof riskAssessmentTranslations.$inferInsert;
+
+// ─── Declarations of Conformity (DoC) ────────────────────────────────────────
+export const declarations = mysqlTable("declarations", {
+  id: int("id").autoincrement().primaryKey(),
+  tenantId: int("tenantId").default(1).notNull(),
+  productId: int("productId").notNull(),
+  supplierId: int("supplierId").notNull(),
+  docNumber: varchar("docNumber", { length: 64 }).notNull().unique(), // e.g. DOC-SZ3-2026-0047-001
+  version: int("version").default(1).notNull(),
+  status: mysqlEnum("status", [
+    "draft",
+    "sent",
+    "manufacturer_review",
+    "signed",
+    "ai_validated",
+    "archived",
+  ]).default("draft").notNull(),
+  // Product identification overrides (can differ from product master data)
+  effectiveProductName: varchar("effectiveProductName", { length: 512 }),
+  effectiveAgeGrading: varchar("effectiveAgeGrading", { length: 128 }),
+  // Directives & standards (JSON arrays of enum values)
+  euDirectives: json("euDirectives").$type<string[]>().default([]),
+  chRegulations: json("chRegulations").$type<string[]>().default([]),
+  standards: json("standards").$type<string[]>().default([]),
+  // Identification fields
+  testReportRef: varchar("testReportRef", { length: 512 }),
+  notifiedBody: varchar("notifiedBody", { length: 255 }),
+  chConformityBody: varchar("chConformityBody", { length: 255 }),
+  issuedDate: timestamp("issuedDate"),
+  issuedPlace: varchar("issuedPlace", { length: 255 }),
+  // Manufacturer contact
+  manufacturerContactName: varchar("manufacturerContactName", { length: 255 }),
+  manufacturerContactEmail: varchar("manufacturerContactEmail", { length: 320 }),
+  // Token for manufacturer portal (public, no login)
+  portalToken: varchar("portalToken", { length: 128 }).unique(),
+  portalTokenExpiresAt: timestamp("portalTokenExpiresAt"),
+  sentAt: timestamp("sentAt"),
+  // Signature tracking
+  signedAt: timestamp("signedAt"),
+  signedByName: varchar("signedByName", { length: 255 }),
+  signedByPosition: varchar("signedByPosition", { length: 255 }),
+  signatureMethod: mysqlEnum("signatureMethod", ["manual_upload", "esignature"]).default("manual_upload"),
+  signedPdfUrl: text("signedPdfUrl"),   // S3 URL of signed PDF
+  signedPdfKey: varchar("signedPdfKey", { length: 512 }),
+  draftPdfUrl: text("draftPdfUrl"),     // S3 URL of draft PDF (sent to manufacturer)
+  draftPdfKey: varchar("draftPdfKey", { length: 512 }),
+  // AI validation
+  aiValidationPassed: boolean("aiValidationPassed"),
+  aiValidationResult: json("aiValidationResult"),   // structured JSON from GPT-4o
+  aiValidationSummary: text("aiValidationSummary"),
+  aiValidatedAt: timestamp("aiValidatedAt"),
+  // Archiving: links to the Document record created on archive
+  archivedDocumentId: int("archivedDocumentId"),
+  archivedAt: timestamp("archivedAt"),
+  // Audit
+  createdByUserId: int("createdByUserId").notNull(),
+  updatedByUserId: int("updatedByUserId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Declaration = typeof declarations.$inferSelect;
+export type InsertDeclaration = typeof declarations.$inferInsert;
+
+// ─── Declaration Articles (pivot: main article + Annex A variants) ────────────
+export const declarationArticles = mysqlTable("declaration_articles", {
+  id: int("id").autoincrement().primaryKey(),
+  declarationId: int("declarationId").notNull(),
+  productId: int("productId").notNull(),        // FK → products.id
+  isPrimary: boolean("isPrimary").default(false).notNull(), // true = main article
+  // Snapshot of product fields at time of declaration creation
+  snapshotProductName: varchar("snapshotProductName", { length: 512 }),
+  snapshotArticleNumber: varchar("snapshotArticleNumber", { length: 128 }),
+  snapshotEan: varchar("snapshotEan", { length: 64 }),
+  snapshotBrand: varchar("snapshotBrand", { length: 255 }),
+  snapshotAgeGrading: varchar("snapshotAgeGrading", { length: 128 }),
+  imageUrl: text("imageUrl"),   // product image URL at time of snapshot
+  sortOrder: int("sortOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type DeclarationArticle = typeof declarationArticles.$inferSelect;
+export type InsertDeclarationArticle = typeof declarationArticles.$inferInsert;
+
+// ─── Declaration Status History (immutable audit trail) ───────────────────────
+export const declarationStatusHistory = mysqlTable("declaration_status_history", {
+  id: int("id").autoincrement().primaryKey(),
+  declarationId: int("declarationId").notNull(),
+  action: varchar("action", { length: 64 }).notNull(),  // e.g. "created", "sent", "signed", "ai_validated", "archived"
+  fromStatus: mysqlEnum("fromStatus", [
+    "draft", "sent", "manufacturer_review", "signed", "ai_validated", "archived",
+  ]),
+  toStatus: mysqlEnum("toStatus", [
+    "draft", "sent", "manufacturer_review", "signed", "ai_validated", "archived",
+  ]),
+  performedByUserId: int("performedByUserId"),
+  performedByName: varchar("performedByName", { length: 255 }), // denormalised for manufacturer actions
+  note: text("note"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type DeclarationStatusHistory = typeof declarationStatusHistory.$inferSelect;
+export type InsertDeclarationStatusHistory = typeof declarationStatusHistory.$inferInsert;

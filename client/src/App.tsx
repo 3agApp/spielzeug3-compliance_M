@@ -30,6 +30,7 @@ import PublicProductPage from "./pages/PublicProductPage";
 import AboutSealPage from "./pages/AboutSealPage";
 import SealInfoPage from "./pages/SealInfoPage";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
+import ManufacturerPortal from "./pages/ManufacturerPortal";
 
 // Wrapper that applies the ComplianceLayout to protected routes
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
@@ -104,6 +105,8 @@ function Router() {
 
       {/* Public invite accept page */}
       <Route path="/invite/accept" component={AcceptInvite} />
+      {/* Public manufacturer portal for DoC signing (no auth) */}
+      <Route path="/declaration/portal/:token" component={ManufacturerPortal} />
       {/* Public product seal page (no auth) */}
       <Route path="/p/:uuid" component={PublicProductPage} />
       {/* About the Swiss Product Seal (no auth) */}

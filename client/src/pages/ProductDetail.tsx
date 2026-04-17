@@ -14,6 +14,7 @@ import { translateError } from "@/lib/translateError";
 import { trpc } from "@/lib/trpc";
 import { AiAnalysisCard } from "@/components/AiAnalysisCard";
 import { EmailLogTab } from "@/components/EmailLogTab";
+import DeclarationsTab from "@/components/DeclarationsTab";
 import RiskAssessmentTab from "@/components/RiskAssessmentTab";
 import ComponentsTab from "@/components/ComponentsTab";
 import ProductImagesGallery from "@/components/ProductImagesGallery";
@@ -533,6 +534,12 @@ export default function ProductDetail() {
               {t.inline.emailprotokoll}
             </TabsTrigger>
           )}
+          {isInternalRole && (
+            <TabsTrigger value="declarations" className="gap-2">
+              <FileSignature className="h-4 w-4" />
+              {lang === "de" ? "Konformitätserklärungen" : "Declarations"}
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* Images Tab */}
@@ -824,6 +831,11 @@ export default function ProductDetail() {
         {isInternalRole && (
           <TabsContent value="email-log" className="mt-4">
             <EmailLogTab productId={productId} />
+          </TabsContent>
+        )}
+        {isInternalRole && (
+          <TabsContent value="declarations" className="mt-4">
+            <DeclarationsTab productId={productId} lang={lang} />
           </TabsContent>
         )}
        </Tabs>
