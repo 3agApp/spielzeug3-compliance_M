@@ -6,6 +6,7 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { incidentService } from "../domains/incidents/incidentService";
+import { incidentAiService } from "../domains/incidents/incidentAiService";
 import { storagePut } from "../storage";
 
 // ─── Zod schemas ──────────────────────────────────────────────────────────────
@@ -250,5 +251,12 @@ export const incidentsRouter = router({
     .input(z.object({ incidentId: z.number().int().positive() }))
     .query(async ({ ctx, input }) => {
       return incidentService.getTimeline(ctx.user, input.incidentId);
+    }),
+
+  // ── KI-gestützte Fallbewertung ───────────────────────────────────────────
+  suggestAssessment: protectedProcedure
+    .input(z.object({ incidentId: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      return incidentAiService.suggestAssessment(ctx.user, input.incidentId);
     }),
 });

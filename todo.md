@@ -944,3 +944,11 @@
 
 ### Tests
 - [x] incidentService Tests (12 Tests: list, create, getStats, addAssessment, initiateRecall – alle grün)
+
+## KI-gestützte Fallbewertung (AI Incident Assessment)
+- [x] Backend: incidentAiService.ts (suggestAssessment – LLM mit JSON-Schema)
+- [x] Backend: incidents.suggestAssessment tRPC-Prozedur
+- [x] Frontend: "KI-Vorschlag anfordern"-Button im AssessmentForm
+- [x] Frontend: KI-Vorschlag-Panel mit Auto-Fill-Funktion (Felder übernehmen)
+- [x] Frontend: Konfidenz-Anzeige und Begründung der KI-Einschätzung
+- [x] Tests: incidentAiService Tests (9 Tests: suggestAssessment mit Mock-LLM – alle grün)

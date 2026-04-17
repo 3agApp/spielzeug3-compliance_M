@@ -49,6 +49,9 @@ import {
   Building2,
   ExternalLink,
   Activity,
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -266,6 +269,43 @@ function AddAssessmentDialog({
   const [requiredDocuments, setRequiredDocuments] = useState("");
   const [internalNotes, setInternalNotes] = useState("");
 
+  // KI-Vorschlag State
+  const [aiSuggestion, setAiSuggestion] = useState<any>(null);
+  const [showAiPanel, setShowAiPanel] = useState(false);
+
+  const aiMutation = trpc.incidents.suggestAssessment.useMutation({
+    onSuccess: (data) => {
+      setAiSuggestion(data);
+      setShowAiPanel(true);
+      toast.success("KI-Vorschlag erstellt – jetzt übernehmen oder anpassen");
+    },
+    onError: (err) => toast.error(`KI-Analyse fehlgeschlagen: ${err.message}`),
+  });
+
+  function applyAiSuggestion() {
+    if (!aiSuggestion) return;
+    setRiskLevel(aiSuggestion.riskLevel ?? riskLevel);
+    setRecallRecommended(aiSuggestion.recallRecommended ?? false);
+    if (aiSuggestion.recallRecommended && aiSuggestion.recallScope) {
+      const scopeText = (aiSuggestion.recallScope as string).toLowerCase();
+      if (scopeText.includes("pflicht") || scopeText.includes("mandatory")) setRecallScope("mandatory");
+      else if (scopeText.includes("freiwillig") || scopeText.includes("voluntary")) setRecallScope("voluntary");
+      else if (scopeText.includes("gezielt") || scopeText.includes("targeted")) setRecallScope("targeted");
+    }
+    setRegulatoryObligation(aiSuggestion.regulatoryObligation ?? false);
+    if (aiSuggestion.regulatoryObligation && aiSuggestion.regulatoryObligationReason) {
+      setRegulatoryBasis(aiSuggestion.regulatoryObligationReason);
+    }
+    if (Array.isArray(aiSuggestion.requiredDocuments) && aiSuggestion.requiredDocuments.length > 0) {
+      setRequiredDocuments(aiSuggestion.requiredDocuments.join(", "));
+    }
+    const regs = Array.isArray(aiSuggestion.applicableRegulations) && aiSuggestion.applicableRegulations.length > 0
+      ? `\n\nRelevante Normen: ${aiSuggestion.applicableRegulations.join(", ")}`
+      : "";
+    setAssessmentText((aiSuggestion.assessmentText ?? "") + regs);
+    toast.success("KI-Vorschlag übernommen");
+  }
+
   const mutation = trpc.incidents.addAssessment.useMutation({
     onSuccess: () => {
       toast.success("Bewertung gespeichert");
@@ -304,6 +344,102 @@ function AddAssessmentDialog({
           <DialogTitle>Interne Bewertung hinzufügen</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* KI-Vorschlag Banner */}
+          <div className="rounded-lg border border-violet-200 bg-violet-50 p-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-violet-600" />
+                <span className="text-sm font-medium text-violet-800">KI-Risikoeinschätzung</span>
+                {aiSuggestion && (
+                  <span className="text-xs text-violet-600 bg-violet-100 px-2 py-0.5 rounded-full">
+                    Konfidenz: {aiSuggestion.confidence === "high" ? "Hoch" : aiSuggestion.confidence === "medium" ? "Mittel" : "Niedrig"}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {aiSuggestion && (
+                  <>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="text-violet-700 border-violet-300 hover:bg-violet-100 h-7 text-xs"
+                      onClick={applyAiSuggestion}
+                    >
+                      Vorschlag übernehmen
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0 text-violet-600"
+                      onClick={() => setShowAiPanel(!showAiPanel)}
+                    >
+                      {showAiPanel ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </Button>
+                  </>
+                )}
+                <Button
+                  type="button"
+                  size="sm"
+                  className="bg-violet-600 hover:bg-violet-700 text-white h-7 text-xs"
+                  onClick={() => aiMutation.mutate({ incidentId })}
+                  disabled={aiMutation.isPending}
+                >
+                  {aiMutation.isPending ? (
+                    <><span className="animate-spin mr-1">&#9696;</span> Analysiere...</>
+                  ) : (
+                    <><Sparkles className="h-3 w-3 mr-1" /> KI-Analyse starten</>
+                  )}
+                </Button>
+              </div>
+            </div>
+            {aiSuggestion && showAiPanel && (
+              <div className="mt-3 space-y-2 text-sm border-t border-violet-200 pt-3">
+                <div className="flex flex-wrap gap-2">
+                  <span className="font-medium text-violet-800">Empfehlung:</span>
+                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                    aiSuggestion.riskLevel === "critical" ? "bg-red-100 text-red-800" :
+                    aiSuggestion.riskLevel === "high" ? "bg-orange-100 text-orange-800" :
+                    aiSuggestion.riskLevel === "medium" ? "bg-yellow-100 text-yellow-800" :
+                    "bg-blue-100 text-blue-800"
+                  }`}>
+                    Risiko: {aiSuggestion.riskLevel === "critical" ? "Kritisch" : aiSuggestion.riskLevel === "high" ? "Hoch" : aiSuggestion.riskLevel === "medium" ? "Mittel" : "Niedrig"}
+                  </span>
+                  {aiSuggestion.recallRecommended && (
+                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                      Rückruf empfohlen
+                    </span>
+                  )}
+                  {aiSuggestion.regulatoryObligation && (
+                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                      Meldepflicht: {aiSuggestion.regulatoryDeadlineDays === 0 ? "sofort" : aiSuggestion.regulatoryDeadlineDays ? `${aiSuggestion.regulatoryDeadlineDays} Tage` : "ja"}
+                    </span>
+                  )}
+                </div>
+                <p className="text-violet-700 text-xs leading-relaxed">{aiSuggestion.summary}</p>
+                {Array.isArray(aiSuggestion.applicableRegulations) && aiSuggestion.applicableRegulations.length > 0 && (
+                  <p className="text-xs text-violet-600">
+                    <span className="font-medium">Normen:</span> {aiSuggestion.applicableRegulations.join(" · ")}
+                  </p>
+                )}
+                {Array.isArray(aiSuggestion.caveats) && aiSuggestion.caveats.length > 0 && (
+                  <div className="bg-amber-50 border border-amber-200 rounded p-2">
+                    <p className="text-xs font-medium text-amber-800 mb-1">Vorbehalte:</p>
+                    {aiSuggestion.caveats.map((c: string, i: number) => (
+                      <p key={i} className="text-xs text-amber-700">&#8226; {c}</p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            {!aiSuggestion && (
+              <p className="text-xs text-violet-600 mt-1">
+                Starten Sie die KI-Analyse, um automatisch eine Risikoeinschätzung basierend auf Fallbeschreibung und Produktdaten zu erhalten.
+              </p>
+            )}
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Bewertungstyp</Label>
