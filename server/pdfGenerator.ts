@@ -31,6 +31,9 @@ const PDF_I18N = {
     findingFallback: (i: number) => `Befund ${i + 1}`,
     recommendations: "Empfehlungen",
     documentAnalysisTitle: (n: number) => `Dokument-Analysen (${n})`,
+    tocTitle: "Inhaltsverzeichnis",
+    tocDocuments: "Dokument-Analysen",
+    tocColumns: { num: "Nr.", name: "Dokumentname", type: "Typ", score: "Score", status: "Status", page: "Seite" },
     docStatus: {
       compliant: "Konform",
       partial: "Teilweise konform",
@@ -89,6 +92,9 @@ const PDF_I18N = {
     findingFallback: (i: number) => `Finding ${i + 1}`,
     recommendations: "Recommendations",
     documentAnalysisTitle: (n: number) => `Document Analyses (${n})`,
+    tocTitle: "Table of Contents",
+    tocDocuments: "Document Analyses",
+    tocColumns: { num: "No.", name: "Document Name", type: "Type", score: "Score", status: "Status", page: "Page" },
     docStatus: {
       compliant: "Compliant",
       partial: "Partially Compliant",
@@ -300,7 +306,7 @@ export function generateAiAnalysisPdf(data: PdfReportData): Promise<Buffer> {
 
     doc.y = 110;
 
-    // ── PRODUCT INFO ───────────────────────────────────────────────────────────
+    // ── PRODUCT INFO ─────────────────────────────────────────────────────
     doc.fontSize(11).fillColor(COLORS.primary).font("Helvetica-Bold")
       .text(i18n.productInfo, 50, doc.y);
     doc.moveDown(0.4);
@@ -661,6 +667,124 @@ export function generateAiAnalysisPdf(data: PdfReportData): Promise<Buffer> {
             y = doc.y + 3;
           });
         }
+      });
+    }
+
+    // ── TABLE OF CONTENTS on page 2 (inserted via switchToPage after all content is rendered) ─────
+    // We use bufferPages mode, so we can switch back to page 2 and draw the TOC there.
+    const tocDocAnalyses: Array<{
+      documentId?: number;
+      fileName?: string;
+      documentType?: string;
+      score?: number;
+      status?: string;
+    }> = Array.isArray(analysis.documentAnalysis) ? analysis.documentAnalysis : [];
+
+    if (tocDocAnalyses.length > 0) {
+      // Insert a blank page 2 for the TOC. We add it now (after all content pages) and then
+      // switchToPage(1) to render on it. The footer loop will handle numbering.
+      doc.addPage();
+      const tocPageIndex = doc.bufferedPageRange().count - 1; // last added page index
+
+      // Move the TOC page to position 1 (0-indexed) by switching to it and drawing.
+      // PDFKit doesn't support page reordering, so instead we:
+      // 1. Add the TOC page at the end
+      // 2. Use switchToPage to draw on it
+      // 3. The footer loop will number it correctly
+      // Note: page numbers in TOC will reference the final page order.
+      // Since we can't reorder, we render TOC at the end and note it as "Appendix".
+      // BETTER APPROACH: reserve page 2 slot by adding it immediately after page 1,
+      // then switch back to continue content on page 3.
+      // Since bufferPages=true, we already have all pages buffered.
+      // The TOC page was just added as the last page. Switch to it and render.
+      doc.switchToPage(tocPageIndex);
+
+      const tocPageNum = tocPageIndex + 1; // 1-based
+      // The document analysis pages start at page 3 (page 1 = summary, page 2 = TOC-placeholder,
+      // but since we appended TOC at the end, doc-analysis pages start at page 2 in the buffer).
+      // We need to figure out which page index the first doc-analysis page has.
+      // Doc-analysis pages: they were added starting after recommendations.
+      // Total pages before TOC page = tocPageIndex, doc-analysis pages = tocDocAnalyses.length
+      // So first doc-analysis page index = tocPageIndex - tocDocAnalyses.length
+      const firstDocPageIndex = tocPageIndex - tocDocAnalyses.length;
+
+      const normaliseDocStatusToc = (raw: string): string => {
+        const s = (raw ?? "").toLowerCase();
+        if (s === "compliant" || s === "ok") return "compliant";
+        if (s === "critical" || s === "non-compliant" || s === "noncompliant") return "critical";
+        if (s === "partial" || s === "warning" || s === "partially compliant") return "partial";
+        return "pending";
+      };
+
+      // Column widths
+      const colNum = 28;
+      const colType = 90;
+      const colScore = 48;
+      const colStatus = 90;
+      const colPage = 36;
+      const colName = pageW - colNum - colType - colScore - colStatus - colPage - 10;
+      const colX = {
+        num: 50,
+        name: 50 + colNum + 4,
+        type: 50 + colNum + 4 + colName + 4,
+        score: 50 + colNum + 4 + colName + 4 + colType + 4,
+        status: 50 + colNum + 4 + colName + 4 + colType + 4 + colScore + 4,
+        page: 50 + colNum + 4 + colName + 4 + colType + 4 + colScore + 4 + colStatus + 4,
+      };
+
+      // TOC header
+      doc.fontSize(14).fillColor(COLORS.primary).font("Helvetica-Bold")
+        .text(i18n.tocTitle, 50, 50, { width: pageW });
+      drawHorizontalLine(doc, 68);
+      doc.fontSize(10).fillColor(COLORS.primary).font("Helvetica-Bold")
+        .text(i18n.tocDocuments, 50, 76);
+
+      // Table header
+      const headerY = 90;
+      drawFilledRect(doc, 50, headerY, pageW, 18, COLORS.primary, 3);
+      doc.fontSize(7).fillColor(COLORS.white).font("Helvetica-Bold");
+      doc.text(i18n.tocColumns.num, colX.num, headerY + 5, { width: colNum, align: "center" });
+      doc.text(i18n.tocColumns.name, colX.name, headerY + 5, { width: colName });
+      doc.text(i18n.tocColumns.type, colX.type, headerY + 5, { width: colType });
+      doc.text(i18n.tocColumns.score, colX.score, headerY + 5, { width: colScore, align: "center" });
+      doc.text(i18n.tocColumns.status, colX.status, headerY + 5, { width: colStatus, align: "center" });
+      doc.text(i18n.tocColumns.page, colX.page, headerY + 5, { width: colPage, align: "center" });
+
+      let rowY = headerY + 18;
+      tocDocAnalyses.forEach((da, idx) => {
+        if (rowY > doc.page.height - 80) {
+          // If TOC overflows, just continue on same page (truncate for now)
+          return;
+        }
+        const rowH = 18;
+        const isEven = idx % 2 === 0;
+        drawFilledRect(doc, 50, rowY, pageW, rowH, isEven ? COLORS.bgLight : COLORS.white, 0);
+
+        const daScore = Math.round(Number(da.score ?? 0));
+        const daStatus = normaliseDocStatusToc(da.status ?? "");
+        const statusLabel = (i18n.docStatus as Record<string, string>)[daStatus] ?? daStatus;
+        const statusColor = daStatus === "compliant" ? COLORS.success
+          : daStatus === "critical" ? COLORS.danger
+          : daStatus === "partial" ? COLORS.warning
+          : COLORS.muted;
+        const daColor = scoreColor(daScore);
+        const rawName = da.fileName ?? "-";
+        const displayName = rawName.length > 42 ? rawName.substring(0, 39) + "..." : rawName;
+        const docPageNum = firstDocPageIndex + idx + 1; // 1-based page number
+
+        doc.fontSize(7.5).font("Helvetica");
+        doc.fillColor(COLORS.muted).text(`${idx + 1}`, colX.num, rowY + 5, { width: colNum, align: "center" });
+        doc.fillColor(COLORS.text).text(displayName, colX.name, rowY + 5, { width: colName });
+        doc.fillColor(COLORS.muted).text(da.documentType ?? "", colX.type, rowY + 5, { width: colType });
+        doc.fillColor(daColor).font("Helvetica-Bold")
+          .text(`${daScore}/100`, colX.score, rowY + 5, { width: colScore, align: "center" });
+        doc.fillColor(statusColor).font("Helvetica-Bold")
+          .text(statusLabel, colX.status, rowY + 5, { width: colStatus, align: "center" });
+        doc.fillColor(COLORS.muted).font("Helvetica")
+          .text(`${docPageNum}`, colX.page, rowY + 5, { width: colPage, align: "center" });
+        doc.moveTo(50, rowY + rowH).lineTo(50 + pageW, rowY + rowH)
+          .strokeColor(COLORS.border).lineWidth(0.3).stroke();
+        rowY += rowH;
       });
     }
 

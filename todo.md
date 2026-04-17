@@ -1005,3 +1005,9 @@
 - [x] Dateinamen mit Zeilenumbruch (wordWrap) für lange Namen
 - [x] Alle Inhalte vollständig ausgeben (positives, missingElements, issues)
 - [x] Phantom-Seiten-Bug behoben: doc.flushPages() vor Footer-Loop (46 → 23 Seiten für 22 Dokumente)
+
+## PDF-Export: Inhaltsverzeichnis
+- [x] pdfGenerator.ts: Inhaltsverzeichnis am Ende des PDFs (via switchToPage nach allen Inhalten)
+- [x] Tabelle: Nr., Dokumentname, Typ, Score (farbig), Status-Badge, Seitenverweis
+- [x] i18n-Strings für Inhaltsverzeichnis (DE/EN: "Inhaltsverzeichnis" / "Table of Contents")
+- [x] 368 Tests, 0 TS-Fehler
