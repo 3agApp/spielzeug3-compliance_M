@@ -19,6 +19,7 @@ import RiskAssessmentTab from "@/components/RiskAssessmentTab";
 import ComponentsTab from "@/components/ComponentsTab";
 import ProductImagesGallery from "@/components/ProductImagesGallery";
 import SignatureRequestDialog from "@/components/SignatureRequestDialog";
+import { CopyProductDataDialog } from "@/components/CopyProductDataDialog";
 import SignatureRequestList from "@/components/SignatureRequestList";
 import { SealStatusPill } from "@/components/SealBadge";
 import type { SealStatus } from "@/components/SealBadge";
@@ -123,6 +124,7 @@ export default function ProductDetail() {
 
   // Delete product state
   const [showDeleteProductDialog, setShowDeleteProductDialog] = useState(false);
+  const [showCopyDialog, setShowCopyDialog] = useState(false);
   const deleteProductMutation = trpc.products.delete.useMutation({
     onSuccess: () => {
       toast.success(t.inline.produkt_wurde_geloescht);
@@ -361,6 +363,16 @@ export default function ProductDetail() {
           <div className="flex flex-col items-end gap-2">
             {isInternalRole && ["administrator", "compliance_manager"].includes(role) && (
               <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => setShowCopyDialog(true)}
+                  title="Compliance-Daten auf andere Produkte übertragen"
+                >
+                  <Copy className="h-4 w-4" />
+                  {lang === "de" ? "Daten übertragen" : "Copy Data"}
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
@@ -1031,7 +1043,16 @@ export default function ProductDetail() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+        </Dialog>
+      {/* ─── Copy Product Data Dialog ──────────────────────────────────── */}
+      {showCopyDialog && product && (
+        <CopyProductDataDialog
+          open={showCopyDialog}
+          onClose={() => setShowCopyDialog(false)}
+          sourceProductId={productId}
+          sourceProductName={product.productName}
+        />
+      )}
     </div>
   );
 }
