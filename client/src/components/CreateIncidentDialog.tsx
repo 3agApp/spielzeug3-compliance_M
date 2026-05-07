@@ -5,9 +5,11 @@
  * Das Produkt ist ein Pflichtfeld – nur so können alle Daten (Prüfberichte,
  * Herstellervorgaben, Komponenten, Deklarationen) bei der KI-Bewertung
  * berücksichtigt werden.
+ * Supports DE and EN via useLang() hook.
  */
 import { useState, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
+import { useLang } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,14 +57,30 @@ function ProductSearchField({
   value,
   onChange,
   preselectedProductId,
+  lang,
 }: {
   value: ProductHit | null;
   onChange: (p: ProductHit | null) => void;
   preselectedProductId?: number;
+  lang: "de" | "en";
 }) {
   const [query, setQuery] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const T = lang === "en" ? {
+    searchPlaceholder: "Search product name, article no. or EAN...",
+    minChars: "Enter at least 1 character...",
+    searching: "Searching...",
+    noResults: "No products found.",
+    aiNote: "Test reports, manufacturer specifications, and component data will be considered in the AI assessment",
+  } : {
+    searchPlaceholder: "Produktname, Art.Nr. oder EAN suchen...",
+    minChars: "Mindestens 1 Zeichen eingeben...",
+    searching: "Suche läuft...",
+    noResults: "Keine Produkte gefunden.",
+    aiNote: "Prüfberichte, Herstellervorgaben und Komponentendaten werden bei der KI-Bewertung berücksichtigt",
+  };
 
   // Load preselected product once on mount
   const preselectedQuery = trpc.products.getById.useQuery(
@@ -102,7 +120,7 @@ function ProductSearchField({
           <div className="flex flex-wrap gap-1.5 mt-1">
             {value.internalArticleNumber && (
               <span className="text-xs text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">
-                Art.Nr. {value.internalArticleNumber}
+                {lang === "en" ? "Art.No." : "Art.Nr."} {value.internalArticleNumber}
               </span>
             )}
             {value.brand && (
@@ -123,7 +141,7 @@ function ProductSearchField({
           </div>
           <p className="text-xs text-blue-600 mt-1.5 flex items-center gap-1">
             <CheckCircle2 className="h-3 w-3" />
-            Prüfberichte, Herstellervorgaben und Komponentendaten werden bei der KI-Bewertung berücksichtigt
+            {T.aiNote}
           </p>
         </div>
         <Button
@@ -148,18 +166,18 @@ function ProductSearchField({
           value={query}
           onChange={(e) => { setQuery(e.target.value); setDropdownOpen(true); }}
           onFocus={() => setDropdownOpen(true)}
-          placeholder="Produktname, Art.Nr. oder EAN suchen..."
+          placeholder={T.searchPlaceholder}
           className="pl-9"
         />
       </div>
       {dropdownOpen && (
         <div className="absolute z-50 top-full mt-1 w-full rounded-md border bg-popover text-popover-foreground shadow-lg max-h-64 overflow-y-auto">
           {query.trim().length < 1 ? (
-            <p className="text-sm text-muted-foreground px-3 py-2.5">Mindestens 1 Zeichen eingeben...</p>
+            <p className="text-sm text-muted-foreground px-3 py-2.5">{T.minChars}</p>
           ) : searchQuery.isLoading ? (
-            <p className="text-sm text-muted-foreground px-3 py-2.5">Suche läuft...</p>
+            <p className="text-sm text-muted-foreground px-3 py-2.5">{T.searching}</p>
           ) : !searchQuery.data || (searchQuery.data as any[]).length === 0 ? (
-            <p className="text-sm text-muted-foreground px-3 py-2.5">Keine Produkte gefunden.</p>
+            <p className="text-sm text-muted-foreground px-3 py-2.5">{T.noResults}</p>
           ) : (
             (searchQuery.data as ProductHit[]).map((p) => (
               <button
@@ -172,7 +190,7 @@ function ProductSearchField({
                 <div className="min-w-0">
                   <p className="text-sm font-medium truncate">{p.productName}</p>
                   <p className="text-xs text-muted-foreground">
-                    {[p.internalArticleNumber && `Art.Nr. ${p.internalArticleNumber}`, p.brand, p.ageGrading].filter(Boolean).join(" · ")}
+                    {[p.internalArticleNumber && `${lang === "en" ? "Art.No." : "Art.Nr."} ${p.internalArticleNumber}`, p.brand, p.ageGrading].filter(Boolean).join(" · ")}
                   </p>
                 </div>
               </button>
@@ -187,7 +205,120 @@ function ProductSearchField({
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function CreateIncidentDialog({ open, onClose, onCreated, preselectedProductId }: Props) {
+  const { lang } = useLang();
   const utils = trpc.useUtils();
+
+  const T = lang === "en" ? {
+    dialogTitle: "Record New Incident",
+    affectedProduct: "Affected Product *",
+    productHint: "Required – enables complete AI assessment with test reports, manufacturer specifications, original accessory compliance, and component data",
+    incidentType: "Incident Type *",
+    typePersonalInjury: "Personal Injury",
+    typePropertyDamage: "Property Damage",
+    typeNearMiss: "Near Miss",
+    typeProductDefect: "Product Defect",
+    typeRegulatoryComplaint: "Regulatory Complaint",
+    typeCustomerComplaint: "Customer Complaint",
+    typeOther: "Other",
+    severity: "Severity *",
+    severityCritical: "Critical (Death / serious injury)",
+    severityHigh: "High (Injury / hospitalisation)",
+    severityMedium: "Medium (Minor injury / medical visit)",
+    severityLow: "Low (No personal injury)",
+    titleLabel: "Title *",
+    titlePlaceholder: "Short, concise description of the incident",
+    descriptionLabel: "Description *",
+    descriptionPlaceholder: "Detailed description of the incident, circumstances, and known facts...",
+    reporterName: "Reported by (Name)",
+    reporterNamePlaceholder: "John Smith",
+    reporterEmail: "Reporter Email",
+    reporterEmailPlaceholder: "john@example.com",
+    reporterType: "Reporter Type",
+    reporterCustomer: "Customer",
+    reporterSupplier: "Supplier",
+    reporterInternal: "Internal",
+    reporterAuthority: "Authority",
+    reporterOther: "Other",
+    incidentDate: "Incident Date *",
+    affectedVersions: "Affected Versions",
+    affectedVersionsPlaceholder: "v1.0, v1.1 (comma-separated)",
+    affectedBatches: "Affected Batch Numbers",
+    affectedBatchesPlaceholder: "B-2026-001, B-2026-002 (comma-separated)",
+    estimatedUnits: "Estimated Number of Affected Units",
+    estimatedUnitsPlaceholder: "e.g. 500",
+    personalInjuryDetails: "Personal Injury Details",
+    injuryDescription: "Injury Description",
+    injuryDescriptionPlaceholder: "Nature and severity of the injury...",
+    injuredAge: "Age of Injured Person",
+    injuredAgePlaceholder: "e.g. 5",
+    personType: "Person Type",
+    personTypeChild: "Child",
+    personTypeAdult: "Adult",
+    personTypeUnknown: "Unknown",
+    medicalTreatment: "Medical treatment required",
+    hospitalisation: "Hospitalisation",
+    cancel: "Cancel",
+    submit: "Record Incident",
+    submitting: "Saving...",
+    successCreated: "Incident recorded",
+    errorNoProduct: "Please select a product – this enables all data to be considered in the AI assessment.",
+    errorRequired: "Title and description are required.",
+  } : {
+    dialogTitle: "Neuen Schadensfall erfassen",
+    affectedProduct: "Betroffenes Produkt *",
+    productHint: "Pflichtfeld – ermöglicht vollständige KI-Bewertung mit Prüfberichten, Herstellervorgaben, Originalzubehör-Compliance und Komponentendaten",
+    incidentType: "Vorfalltyp *",
+    typePersonalInjury: "Personenschaden",
+    typePropertyDamage: "Sachschaden",
+    typeNearMiss: "Beinahe-Vorfall",
+    typeProductDefect: "Produktmangel",
+    typeRegulatoryComplaint: "Behördenbeschwerde",
+    typeCustomerComplaint: "Kundenbeschwerde",
+    typeOther: "Sonstiges",
+    severity: "Schweregrad *",
+    severityCritical: "Kritisch (Tod / schwere Verletzung)",
+    severityHigh: "Hoch (Verletzung / Krankenhausaufenthalt)",
+    severityMedium: "Mittel (leichte Verletzung / Arztbesuch)",
+    severityLow: "Niedrig (kein Personenschaden)",
+    titleLabel: "Titel *",
+    titlePlaceholder: "Kurze, prägnante Beschreibung des Vorfalls",
+    descriptionLabel: "Beschreibung *",
+    descriptionPlaceholder: "Detaillierte Beschreibung des Vorfalls, der Umstände und bekannter Fakten...",
+    reporterName: "Gemeldet von (Name)",
+    reporterNamePlaceholder: "Max Mustermann",
+    reporterEmail: "E-Mail des Melders",
+    reporterEmailPlaceholder: "max@beispiel.ch",
+    reporterType: "Melder-Typ",
+    reporterCustomer: "Kunde",
+    reporterSupplier: "Lieferant",
+    reporterInternal: "Intern",
+    reporterAuthority: "Behörde",
+    reporterOther: "Sonstiges",
+    incidentDate: "Datum des Vorfalls *",
+    affectedVersions: "Betroffene Versionen",
+    affectedVersionsPlaceholder: "v1.0, v1.1 (kommagetrennt)",
+    affectedBatches: "Betroffene Chargennummern",
+    affectedBatchesPlaceholder: "B-2026-001, B-2026-002 (kommagetrennt)",
+    estimatedUnits: "Geschätzte Anzahl betroffener Einheiten",
+    estimatedUnitsPlaceholder: "z.B. 500",
+    personalInjuryDetails: "Details zum Personenschaden",
+    injuryDescription: "Verletzungsbeschreibung",
+    injuryDescriptionPlaceholder: "Art und Schwere der Verletzung...",
+    injuredAge: "Alter der verletzten Person",
+    injuredAgePlaceholder: "z.B. 5",
+    personType: "Personentyp",
+    personTypeChild: "Kind",
+    personTypeAdult: "Erwachsener",
+    personTypeUnknown: "Unbekannt",
+    medicalTreatment: "Arztbesuch erforderlich",
+    hospitalisation: "Krankenhausaufenthalt",
+    cancel: "Abbrechen",
+    submit: "Schadensfall erfassen",
+    submitting: "Wird gespeichert...",
+    successCreated: "Schadensfall erfasst",
+    errorNoProduct: "Bitte ein Produkt auswählen – nur so können alle Daten bei der KI-Bewertung berücksichtigt werden.",
+    errorRequired: "Titel und Beschreibung sind Pflichtfelder.",
+  };
 
   // Product selection (required)
   const [selectedProduct, setSelectedProduct] = useState<ProductHit | null>(null);
@@ -214,14 +345,14 @@ export default function CreateIncidentDialog({ open, onClose, onCreated, presele
 
   const createMutation = trpc.incidents.create.useMutation({
     onSuccess: (data) => {
-      toast.success("Schadensfall erfasst");
+      toast.success(T.successCreated);
       utils.incidents.list.invalidate();
       utils.incidents.getStats.invalidate();
       onCreated(data.id);
       resetForm();
     },
     onError: (err) => {
-      toast.error(`Fehler: ${err.message}`);
+      toast.error(`${lang === "en" ? "Error" : "Fehler"}: ${err.message}`);
     },
   });
 
@@ -248,11 +379,11 @@ export default function CreateIncidentDialog({ open, onClose, onCreated, presele
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!selectedProduct) {
-      toast.error("Bitte ein Produkt auswählen – nur so können alle Daten bei der KI-Bewertung berücksichtigt werden.");
+      toast.error(T.errorNoProduct);
       return;
     }
     if (!title.trim() || !description.trim()) {
-      toast.error("Titel und Beschreibung sind Pflichtfelder.");
+      toast.error(T.errorRequired);
       return;
     }
     createMutation.mutate({
@@ -286,121 +417,122 @@ export default function CreateIncidentDialog({ open, onClose, onCreated, presele
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-orange-500" />
-            Neuen Schadensfall erfassen
+            {T.dialogTitle}
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-5">
 
-          {/* ── Produkt (Pflichtfeld) – immer als erstes ── */}
+          {/* ── Product (required) ── */}
           <div className="space-y-1.5">
             <Label className="flex items-center gap-1.5 font-semibold">
               <Package className="h-4 w-4 text-blue-600" />
-              Betroffenes Produkt *
+              {T.affectedProduct}
             </Label>
             <ProductSearchField
               value={selectedProduct}
               onChange={setSelectedProduct}
               preselectedProductId={preselectedProductId}
+              lang={lang}
             />
             {!selectedProduct && (
               <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                 <Info className="h-3 w-3 shrink-0" />
-                Pflichtfeld – ermöglicht vollständige KI-Bewertung mit Prüfberichten, Herstellervorgaben, Originalzubehör-Compliance und Komponentendaten
+                {T.productHint}
               </p>
             )}
           </div>
 
-          {/* ── Vorfalltyp & Schweregrad ── */}
+          {/* ── Incident Type & Severity ── */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Vorfalltyp *</Label>
+              <Label>{T.incidentType}</Label>
               <Select value={incidentType} onValueChange={setIncidentType}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="personal_injury">Personenschaden</SelectItem>
-                  <SelectItem value="property_damage">Sachschaden</SelectItem>
-                  <SelectItem value="near_miss">Beinahe-Vorfall</SelectItem>
-                  <SelectItem value="product_defect">Produktmangel</SelectItem>
-                  <SelectItem value="regulatory_complaint">Behördenbeschwerde</SelectItem>
-                  <SelectItem value="customer_complaint">Kundenbeschwerde</SelectItem>
-                  <SelectItem value="other">Sonstiges</SelectItem>
+                  <SelectItem value="personal_injury">{T.typePersonalInjury}</SelectItem>
+                  <SelectItem value="property_damage">{T.typePropertyDamage}</SelectItem>
+                  <SelectItem value="near_miss">{T.typeNearMiss}</SelectItem>
+                  <SelectItem value="product_defect">{T.typeProductDefect}</SelectItem>
+                  <SelectItem value="regulatory_complaint">{T.typeRegulatoryComplaint}</SelectItem>
+                  <SelectItem value="customer_complaint">{T.typeCustomerComplaint}</SelectItem>
+                  <SelectItem value="other">{T.typeOther}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Schweregrad *</Label>
+              <Label>{T.severity}</Label>
               <Select value={severity} onValueChange={setSeverity}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="critical">Kritisch (Tod / schwere Verletzung)</SelectItem>
-                  <SelectItem value="high">Hoch (Verletzung / Krankenhausaufenthalt)</SelectItem>
-                  <SelectItem value="medium">Mittel (leichte Verletzung / Arztbesuch)</SelectItem>
-                  <SelectItem value="low">Niedrig (kein Personenschaden)</SelectItem>
+                  <SelectItem value="critical">{T.severityCritical}</SelectItem>
+                  <SelectItem value="high">{T.severityHigh}</SelectItem>
+                  <SelectItem value="medium">{T.severityMedium}</SelectItem>
+                  <SelectItem value="low">{T.severityLow}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          {/* ── Titel ── */}
+          {/* ── Title ── */}
           <div className="space-y-1.5">
-            <Label>Titel *</Label>
+            <Label>{T.titleLabel}</Label>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Kurze, prägnante Beschreibung des Vorfalls"
+              placeholder={T.titlePlaceholder}
               required
             />
           </div>
 
-          {/* ── Beschreibung ── */}
+          {/* ── Description ── */}
           <div className="space-y-1.5">
-            <Label>Beschreibung *</Label>
+            <Label>{T.descriptionLabel}</Label>
             <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Detaillierte Beschreibung des Vorfalls, der Umstände und bekannter Fakten..."
+              placeholder={T.descriptionPlaceholder}
               rows={4}
               required
             />
           </div>
 
-          {/* ── Melder ── */}
+          {/* ── Reporter ── */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Gemeldet von (Name)</Label>
+              <Label>{T.reporterName}</Label>
               <Input
                 value={reportedByName}
                 onChange={(e) => setReportedByName(e.target.value)}
-                placeholder="Max Mustermann"
+                placeholder={T.reporterNamePlaceholder}
               />
             </div>
             <div className="space-y-1.5">
-              <Label>E-Mail des Melders</Label>
+              <Label>{T.reporterEmail}</Label>
               <Input
                 type="email"
                 value={reportedByEmail}
                 onChange={(e) => setReportedByEmail(e.target.value)}
-                placeholder="max@beispiel.ch"
+                placeholder={T.reporterEmailPlaceholder}
               />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Melder-Typ</Label>
+              <Label>{T.reporterType}</Label>
               <Select value={reportedByType} onValueChange={setReportedByType}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="customer">Kunde</SelectItem>
-                  <SelectItem value="supplier">Lieferant</SelectItem>
-                  <SelectItem value="internal">Intern</SelectItem>
-                  <SelectItem value="authority">Behörde</SelectItem>
-                  <SelectItem value="other">Sonstiges</SelectItem>
+                  <SelectItem value="customer">{T.reporterCustomer}</SelectItem>
+                  <SelectItem value="supplier">{T.reporterSupplier}</SelectItem>
+                  <SelectItem value="internal">{T.reporterInternal}</SelectItem>
+                  <SelectItem value="authority">{T.reporterAuthority}</SelectItem>
+                  <SelectItem value="other">{T.reporterOther}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Datum des Vorfalls *</Label>
+              <Label>{T.incidentDate}</Label>
               <Input
                 type="date"
                 value={reportedAt}
@@ -410,72 +542,72 @@ export default function CreateIncidentDialog({ open, onClose, onCreated, presele
             </div>
           </div>
 
-          {/* ── Betroffene Versionen / Chargen ── */}
+          {/* ── Affected Versions / Batches ── */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Betroffene Versionen</Label>
+              <Label>{T.affectedVersions}</Label>
               <Input
                 value={affectedVersions}
                 onChange={(e) => setAffectedVersions(e.target.value)}
-                placeholder="v1.0, v1.1 (kommagetrennt)"
+                placeholder={T.affectedVersionsPlaceholder}
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Betroffene Chargennummern</Label>
+              <Label>{T.affectedBatches}</Label>
               <Input
                 value={affectedBatchNumbers}
                 onChange={(e) => setAffectedBatchNumbers(e.target.value)}
-                placeholder="B-2026-001, B-2026-002 (kommagetrennt)"
+                placeholder={T.affectedBatchesPlaceholder}
               />
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label>Geschätzte Anzahl betroffener Einheiten</Label>
+            <Label>{T.estimatedUnits}</Label>
             <Input
               type="number"
               min="1"
               value={affectedUnitsEstimate}
               onChange={(e) => setAffectedUnitsEstimate(e.target.value)}
-              placeholder="z.B. 500"
+              placeholder={T.estimatedUnitsPlaceholder}
             />
           </div>
 
-          {/* ── Personenschaden-Details ── */}
+          {/* ── Personal Injury Details ── */}
           {incidentType === "personal_injury" && (
             <div className="border rounded-lg p-4 space-y-4 bg-red-50/50">
               <h3 className="font-medium text-sm text-red-800 flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4" />
-                Details zum Personenschaden
+                {T.personalInjuryDetails}
               </h3>
               <div className="space-y-1.5">
-                <Label>Verletzungsbeschreibung</Label>
+                <Label>{T.injuryDescription}</Label>
                 <Textarea
                   value={injuryDescription}
                   onChange={(e) => setInjuryDescription(e.target.value)}
-                  placeholder="Art und Schwere der Verletzung..."
+                  placeholder={T.injuryDescriptionPlaceholder}
                   rows={3}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label>Alter der verletzten Person</Label>
+                  <Label>{T.injuredAge}</Label>
                   <Input
                     type="number"
                     min="0"
                     max="150"
                     value={injuredPersonAge}
                     onChange={(e) => setInjuredPersonAge(e.target.value)}
-                    placeholder="z.B. 5"
+                    placeholder={T.injuredAgePlaceholder}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Personentyp</Label>
+                  <Label>{T.personType}</Label>
                   <Select value={injuredPersonType} onValueChange={setInjuredPersonType}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="child">Kind</SelectItem>
-                      <SelectItem value="adult">Erwachsener</SelectItem>
-                      <SelectItem value="unknown">Unbekannt</SelectItem>
+                      <SelectItem value="child">{T.personTypeChild}</SelectItem>
+                      <SelectItem value="adult">{T.personTypeAdult}</SelectItem>
+                      <SelectItem value="unknown">{T.personTypeUnknown}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -487,7 +619,7 @@ export default function CreateIncidentDialog({ open, onClose, onCreated, presele
                     checked={medicalTreatmentRequired}
                     onCheckedChange={(v) => setMedicalTreatmentRequired(v === true)}
                   />
-                  <Label htmlFor="medicalTreatment" className="cursor-pointer">Arztbesuch erforderlich</Label>
+                  <Label htmlFor="medicalTreatment" className="cursor-pointer">{T.medicalTreatment}</Label>
                 </div>
                 <div className="flex items-center gap-2">
                   <Checkbox
@@ -495,7 +627,7 @@ export default function CreateIncidentDialog({ open, onClose, onCreated, presele
                     checked={hospitalisation}
                     onCheckedChange={(v) => setHospitalisation(v === true)}
                   />
-                  <Label htmlFor="hospitalisation" className="cursor-pointer">Krankenhausaufenthalt</Label>
+                  <Label htmlFor="hospitalisation" className="cursor-pointer">{T.hospitalisation}</Label>
                 </div>
               </div>
             </div>
@@ -503,10 +635,10 @@ export default function CreateIncidentDialog({ open, onClose, onCreated, presele
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => { onClose(); resetForm(); }}>
-              Abbrechen
+              {T.cancel}
             </Button>
             <Button type="submit" disabled={createMutation.isPending || !selectedProduct}>
-              {createMutation.isPending ? "Wird gespeichert..." : "Schadensfall erfassen"}
+              {createMutation.isPending ? T.submitting : T.submit}
             </Button>
           </DialogFooter>
         </form>

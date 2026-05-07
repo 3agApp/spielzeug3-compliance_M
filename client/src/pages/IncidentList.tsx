@@ -1,16 +1,17 @@
 /**
  * client/src/pages/IncidentList.tsx
  * ─────────────────────────────────────────────────────────────────────────────
- * Übersichtsliste aller Schadensfälle und Rückrufe.
+ * Overview list of all incidents and recalls.
  */
 import { useState } from "react";
 import { useLocation } from "wouter";
 import ComplianceLayout from "@/components/ComplianceLayout";
 import { trpc } from "@/lib/trpc";
 import { useLang } from "@/lib/i18n";
+import type { Language } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -37,42 +38,56 @@ import CreateIncidentDialog from "@/components/CreateIncidentDialog";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const SEVERITY_CONFIG = {
-  critical: { label: "Kritisch", className: "bg-red-100 text-red-800 border-red-200" },
-  high: { label: "Hoch", className: "bg-orange-100 text-orange-800 border-orange-200" },
-  medium: { label: "Mittel", className: "bg-yellow-100 text-yellow-800 border-yellow-200" },
-  low: { label: "Niedrig", className: "bg-blue-100 text-blue-800 border-blue-200" },
-} as const;
+function getSeverityConfig(lang: Language) {
+  const isEn = lang === "en";
+  return {
+    critical: { label: isEn ? "Critical" : "Kritisch", className: "bg-red-100 text-red-800 border-red-200" },
+    high: { label: isEn ? "High" : "Hoch", className: "bg-orange-100 text-orange-800 border-orange-200" },
+    medium: { label: isEn ? "Medium" : "Mittel", className: "bg-yellow-100 text-yellow-800 border-yellow-200" },
+    low: { label: isEn ? "Low" : "Niedrig", className: "bg-blue-100 text-blue-800 border-blue-200" },
+  };
+}
 
-const STATUS_CONFIG = {
-  open: { label: "Offen", icon: Clock, className: "bg-gray-100 text-gray-700" },
-  under_review: { label: "In Prüfung", icon: Search, className: "bg-blue-100 text-blue-700" },
-  assessed: { label: "Bewertet", icon: ShieldAlert, className: "bg-purple-100 text-purple-700" },
-  recall_initiated: { label: "Rückruf eingeleitet", icon: RotateCcw, className: "bg-orange-100 text-orange-700" },
-  recall_completed: { label: "Rückruf abgeschlossen", icon: CheckCircle2, className: "bg-green-100 text-green-700" },
-  closed: { label: "Geschlossen", icon: CheckCircle2, className: "bg-gray-100 text-gray-500" },
-  archived: { label: "Archiviert", icon: XCircle, className: "bg-gray-100 text-gray-400" },
-} as const;
+function getStatusConfig(lang: Language) {
+  const isEn = lang === "en";
+  return {
+    open: { label: isEn ? "Open" : "Offen", icon: Clock, className: "bg-gray-100 text-gray-700" },
+    under_review: { label: isEn ? "Under Review" : "In Prüfung", icon: Search, className: "bg-blue-100 text-blue-700" },
+    assessed: { label: isEn ? "Assessed" : "Bewertet", icon: ShieldAlert, className: "bg-purple-100 text-purple-700" },
+    recall_initiated: { label: isEn ? "Recall Initiated" : "Rückruf eingeleitet", icon: RotateCcw, className: "bg-orange-100 text-orange-700" },
+    recall_completed: { label: isEn ? "Recall Completed" : "Rückruf abgeschlossen", icon: CheckCircle2, className: "bg-green-100 text-green-700" },
+    closed: { label: isEn ? "Closed" : "Geschlossen", icon: CheckCircle2, className: "bg-gray-100 text-gray-500" },
+    archived: { label: isEn ? "Archived" : "Archiviert", icon: XCircle, className: "bg-gray-100 text-gray-400" },
+  };
+}
 
-const INCIDENT_TYPE_LABELS: Record<string, string> = {
-  personal_injury: "Personenschaden",
-  property_damage: "Sachschaden",
-  near_miss: "Beinahe-Vorfall",
-  product_defect: "Produktmangel",
-  regulatory_complaint: "Behördenbeschwerde",
-  customer_complaint: "Kundenbeschwerde",
-  other: "Sonstiges",
-};
+function getIncidentTypeLabels(lang: Language): Record<string, string> {
+  const isEn = lang === "en";
+  return {
+    personal_injury: isEn ? "Personal Injury" : "Personenschaden",
+    property_damage: isEn ? "Property Damage" : "Sachschaden",
+    near_miss: isEn ? "Near Miss" : "Beinahe-Vorfall",
+    product_defect: isEn ? "Product Defect" : "Produktmangel",
+    regulatory_complaint: isEn ? "Regulatory Complaint" : "Behördenbeschwerde",
+    customer_complaint: isEn ? "Customer Complaint" : "Kundenbeschwerde",
+    other: isEn ? "Other" : "Sonstiges",
+  };
+}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function IncidentList() {
   const [, navigate] = useLocation();
-  const { t } = useLang();
+  const { lang } = useLang();
+  const isEn = lang === "en";
   const [showCreate, setShowCreate] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterSeverity, setFilterSeverity] = useState<string>("all");
+
+  const SEVERITY_CONFIG = getSeverityConfig(lang);
+  const STATUS_CONFIG = getStatusConfig(lang);
+  const INCIDENT_TYPE_LABELS = getIncidentTypeLabels(lang);
 
   const { data: stats } = trpc.incidents.getStats.useQuery();
   const { data: incidents = [], isLoading, refetch } = trpc.incidents.list.useQuery(
@@ -96,15 +111,17 @@ export default function IncidentList() {
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <AlertTriangle className="h-6 w-6 text-orange-500" />
-              Schadensfälle & Rückrufe
+              {isEn ? "Incidents & Recalls" : "Schadensfälle & Rückrufe"}
             </h1>
             <p className="text-muted-foreground mt-1">
-              Verwaltung von Vorfällen, Bewertungen und Produktrückrufen
+              {isEn
+                ? "Manage incidents, assessments and product recalls"
+                : "Verwaltung von Vorfällen, Bewertungen und Produktrückrufen"}
             </p>
           </div>
           <Button onClick={() => setShowCreate(true)}>
             <Plus className="h-4 w-4 mr-2" />
-            Neuer Schadensfall
+            {isEn ? "New Incident" : "Neuer Schadensfall"}
           </Button>
         </div>
 
@@ -112,12 +129,12 @@ export default function IncidentList() {
         {stats && (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             {[
-              { label: "Gesamt", value: stats.total, className: "text-foreground" },
-              { label: "Offen", value: stats.open, className: "text-gray-600" },
-              { label: "In Prüfung", value: stats.underReview, className: "text-blue-600" },
-              { label: "Rückruf aktiv", value: stats.recallActive, className: "text-orange-600" },
-              { label: "Kritisch", value: stats.critical, className: "text-red-600" },
-              { label: "Hoch", value: stats.high, className: "text-orange-500" },
+              { label: isEn ? "Total" : "Gesamt", value: stats.total, className: "text-foreground" },
+              { label: isEn ? "Open" : "Offen", value: stats.open, className: "text-gray-600" },
+              { label: isEn ? "Under Review" : "In Prüfung", value: stats.underReview, className: "text-blue-600" },
+              { label: isEn ? "Recall Active" : "Rückruf aktiv", value: stats.recallActive, className: "text-orange-600" },
+              { label: isEn ? "Critical" : "Kritisch", value: stats.critical, className: "text-red-600" },
+              { label: isEn ? "High" : "Hoch", value: stats.high, className: "text-orange-500" },
             ].map((s) => (
               <Card key={s.label} className="text-center py-3">
                 <div className={`text-2xl font-bold ${s.className}`}>{s.value}</div>
@@ -132,7 +149,7 @@ export default function IncidentList() {
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Suche nach Titel oder Produkt..."
+              placeholder={isEn ? "Search by title or product..." : "Suche nach Titel oder Produkt..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9"
@@ -140,10 +157,10 @@ export default function IncidentList() {
           </div>
           <Select value={filterStatus} onValueChange={setFilterStatus}>
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Status" />
+              <SelectValue placeholder={isEn ? "Status" : "Status"} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Alle Status</SelectItem>
+              <SelectItem value="all">{isEn ? "All Statuses" : "Alle Status"}</SelectItem>
               {Object.entries(STATUS_CONFIG).map(([k, v]) => (
                 <SelectItem key={k} value={k}>{v.label}</SelectItem>
               ))}
@@ -151,10 +168,10 @@ export default function IncidentList() {
           </Select>
           <Select value={filterSeverity} onValueChange={setFilterSeverity}>
             <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Schweregrad" />
+              <SelectValue placeholder={isEn ? "Severity" : "Schweregrad"} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Alle Schweregrade</SelectItem>
+              <SelectItem value="all">{isEn ? "All Severities" : "Alle Schweregrade"}</SelectItem>
               {Object.entries(SEVERITY_CONFIG).map(([k, v]) => (
                 <SelectItem key={k} value={k}>{v.label}</SelectItem>
               ))}
@@ -173,8 +190,12 @@ export default function IncidentList() {
           <Card className="py-16">
             <CardContent className="text-center text-muted-foreground">
               <AlertTriangle className="h-12 w-12 mx-auto mb-4 opacity-30" />
-              <p className="font-medium">Keine Schadensfälle gefunden</p>
-              <p className="text-sm mt-1">Erstellen Sie einen neuen Schadensfall mit dem Button oben rechts.</p>
+              <p className="font-medium">{isEn ? "No incidents found" : "Keine Schadensfälle gefunden"}</p>
+              <p className="text-sm mt-1">
+                {isEn
+                  ? "Create a new incident using the button in the top right."
+                  : "Erstellen Sie einen neuen Schadensfall mit dem Button oben rechts."}
+              </p>
             </CardContent>
           </Card>
         ) : (
@@ -211,7 +232,7 @@ export default function IncidentList() {
                           {(incident.status === "recall_initiated" || incident.status === "recall_completed") && (
                             <Badge variant="outline" className="text-xs shrink-0 bg-red-50 text-red-700 border-red-200">
                               <RotateCcw className="h-3 w-3 mr-1" />
-                              Rückruf
+                              {isEn ? "Recall" : "Rückruf"}
                             </Badge>
                           )}
                         </div>
@@ -237,7 +258,7 @@ export default function IncidentList() {
                           )}
                           <span className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
-                            {new Date(incident.reportedAt).toLocaleDateString("de-CH")}
+                            {new Date(incident.reportedAt).toLocaleDateString(isEn ? "en-GB" : "de-CH")}
                           </span>
                         </div>
                       </div>
