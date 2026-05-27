@@ -1,0 +1,592 @@
+================================================================================
+COMPLIANCE-WISSENSBASIS WASSERFILTER / TRINKWASSERFILTER — DE / EU
+================================================================================
+
+Stand: 22.05.2026
+Kontext: Importeur-Sorgfaltspflicht NaturalAqua (CH), Hersteller Riva Systemtechnik GmbH (DE)
+Anwendungsbereich: Aktivkohle-Filter, Hohlfasermembran-Filter, Mikrofiltrations-Membranen,
+                   Impfkristall-Kalkwandler, mobile Outdoor-Filter (alle passiv, ohne Elektrik)
+Klassifizierung: Wasserfilter sind Lebensmittelkontaktmaterialien (food contact materials),
+                 nicht CE-pflichtige Geräte
+
+
+================================================================================
+TEIL A — REGULATORISCHER RAHMEN EU
+================================================================================
+
+A.1 RAHMENVERORDNUNG LEBENSMITTELKONTAKT
+----------------------------------------
+
+Verordnung (EG) 1935/2004 — Materialien und Gegenstände in Berührung mit Lebensmitteln
+- Status: in Kraft seit 27.10.2004, weiterhin gültig
+- Anwendungsbereich: ALLE Materialien, die mit Lebensmitteln (inkl. Trinkwasser) in
+  Berührung kommen
+- Kernpflichten Hersteller:
+  * Sicherheit: keine Migration gesundheitsschädlicher Stoffe
+  * Inertheit: keine unzulässigen Veränderungen des Lebensmittels
+  * Rückverfolgbarkeit der Materialien
+  * Konformitätserklärung (Declaration of Compliance, DoC) für jede Charge / jedes Material
+- Direkte Konsequenz für Wasserfilter: jedes wasserberührte Material (Aktivkohle,
+  Membranen, Kunststoffe, Metalle, Dichtungen) braucht eine Vorlieferanten-DoC
+
+Verordnung (EU) 10/2011 — Kunststoffe im Lebensmittelkontakt
+- Spezifische Regelung für Kunststoffmaterialien
+- Positivliste zugelassener Monomere und Additive
+- Migrationsgrenzwerte (Gesamtmigration max. 10 mg/dm² oder 60 mg/kg)
+- Spezifische Migrationsgrenzwerte (SML) für einzelne Stoffe
+- Anwendbarkeit: ALLE Kunststoffteile, die mit Wasser in Berührung kommen
+  (Gehäuse, Kartuschenhalter, Schläuche, O-Ringe sofern Kunststoff)
+
+Verordnung (EG) 2023/2006 — Gute Herstellungspraxis (GMP)
+- Qualitätssicherung in der Produktion von Lebensmittelkontaktmaterialien
+- Forderung nach dokumentiertem Qualitätsmanagement-System
+
+A.2 TRINKWASSERSPEZIFISCH
+-------------------------
+
+Richtlinie (EU) 2020/2184 — EU-Trinkwasserrichtlinie (Neue)
+- In Kraft: 12.01.2021, in nationales Recht umzusetzen bis 12.01.2023
+- Wesentlich: Artikel 11 — Mindestanforderungen für Materialien in Kontakt mit Trinkwasser
+- ZIEL: EU-weit harmonisierte Konformitätsbewertung für Trinkwasser-Materialien
+  (löst schrittweise die nationalen Bewertungssysteme ab, ist aber noch nicht voll
+  operativ)
+- Hygiene-Anforderungen: Materialien dürfen Trinkwasserqualität nicht
+  beeinträchtigen, nicht Mikroorganismenwachstum fördern, keine bedenklichen Stoffe
+  abgeben
+- Übergangsperiode bis ca. 2032 — nationale Regelungen gelten parallel weiter
+
+Durchführungsbeschluss (EU) 2024/367 — Positiv-/Negativlisten für Stoffe
+- Konkretisierung der Anforderungen aus 2020/2184
+- ECHA-Liste der zugelassenen Ausgangsstoffe für Materialien in Trinkwasserkontakt
+
+A.3 ALLGEMEINE PRODUKTSICHERHEIT
+--------------------------------
+
+Verordnung (EU) 2023/988 — GPSR (General Product Safety Regulation)
+- In Kraft seit: 13.12.2024
+- Ersetzt die alte Produktsicherheitsrichtlinie 2001/95/EG
+- Anwendungsbereich: Auffang-Verordnung für ALLE Verbraucherprodukte ohne
+  spezifische sektorale Regelung; Wasserfilter fallen primär unter
+  Lebensmittelkontakt, aber GPSR ist ergänzend anwendbar
+- Kernpflichten Hersteller (Art. 9):
+  * Risikobewertung VOR Inverkehrbringen (Art. 6)
+  * Sicherer Produkt-Status
+  * Bedienungsanleitung mit Warnhinweisen in Landessprache (Art. 9 Abs. 8)
+  * Hersteller-Kontaktstelle mit Sitz in EU (Art. 14) — verantwortlicher
+    Wirtschaftsakteur
+  * Rückrufpflicht und Safety-Gate-Meldepflicht bei festgestellten Gefahren (Art. 20)
+- Pflichten Importeur (Art. 11):
+  * Pruefung, ob der Hersteller seine Pflichten erfüllt hat
+  * Eigene Identifikation auf dem Produkt oder Verpackung
+  * Aufbewahrung der Konformitätsdokumentation 10 Jahre
+  * Verfügbarkeit für Marktüberwachungsbehörden
+- Safety Business Gateway: zwingende Plattform für Selbstmeldungen nach Art. 20
+
+Verordnung (EU) 2019/1020 — Marktüberwachungsverordnung
+- Pflicht: verantwortlicher Wirtschaftsakteur mit Sitz in EU
+- Pflicht zur Kooperation mit Marktüberwachungsbehörden
+- Rückrufmechanismen
+
+
+================================================================================
+TEIL B — REGULATORISCHER RAHMEN DEUTSCHLAND (vertiefend)
+================================================================================
+
+B.1 TRINKWASSERVERORDNUNG (TrinkwV)
+-----------------------------------
+
+Trinkwasserverordnung in der Fassung vom 20.06.2023
+- §17 — Anforderungen an Materialien und Werkstoffe in Kontakt mit Trinkwasser
+- Verweis auf die Bewertungsgrundlagen des Umweltbundesamtes (UBA)
+- Verpflichtung: Materialien müssen UBA-Bewertungsgrundlagen entsprechen
+- Akkreditierte Prüflabore vergeben Konformitätsbescheinigungen (oft fälschlich als
+  "KTW-Zertifikat" bezeichnet)
+
+UBA-Bewertungsgrundlagen (verbindliche Prüfgrundlagen):
+- "KTW-BWGL Kunststoffe" — Bewertungsgrundlage für Kunststoffe in Trinkwasserkontakt
+  (gültig seit 21.03.2021, vorher bekannt als KTW-Leitlinie)
+- "Elastomer-Leitlinie" — für Dichtungen, O-Ringe
+- "Metallene Werkstoffe" — für Messing, Edelstahl, Aluminium etc.
+- "Email-Leitlinie", "Zementmörtel-Leitlinie", "Schmierstoffe"
+- DVGW-Arbeitsblatt W270 — Vermehrung von Mikroorganismen auf Werkstoffen
+  (ergänzend zu obigen, für hygienische Sicherheit)
+
+WICHTIG: Es gibt KEIN einzelnes "KTW-Zertifikat". Die korrekte Bezeichnung ist:
+"Konformitätsbescheinigung nach den UBA-Bewertungsgrundlagen [konkret nennen, z.B.
+KTW-BWGL Kunststoffe] in Verbindung mit dem DVGW-Arbeitsblatt W270"
+ausgestellt durch ein nach DIN EN ISO/IEC 17025 akkreditiertes Prüflabor.
+
+Akkreditierte Prüflabore für KTW-W270 (Auswahl):
+- Hygiene-Institut des Ruhrgebiets, Gelsenkirchen (HIR)
+- Hygiene-Institut Bochum
+- IWW Zentrum Wasser, Mülheim
+- TZW DVGW-Technologiezentrum Wasser, Karlsruhe
+- DVGW-Forschungsstelle TUHH
+
+B.2 ZUSTÄNDIGE BEHÖRDEN
+-----------------------
+
+- BVL (Bundesamt für Verbraucherschutz und Lebensmittelsicherheit) —
+  Bundesoberbehörde für Lebensmittelkontaktmaterialien
+- BfR (Bundesinstitut für Risikobewertung) — wissenschaftliche Bewertungen
+- Umweltbundesamt (UBA) — Bewertungsgrundlagen Trinkwasser
+- BAuA (Bundesanstalt für Arbeitsschutz) — nationale Safety-Gate-Kontaktstelle
+- Länder-Lebensmittelüberwachung — operative Marktüberwachung
+  (z.B. Regierungspräsidien)
+- DAkkS (Deutsche Akkreditierungsstelle) — akkreditiert die Prüflabore
+
+B.3 GEWERBLICHE SCHUTZNORMEN
+----------------------------
+
+DIN EN 13443-1, -2 — Wasseraufbereitungsgeräte im Hausanschluss
+DIN EN 14743 — Wasseraufbereitungsgeräte zur Enthärtung
+DIN EN 14898 — Wasseraufbereitungsgeräte zur Beseitigung biologischer Verunreinigungen
+DIN EN ISO 9001 — Qualitätsmanagement (Hersteller)
+DIN EN ISO 22000 — Lebensmittelsicherheits-Management
+
+B.4 ZERTIFIZIERUNGS-LANDSCHAFT
+------------------------------
+
+Echte Konformitätsbewertungs-Stellen (DE / EU):
+- DVGW CERT GmbH — bedeutendster deutscher Zertifizierer für Trinkwassertechnik
+  * DVGW-Baumusterprüfzertifikat
+  * DVGW-Zertifizierungszeichen nach W270, W534, W540 etc.
+- Kiwa Deutschland — internationaler Zertifizierer mit Niederlassung in DE
+- TZW Karlsruhe — DVGW-Technologiezentrum Wasser
+- TÜV Süd / TÜV Rheinland / TÜV Nord — multifunktionale Konformitätsbewertung
+
+Internationale Standards, die in DE/EU anerkannt werden:
+- NSF/ANSI 42 — ästhetische Wasserparameter (Chlor, Geschmack, Geruch)
+- NSF/ANSI 53 — Reduktion gesundheitsrelevanter Stoffe
+- NSF/ANSI 58 — Umkehrosmose
+- NSF/ANSI 61 — Material-Anforderungen für Trinkwasser
+- NSF P231 / P244 — Mikrobiologie
+- NSF/ANSI 401 — neuartige Schadstoffe (Pharmaka, Hormone)
+
+
+================================================================================
+TEIL C — CE-KENNZEICHNUNG: WAS WIRKLICH GILT
+================================================================================
+
+KURZE ANTWORT: Passive Wasserfilter ohne Elektrik sind in der Regel NICHT
+CE-PFLICHTIG.
+
+C.1 CE-PFLICHT NUR BEI:
+- Niederspannungsrichtlinie 2014/35/EU → wenn elektrische Bauteile über 50 V AC /
+  75 V DC vorhanden (z.B. UV-Lampe, elektrische Pumpe einer Umkehrosmose-Anlage)
+- EMV-Richtlinie 2014/30/EU → wenn elektromagnetische Emissionen ausgehen
+- Maschinenrichtlinie 2006/42/EG (ab 2027 ersetzt durch 2023/1230) → bewegliche
+  Teile, die Gefährdung verursachen können
+- Druckgeräterichtlinie 2014/68/EU → ab bestimmten Druck × Volumen-Werten
+- Bauproduktenverordnung 305/2011 → nur bei harmonisierter Produktnorm (für
+  Wasserfilter aktuell keine vorhanden)
+
+C.2 FÜR PASSIVE FILTER GILT KEINE CE-PFLICHT
+- Aktivkohleblock-Filter ohne Strom: KEINE CE-Pflicht
+- Hohlfasermembran-Filter ohne Strom: KEINE CE-Pflicht
+- Mikrofiltrations-Membran-Filter: KEINE CE-Pflicht
+- Impfkristall-Kalkwandler: KEINE CE-Pflicht
+- Mobile Outdoor-Filter ohne UV: KEINE CE-Pflicht
+
+C.3 ACHTUNG: UNZULÄSSIGE CE-VERWENDUNG IST EINE ORDNUNGSWIDRIGKEIT
+- Anbringen eines CE-Zeichens ohne zugrunde liegende Richtlinien-Konformität ist
+  nach VO (EG) 765/2008 unzulässig
+- Kann durch Marktüberwachungsbehörden und Wettbewerber abgemahnt werden
+- Konsumenten-Argumentation "CE-zertifiziert" ist FALSCH:
+  * CE ist eine Selbsterklärung des Herstellers, KEINE externe Zertifizierung
+  * Korrekt: "Konform mit VO (EG) 1935/2004" oder "KTW-bewertet" oder
+    "DVGW-zertifiziert"
+
+
+================================================================================
+TEIL D — WERBEAUSSAGEN UND LAUTERKEITSRECHT (UWG)
+================================================================================
+
+D.1 RECHTSGRUNDLAGE
+- UWG (Gesetz gegen den unlauteren Wettbewerb) Deutschland, §5 (Irreführung)
+- Pendant in CH: Bundesgesetz gegen den unlauteren Wettbewerb (UWG, SR 241)
+
+D.2 KRITISCHE AUSSAGEN-KATEGORIEN
+---------------------------------
+
+Gesundheitsbezogene Aussagen (zusätzlich HWG / HMG-relevant):
+- "Beugt Krankheit X vor" → krankheitsbezogene Werbung, in DE nach HWG §3 nur
+  für zugelassene Heilmittel zulässig
+- "Mehr Sicherheit für Babynahrung / Kinder" → vulnerable Zielgruppe,
+  Sorgfaltspflicht erhöht
+- "Schützt vor Legionellen / Pseudomonas / Bakterien" → wenn als Heilmittel
+  beworben, HMG-pflichtig
+
+Zertifizierungs- und Beleg-Aussagen:
+- "Zertifiziert" → setzt eine externe Konformitätsbewertungsstelle voraus, NICHT
+  durch Eigenerklärung
+- "Geprüft" → erfordert konkret benennbaren Prüfbericht eines Labors
+- "Laborzertifikat" → erfordert akkreditiertes Labor (DIN EN ISO/IEC 17025)
+- "Klinisch getestet" → meist nicht zutreffend bei Wasserfiltern; problematisch
+
+Quantitative Aussagen:
+- "99,99 % Bakterien" → muss durch akkreditierten Prüfbericht (Wirkungsgrad
+  über mehrere Log-Stufen, z.B. >4 log10) belegbar sein
+- "99,99 % Viren" → physikalisch nur möglich bei Membran < 0,02 µm oder
+  spezifischer elektroadsorptiver Wirkung; muss durch Pruefung am ENDPRODUKT
+  belegt sein, nicht durch Material-Datenblatt
+- "Reduziert PFAS / Mikroplastik / Nanoplastik" → braucht konkrete Pruefberichte
+  mit Stoffliste, Eingangskonzentrationen, Durchflussrate, Pruefnorm
+- "Filtert Hormone / Medikamentenrückstände" → braucht Stoffliste der getesteten
+  Substanzen und Pruefbedingungen (Durchfluss, Kontaktzeit)
+- "Filtert Schwermetalle" → braucht Stoffliste (Blei, Kupfer, ggf. weitere)
+
+Herkunftsangaben:
+- "Made in Germany" → nach BGH I ZR 50/12 ("Kondome aus Sachsen") und EU-Praxis
+  nur zulässig, wenn die wertschöpfungsbestimmenden Schritte in DE erfolgen
+- Falsche Aussage bei OEM-Material-Beschaffung mit nur Endmontage in DE ist
+  irreführend
+
+Esoterische / pseudowissenschaftliche Aussagen:
+- "EM-Keramik wirkt auf Wassercluster / Oberflächenspannung / Vitalisierung" →
+  wissenschaftlich nicht belegbar; nach UWG §5 irreführend
+- "Wasservitalisierung" / "Energetisierung" → kein wissenschaftlicher Beleg
+
+Pauschalaussagen:
+- "Regelmäßig durch unabhängige Institute geprüft" → erfordert konkrete und
+  laufende Pruefungen, nicht punktuelle Material-Datenblätter
+- "Gesünderes Wasser" → unzulässige gesundheitsbezogene Pauschalaussage ohne
+  Vergleichsbasis
+
+D.3 ABMAHN- UND KLAGEBEFUGTE STELLEN
+- Mitbewerber (sehr aktiv im Wasserfilter-Markt)
+- Wettbewerbszentrale (Bad Homburg, Deutschland)
+- Verbraucherzentralen
+- Verbraucherverband Bundesverband (vzbv)
+- In CH: Stiftung für Konsumentenschutz (SKS), Konsumentenschutz Deutsch-Schweiz
+
+
+================================================================================
+TEIL E — KONKRETE BELEGE / PRÜFBERICHTE — WAS BRAUCHT EIN HERSTELLER?
+================================================================================
+
+E.1 PFLICHTBELEGE FÜR JEDES PRODUKT (EU-Standard)
+-------------------------------------------------
+
+1. Konformitätserklärung des Herstellers nach VO (EG) 1935/2004
+   - Mit Verweis auf alle anwendbaren spezifischen Verordnungen (z.B. 10/2011)
+   - Auflistung aller Materialien
+   - Bestätigung der Migrationsgrenzwerte
+
+2. Konformitätserklärungen aller Vorlieferanten
+   - Für Aktivkohle: Lieferant + Material-Klasse + 1935/2004-DoC
+   - Für Membran: Lieferant + Materialart + DoC
+   - Für Kunststoffe: VO (EU) 10/2011-DoC, Positivlisten-Konformität
+   - Für Metalle: Bewertung nach UBA-Metall-Leitlinie
+   - Für Dichtungen / O-Ringe: Elastomer-Leitlinie + W270
+
+3. KTW-W270-Konformitätsbescheinigung für jedes wasserberührte Bauteil
+   - Ausgestellt durch akkreditiertes Prüflabor
+   - Mit konkretem Akkreditierungs-Zeichen (DAkkS)
+   - Pruefberichtnummer, Datum, Gültigkeitsperiode
+
+4. Risikobewertung nach Art. 6 GPSR
+   - Identifikation vernünftigerweise vorhersehbarer Verwendungsfälle
+   - Bewertung der Gefahren für vulnerable Gruppen
+   - Mitigations-Maßnahmen
+   - Restrisiken in der Bedienungsanleitung adressiert
+
+5. Bedienungsanleitung in Landessprache(n)
+   - Bestimmungsgemäßer Gebrauch
+   - Warnhinweise (max. Temperatur, Druck, Wechselintervall, Nicht-Eignung
+     bei Niederdruckboilern, etc.)
+   - Bei Outdoor-Filtern: klare Aussage zur Eignung/Nicht-Eignung als
+     Mikroorganismen-Filter
+
+6. Hersteller-Identifikation auf dem Produkt oder Verpackung (Art. 9 GPSR)
+
+E.2 OPTIONALE BELEGE (Werbeaussagen-Untermauerung)
+--------------------------------------------------
+
+Falls beworben, müssen Belege vorliegen:
+
+- Bakterien-Rückhaltung: Akkreditierter Prüfbericht (z.B. HygCen, IWW, TZW)
+  mit konkreten Test-Organismen (Pseudomonas aeruginosa, E. coli, Enterokokken)
+  und Pruefnorm (z.B. DIN EN 14898)
+- Viren-Rückhaltung: Akkreditierter Prüfbericht mit Test-Viren (z.B. MS2-Phagen,
+  Adenoviren) — selten verfügbar, da physikalisch anspruchsvoll
+- Schwermetalle: Akkreditierter Prüfbericht (z.B. nach DIN EN ISO/IEC 17025)
+- Pestizide / Herbizide / Insektizide: Stoffliste und Wirkungsgrade
+- Pharmaka / Hormone: Spezifische Studien zu definierten Substanzen
+- PFAS: PFAS-Stoffliste (mind. 12 typische Verbindungen), Eingangskonzentrationen
+- Mikroplastik / Nanoplastik: Pruefmethode (z.B. Pyro-GC-MS, Raman-Spektroskopie),
+  Partikelgrößen-Bereich
+
+E.3 PROBLEMATISCHE BELEG-TYPEN (vorsicht!)
+------------------------------------------
+
+Was NICHT als "Laborzertifikat" oder "geprüft" durchgeht:
+
+- OEM-Materialdatenblätter (Daten zu Aktivkohle oder Membran allgemein, NICHT zum
+  Endprodukt)
+- Briefe von Laboren an OEM-Lieferanten (nicht an den Hersteller selbst)
+- Hersteller-Eigentests ohne Akkreditierung
+- Allgemeine Aussagen wie "wissenschaftlich geprüft" ohne konkrete Studie
+- Übertragung von Pruefberichten zwischen verschiedenen Produkten / Konfigurationen
+- Pruefberichte zu deutlich anderen Bedingungen (z.B. niedrigerer Durchfluss als
+  beworben)
+
+
+================================================================================
+TEIL F — KONKRETE RISIKEN UND ANGRIFFSPUNKTE
+================================================================================
+
+F.1 BEHÖRDEN-RISIKEN
+---------------------
+
+Lebensmittelüberwachung (Bundesländer DE / kantonal CH):
+- Reguläre Marktkontrollen
+- Verdachtsproben bei Reklamationen
+- Stichproben bei Importeur ODER bei Hersteller
+- Sanktionen: Anordnung, Verkaufsstopp, Bußgeld (DE: bis 100.000 € pro Verstoß
+  nach ProdSG), in schweren Fällen Strafverfahren
+
+Safety Gate (EU) / Safety Business Gateway:
+- Importeure und Hersteller haben Meldepflicht nach Art. 20 GPSR bei festgestellten
+  Gefahren
+- Versäumte Meldung ist eigener Tatbestand
+- Eintrag in Safety Gate wird wöchentlich EU-weit veröffentlicht
+- Domino-Effekt: andere EU-Länder ziehen nach
+
+UWG-Abmahnungen:
+- Durch Mitbewerber (am häufigsten)
+- Durch Wettbewerbszentrale
+- Durch Verbraucherzentralen
+- Folge: Unterlassungsverpflichtung mit Vertragsstrafe (oft 5.000 € pro Verstoß)
+
+F.2 ZIVILRECHTLICHE RISIKEN
+----------------------------
+
+- Produkthaftung nach ProdHaftG bei Personenschäden
+- Schadensersatz bei Sachschäden (z.B. Wasserschaden durch defektes Gehäuse)
+- Rückabwicklung von Verträgen bei wesentlichen Sachmängeln
+
+F.3 STRAFRECHTLICHE RISIKEN (bei Vorsatz)
+------------------------------------------
+
+- §263 StGB Betrug (bei vorsätzlicher Falschauslobung)
+- §314 StGB Gemeingefährliche Vergiftung (bei tatsächlicher Gesundheitsgefahr)
+- §43 GmbHG persönliche Geschäftsführer-Haftung
+
+F.4 REPUTATIONSRISIKEN
+-----------------------
+
+- Konsumentenmagazine: K-Tipp, Saldo, Beobachter (CH); Stiftung Warentest,
+  ÖKO-TEST, Konsument (DE/AT)
+- Verbraucherportale: Trustpilot, Trusted Shops
+- Online-Aktivismus durch Verbraucher und Influencer
+- Plattform-Sanktionen: Amazon, eBay, Galaxus filtern nach Safety-Gate-Meldungen
+
+
+================================================================================
+TEIL G — IMPORTEUR-SORGFALTSPFLICHT
+================================================================================
+
+G.1 EU-RECHTLICH (Art. 11 GPSR)
+--------------------------------
+
+Importeure müssen:
+1. Sicherstellen, dass der Hersteller die Konformitätsbewertung durchgeführt hat
+2. Sicherstellen, dass die technische Dokumentation vorliegt
+3. Eigene Kontaktdaten auf dem Produkt anbringen (Name, Marke oder Adresse)
+4. Sicherstellen, dass Bedienungsanleitung in Landessprache beiliegt
+5. Aufbewahrung der Konformitätsdokumentation 10 Jahre nach Inverkehrbringen
+6. Bei Kenntnis von Nicht-Konformität: Korrekturmaßnahmen einleiten
+7. Bei Gefahren: Information an Marktüberwachungsbehörden (Safety Business
+   Gateway)
+8. Kooperation mit Marktüberwachungsbehörden
+
+G.2 NICHT-DELEGIERBARE PRÜFPFLICHTEN
+-------------------------------------
+
+Der Importeur darf sich NICHT blind auf den Hersteller verlassen, sondern muss:
+- Stichprobenartig prüfen, ob die Belege plausibel sind
+- Bei Verdachtsmomenten aktiv nachforschen
+- Eigene Risikobewertung durchführen, wenn der Hersteller eine offenkundige
+  Pflichtverletzung begeht
+- Eigene Vermarktungs-Aussagen NICHT mit Hersteller-Aussagen begründen, wenn
+  Zweifel bestehen
+
+
+================================================================================
+TEIL H — WAS BISHER BEI RIVA / NATURALAQUA RECHERCHIERT WURDE
+================================================================================
+
+H.1 RIVA-HERSTELLER-WEBSEITE (riva-filter.de) — 62 Befunde
+-----------------------------------------------------------
+
+Dokumentiert in Aktennotiz Nr. 2 (21.05.2026). Kritische Aussagen-Cluster:
+
+- Bakterien-/Viren-Aussagen mit unhaltbaren Pauschalbehauptungen
+  (z.B. "99,99 % Viren" bei Membranen mit Filterfeinheit deutlich über
+  Virus-Partikelgrößen)
+- Krankheitsbezogene Werbung (Legionärskrankheit, Krebs-Vorbeugung)
+- Babynahrung-Sicherheit
+- Esoterische EM-Keramik-Wirkaussagen
+- Pauschal "zertifiziert" ohne benennbare Stelle
+- "Made in Germany" trotz OEM-Lieferketten
+- Outdoor-Filter mit "aus jeder Quelle trinken"-Suggestion
+- Krebs-/Metastasen-Bezüge im Kontext eigener Filter als angebliche Schutzmaßnahme
+- "Abkochen nicht nötig"-Aussagen
+
+H.2 RIVA-VERLINKTE LABORBERICHTE — Forensische Analyse
+-------------------------------------------------------
+
+Dokumentiert in Aktennotiz Nr. 3 (21.05.2026). Befunde:
+
+Von 8 direkt verlinkten "Laborzertifikaten" auf riva-filter.de:
+- 1 echter, verwertbarer Pruefbericht: HygCen Germany GmbH,
+  DAkkS-Akkreditierung D-PL-18818-02, Pruefnummer 2022-2801 vom 14.12.2022,
+  Pseudomonas aeruginosa, am Riva-Produkt rivaALVA-S Jova
+- 1 Hersteller-Eigentest: PFAS-Test ist "Auszug aus den Laboranalysen des
+  Filtermaterial-Entwicklers und Produzenten" — explizit kein externer Test
+- 3 umetikettierte OEM-Datenblätter:
+  * Ahlstrom/BCS-Brief 2016 (gerichtet an Ahlstrom Filtration LLC, US-OEM)
+    erwähnt Riva mit keinem Wort, wird aber als "Bakterien-/Virenmembran-
+    Zertifikat" verlinkt
+  * Carbonit-Datenblatt 2016 (gerichtet an Carbonit-Vertriebspartner) erkennt
+    in Punkt 2.6 selbst an: EM-Wirkung "durch naturwissenschaftlich anerkannte
+    Tests nicht nachweisbar"
+  * TU Berlin 2000 (für Carbonit NFP Premium-Untertischfilter mit 0,45 µm
+    Filterfeinheit) — wird für ungeeignete Produkte (z.B. 20 µm Duschfilter
+    bei 9-11 l/min) als Beleg für "Hormone und Medikamente"-Filterung
+    verwendet
+- 1 selbstwidersprüchliches PDF: nennt mehrere prominente Labore (Wessling,
+  Eurofins, SGS, Brave, Uni Luxemburg) und verbietet gleichzeitig die
+  Namensverwendung — forensisch eindeutiger Selbstwiderspruch
+- 1 Flyer (kein Pruefbericht)
+- 1 nicht-OCR-fähige Druckprüfung
+
+H.3 OEM-LIEFERKETTE IDENTIFIZIERT
+----------------------------------
+
+- Aktivkohle-Block: vermutlich Carbonit Filtertechnik GmbH, Salzwedel (DE)
+- Mikrofiltrations-Membran "Disruptor®": Ahlstrom Filtration LLC, USA
+  (Markenname auf rivaPura-Ersatzkartusche-Seite erkennbar)
+- Impfkristall-Granulat (KALK): mehrere mögliche OEM-Lieferanten verfügbar
+- Damit ist die "Made in Germany"-Aussage nur für Endmontage/Konfektionierung
+  trifftig, nicht für die wertbestimmenden Filtermaterialien
+
+H.4 NATURALAQUA-WEBSEITE (naturalaqua.ch)
+------------------------------------------
+
+Dokumentiert in Aktennotiz Nr. 4 + 5 (21.05.2026).
+
+Positiv: viele der heikelsten Riva-Aussagen wurden NICHT übernommen
+(kein PURA-Komplettprodukt, keine Neurodermitis-Versprechen, keine "Abkochen
+nicht nötig"-Aussage, keine Krebsbezüge, FAQ leer).
+
+Identifizierte übernommene Probleme:
+- 3 kritisch (Jova-Viren, lokale Labor-PDFs auf eigener Domain,
+  rivaPura-Ersatzkartusche)
+- 11 hoch
+- 4 mittel
+- 4 systemisch (Aussagen-Hygiene)
+
+Werden im Rahmen der Sofortmaßnahmen Mai/Juni 2026 angepasst.
+
+H.5 PRODUKT-KATEGORIEN BEI NATURALAQUA
+---------------------------------------
+
+15 Hauptprodukte (Ersatzkartuschen separat, aber im jeweiligen Hauptprodukt
+materiell mit abgedeckt):
+
+Untertisch (6):
+- rivaALVA LIFE (Aktivkohle 20 µm)
+- rivaALVA LIFE-EM (Aktivkohle + EM-Keramik)
+- rivaALVA Life SafePro (LIFE + 0,2 µm Membran)
+- rivaALVA Life SafePro-EM
+- rivaALVA MEX 2in1 (PFAS-/Nanoplastik-Spezialgranulat)
+- riva MULTI (0,2 µm Hohlfasermembran)
+
+Wasserhahn (4):
+- rivaALVA-S Viva (Aktivkohle 20 µm)
+- rivaALVA-S Viva EM
+- rivaALVA-S Jova (Aktivkohle 20 µm + 1,5 µm Membran)
+- rivaALVA-S Jova EM
+
+Dusche (4):
+- rivaALVA SKIN&HAIR (20 µm Aktivkohle)
+- rivaALVA SKIN&HAIR EM
+- rivaALVA KALK (Impfkristall-Kalkwandler)
+- riva MULTI Duschfilter (Hohlfasermembran)
+
+Outdoor (3):
+- rivaALVA LIFE EXPLORER
+- riva MULTI EXPLORER
+- rivaALVA EXPLORER OVERLAND
+
+H.6 BEREITS ERSTELLTE COMPLIANCE-DOKUMENTE
+-------------------------------------------
+
+- 15 schlanke EU-Konformitätserklärungs-Vorlagen, je Produkt eine, zur
+  Unterzeichnung durch Riva Systemtechnik GmbH
+- 6 Aktennotizen für interne Compliance-Akte
+- Interne Risikobewertung mit 22 priorisierten Maßnahmen
+
+
+================================================================================
+TEIL I — CHECKLISTE FÜR HERSTELLER-COMPLIANCE-BEWERTUNG
+================================================================================
+
+Diese Checkliste kann das Compliance-Tool verwenden, um pro Produkt zu prüfen:
+
+[ ] 1. Hersteller-Identifikation
+    - Firma, Adresse, Handelsregisternummer
+    - Geschäftsführung benannt
+    - Kontaktstelle für Marktüberwachung (Art. 14 GPSR)
+
+[ ] 2. Produktidentifikation
+    - Eindeutige Artikelnummer
+    - Produktkategorie und Verwendungszweck
+    - Technische Daten (Filterfeinheit, Durchfluss, Druck, Temperatur)
+
+[ ] 3. Materialien-Offenlegung
+    - Alle wasserberührten Komponenten benannt
+    - Vorlieferanten benannt
+    - VO (EG) 1935/2004 DoC für jedes Material
+
+[ ] 4. Trinkwasserspezifische Konformität
+    - KTW-W270-Bescheinigung für Kunststoffe
+    - UBA-Bewertungsgrundlage-Konformität
+    - Akkreditiertes Prüflabor benannt mit Pruefnummer
+
+[ ] 5. Konformitätsbewertungen
+    - DVGW-Zertifizierung (sofern vorhanden, Nummer und Datum)
+    - NSF-Zertifizierung (sofern vorhanden, mit konkretem Standard)
+    - ISO 9001/22000 Zertifikate Herstellungsstandort
+
+[ ] 6. Risikobewertung nach Art. 6 GPSR
+    - Dokumentiert und beim Hersteller archiviert
+    - Vulnerable Gruppen berücksichtigt
+    - Restrisiken adressiert
+
+[ ] 7. Bedienungsanleitung
+    - In Landessprache(n)
+    - Mit Warnhinweisen
+    - Beigelegt zum Produkt
+
+[ ] 8. Werbeaussagen-Belege (pro Aussage einzeln)
+    - Konkreter Pruefbericht benannt
+    - Pruefbericht-Typ klassifiziert (akkreditiert / eigentest / OEM-Datenblatt)
+    - Pruefbedingungen relevant für Produkt (Durchfluss, Konzentration etc.)
+
+[ ] 9. Vertriebspflichten
+    - Belege binnen 10 Werktagen verfügbar
+    - Änderungs-Meldepflicht binnen 5 Werktagen
+    - Behörden-Beanstandungen werden weitergeleitet
+    - Rückruf-Kosten-Tragung im Falle eines berechtigten Rückrufs
+
+[ ] 10. Haftungsfreistellung Importeur (optional, vertraglich)
+    - Bei unveränderter Übernahme der Hersteller-Aussagen
+    - Anwalts- und Verfahrenskosten in angemessenem Umfang
+
+
+================================================================================
+ENDE TEIL DE / EU
+================================================================================

@@ -1,0 +1,566 @@
+================================================================================
+COMPLIANCE-WISSENSBASIS WASSERFILTER / TRINKWASSERFILTER — SCHWEIZ (ZUSÄTZLICH)
+================================================================================
+
+Stand: 22.05.2026
+Vorbedingung: Das DE/EU-Kompendium ist bekannt (siehe compliance_DE_EU.txt)
+Anwendungsbereich: Generalimporteur NaturalAqua, Vertrieb auf naturalaqua.ch
+Hauptkonstellation: Hersteller in DE / EU, Importeur in CH, Endkunden in CH
+
+WICHTIGER GRUNDSATZ:
+Die Schweiz ist NICHT EU-Mitglied, aber durch bilaterale Abkommen und das THG
+(Bundesgesetz über die technischen Handelshemmnisse) bestehen weitreichende
+Anerkennungs- und Äquivalenzmechanismen mit der EU. Vieles aus dem EU-Kompendium
+gilt sinngemäß. Dieser Text dokumentiert nur das, was ZUSÄTZLICH oder ANDERS
+ist als im EU/DE-Recht.
+
+
+================================================================================
+TEIL A — RECHTLICHER RAHMEN SCHWEIZ
+================================================================================
+
+A.1 TECHNISCHE HANDELSHEMMNISSE
+-------------------------------
+
+Bundesgesetz über die technischen Handelshemmnisse (THG, SR 946.51)
+- Zweck: Verhinderung von Handelshemmnissen, weitgehende Anerkennung von
+  EU-Konformität (Cassis-de-Dijon-Prinzip nach Art. 16a-d THG)
+- Wichtige Konsequenz: Produkte, die in der EU rechtmäßig in Verkehr gebracht
+  sind, dürfen in der Regel auch in die Schweiz importiert werden — ABER mit
+  Einschränkungen für Lebensmittel und Lebensmittelkontaktmaterialien
+
+Verordnung über das Inverkehrbringen von nach ausländischen technischen
+Vorschriften hergestellten Produkten und über deren Überwachung auf dem Markt
+(VIPaV, SR 946.513.8)
+- Anwendbarkeit Cassis-de-Dijon-Prinzip auf Lebensmittel und damit verbundene
+  Gegenstände eingeschränkt
+- Für Lebensmittelbedarfsgegenstände gilt: muss CH-spezifischen Anforderungen
+  entsprechen, auch wenn EU-konform
+
+A.2 LEBENSMITTELRECHT
+---------------------
+
+Bundesgesetz über Lebensmittel und Gebrauchsgegenstände (LMG, SR 817.0)
+- Art. 1: Schutz der Gesundheit und Täuschungsschutz
+- Art. 18: Täuschungsverbot — verbietet jede täuschende oder irreführende
+  Angabe über Lebensmittel und Bedarfsgegenstände (entspricht funktional dem
+  deutschen UWG §5)
+- Art. 26: Sorgfaltspflicht der Hersteller, Bearbeiter, Lagerhalter, Importeure
+  und Verteiler
+- Art. 28: Selbstkontrollpflicht
+
+Lebensmittel- und Gebrauchsgegenständeverordnung (LGV, SR 817.02)
+- Konkretisierung der Anforderungen aus LMG
+- Bestimmungen zu Verpackung, Kennzeichnung, Werbung
+
+Verordnung über Materialien und Gegenstände, die dazu bestimmt sind, mit
+Lebensmitteln in Berührung zu kommen (Bedarfsgegenständeverordnung — FCMV,
+SR 817.023.21)
+- ENTSPRICHT funktional VO (EG) 1935/2004 EU
+- Anforderungen weitgehend mit EU harmonisiert
+- Wasserfilter fallen unter diese Verordnung
+- Anhang 2: Spezifische Anforderungen für Kunststoffe (entspricht VO 10/2011)
+- Anhang 6: Spezifische Anforderungen für andere Materialien
+
+Trinkwasserverordnung (TBDV, SR 817.022.11) — Verordnung des EDI über
+Trinkwasser sowie Wasser in öffentlich zugänglichen Bädern und Duschanlagen
+- Mikrobiologische und chemische Anforderungen
+- Grundlage für die Aussage, dass Schweizer Leitungswasser unbedenklich ist —
+  WICHTIG für Werbeaussagen-Bewertung
+
+A.3 PRODUKTSICHERHEIT
+---------------------
+
+Bundesgesetz über die Produktesicherheit (PrSG, SR 930.11)
+- Inkrafttreten: 01.07.2010
+- Anwendbarkeit: Verbraucherprodukte allgemein
+- ENTSPRICHT funktional der EU-GPSR (VO 2023/988)
+- Art. 8: Meldepflicht — Hersteller, Importeure und Inverkehrbringer müssen
+  den zuständigen Vollzugsorganen unverzüglich melden, wenn ihre Produkte
+  eine Gefahr darstellen
+- Art. 3: allgemeine Sicherheitsanforderung
+- Art. 6-7: Pflichten der Wirtschaftsakteure
+
+Verordnung über die Produktesicherheit (PrSV, SR 930.111)
+- Konkretisierung des PrSG
+- Verweis auf harmonisierte Normen
+
+A.4 WETTBEWERBSRECHT
+--------------------
+
+Bundesgesetz gegen den unlauteren Wettbewerb (UWG, SR 241)
+- Art. 3 Abs. 1 lit. b: Verbot irreführender Angaben über sich, seine
+  Produkte oder Dienstleistungen
+- Art. 3 Abs. 1 lit. e: Anlehnungsverbot bezüglich Qualitätsangaben
+- Aktivlegitimation: Mitbewerber, Kunden, Berufsverbände,
+  Konsumentenschutzorganisationen, Bund (in bestimmten Fällen)
+
+A.5 HEILMITTELRECHT
+-------------------
+
+Heilmittelgesetz (HMG, SR 812.21)
+- Anwendbar, wenn Produkte krankheitsbezogen beworben werden
+- Art. 31: Werbung für Heilmittel
+- Wichtig für Wasserfilter, wenn Aussagen wie "vermeidet Krankheit X" gemacht
+  werden — dann fällt das Produkt potenziell unter HMG, ist aber als
+  Wasserfilter NICHT als Heilmittel zugelassen → unzulässige Werbung
+
+
+================================================================================
+TEIL B — ZUSTÄNDIGE BEHÖRDEN UND VOLLZUG IN DER CH
+================================================================================
+
+B.1 BUNDESEBENE
+---------------
+
+BLV (Bundesamt für Lebensmittelsicherheit und Veterinärwesen)
+- Oberbehörde für Lebensmittel, Bedarfsgegenstände, Wasserfilter im
+  Trinkwasserkontakt
+- Erlässt Vollzugsweisungen und Hilfsmittel
+- Webseite: www.blv.admin.ch
+
+BAG (Bundesamt für Gesundheit)
+- Trinkwasserqualität, Schutz der menschlichen Gesundheit
+- Bei gesundheitsbezogenen Werbeaussagen relevant
+
+EDI (Eidgenössisches Departement des Innern)
+- Erlässt die TBDV und andere Verordnungen
+
+SECO (Staatssekretariat für Wirtschaft)
+- Koordinationsstelle für Marktüberwachung gemäß PrSG
+- Verbindungsstelle zu internationalen Behörden
+
+Swissmedic
+- Bei Produkten mit Heilmittel-Aspekten
+- Bei Wasserfiltern in der Regel nicht primär zuständig, aber bei
+  krankheitsbezogenen Werbeaussagen kann eine Abklärung folgen
+
+B.2 KANTONALE EBENE (operative Marktüberwachung)
+------------------------------------------------
+
+Kantonale Lebensmittel- und Veterinärämter
+- 26 Kantone, organisatorisch unterschiedlich aufgestellt
+- In den meisten Kantonen: Kantonschemiker als Leiter
+- Direkte Anlaufstelle für die operative Marktüberwachung von
+  Lebensmittelkontaktmaterialien
+- Können Inspektionen durchführen, Proben ziehen, Verkaufsstopps anordnen,
+  Bußen verhängen
+
+Wichtigste Kantone für E-Commerce-Importeure
+(je nach Sitz NaturalAqua zuständig):
+- Kantonsapotheker / Kantonschemiker des Sitzkantons
+- Inter-kantonales Lebensmittel-Kontroll-System
+- Aargau, Zürich, Bern, Waadt etc. mit erfahrenen Vollzugsorganen
+
+KOLAS (Konferenz der kantonalen Beauftragten für Lebensmittelsicherheit)
+- Koordinationsplattform der kantonalen Behörden
+- Erarbeitet gemeinsame Vorgehensweisen
+
+B.3 ZERTIFIZIERUNGS-LANDSCHAFT CH
+---------------------------------
+
+SVGW (Schweizerischer Verein des Gas- und Wasserfaches)
+- CH-Pendant zum deutschen DVGW
+- Eigene Zertifizierungs-Verfahren für Trinkwasser-Produkte
+- Wichtigste CH-spezifische Zertifizierung für Wasserfilter
+- SVGW-Zertifizierungs-Zeichen "W"
+
+WICHTIG: SVGW-Zertifizierung kann zusätzlich zu DVGW erforderlich sein, ist aber
+nicht für jedes Wasserfilter-Produkt zwingend erforderlich. Pflicht insbesondere
+bei direktem Anschluss an die öffentliche Trinkwasserversorgung (Hauseinlauf).
+
+SAS (Schweizerische Akkreditierungsstelle)
+- Akkreditiert Schweizer Prüflabore nach SN EN ISO/IEC 17025
+- CH-Pendant zur deutschen DAkkS
+- Wechselseitige Anerkennung mit DAkkS und anderen EU-Akkreditierern
+
+Andere zertifizierungsfähige Stellen mit CH-Bezug:
+- Eurofins CH
+- SGS Schweiz
+- TÜV SÜD Schweiz
+- Bureau Veritas
+
+
+================================================================================
+TEIL C — IMPORTEUR-SORGFALTSPFLICHT CH
+================================================================================
+
+C.1 RECHTSGRUNDLAGE
+-------------------
+
+LMG Art. 26 — Sorgfaltspflicht
+Wörtlich: "Wer mit Lebensmitteln oder Gebrauchsgegenständen umgeht, ist
+verpflichtet, im Rahmen seiner Tätigkeit dafür zu sorgen, dass die Waren beim
+Umgang gesetzlichen Anforderungen entsprechen. Er muss die Selbstkontrolle nach
+dem Stand des Wissens vornehmen."
+
+PrSG Art. 8 — Mitteilungspflicht
+Wörtlich (auszugsweise): "Stellt der Hersteller oder ein anderer Inverkehrbringer
+fest oder hat er Grund zur Annahme, dass von seinem Produkt eine Gefahr für die
+Sicherheit oder die Gesundheit der Verwenderinnen und Verwender oder Dritter
+ausgeht, so macht er dem zuständigen Vollzugsorgan unverzüglich folgende Angaben
+[...]"
+
+C.2 KONKRETE PFLICHTEN NaturalAqua als Generalimporteur CH
+----------------------------------------------------------
+
+1. Sicherstellen, dass die Produkte den schweizerischen Anforderungen entsprechen
+2. Selbstkontrolle und Dokumentation der Selbstkontrolle
+3. Bedienungsanleitung in CH-Landessprachen (mind. Deutsch, idR auch
+   Französisch, ggf. Italienisch je nach Vertriebsgebiet)
+4. CH-Kontaktstelle (das ist NaturalAqua selbst) — Adresse muss auf Produkt
+   oder Verpackung erscheinen
+5. Meldepflicht an kantonales Vollzugsorgan bei festgestellten Gefahren
+6. Kooperation mit den Marktüberwachungsbehörden
+7. 10-jährige Aufbewahrung der Compliance-Dokumentation
+8. Bei eigenen Werbeaussagen: eigenständige Belegfähigkeit nach UWG
+
+C.3 BESONDERHEIT: WERBEAUSSAGEN UND SCHWEIZER LEITUNGSWASSER
+------------------------------------------------------------
+
+Schweizer Leitungswasser ist nach TBDV streng kontrolliert und gilt als
+unbedenklich. Werbeaussagen wie "gesünderes Wasser" oder "mehr Sicherheit für
+Babynahrung" implizieren ein Sicherheitsdefizit des Leitungswassers, das in der
+Schweiz im Regelfall nicht gegeben ist. Dies ist besonders empfindlich, weil:
+
+- BAG-Empfehlung: Leitungswasser ist unbedenklich, auch für Säuglingsnahrung
+- Die Wasserversorger der Gemeinden (über 2000 in der CH) sind sensibilisiert
+  gegen solche Aussagen
+- SVGW selbst tritt aktiv gegen herabsetzende Aussagen über Leitungswasser auf
+- Konsumentenschutz-Organisationen (SKS, Konsumentenschutz Deutsch-Schweiz,
+  FRC für Westschweiz) achten besonders darauf
+
+
+================================================================================
+TEIL D — RAPEX / SAFETY GATE UND DIE SCHWEIZ
+================================================================================
+
+D.1 STATUS DER SCHWEIZ
+----------------------
+
+Die Schweiz ist KEIN volles Mitglied des EU-Safety-Gate-Systems (vormals RAPEX).
+Es gibt aber praktisch wirksame bilaterale Mechanismen:
+
+- Zugang zu Safety-Gate-Datenbank als Informationsquelle (nicht als Melder)
+- Bilaterale Koordination zwischen SECO/BLV und EU-Behörden
+- Kantonale Behörden können direkt mit deutschen Schwester-Behörden
+  kommunizieren
+- Schweizer Beanstandungen können über Deutschland in das Safety-Gate-System
+  eingespeist werden
+
+D.2 PRAKTISCHE ESKALATIONSWEGE bei nicht-konformen Produkten
+------------------------------------------------------------
+
+Bei einer Beanstandung in der CH ergibt sich folgende typische Eskalation:
+
+Stufe 1 — Kantonale Ebene (CH):
+- Kantonschemiker erhält Information (von Konsument, Konkurrenz oder eigene
+  Stichprobe)
+- Untersuchung beim Importeur (NaturalAqua)
+- Mögliche Anordnungen: Verkaufsstopp, Rückruf, Bußen
+
+Stufe 2 — Inter-kantonale Ebene:
+- KOLAS-Koordination zwischen den Kantonen
+- Bei Fall mit überregionaler Bedeutung: BLV-Einschaltung
+
+Stufe 3 — Bilaterale Ebene:
+- BLV → BVL (Deutschland) bei Hersteller in DE
+- Möglicher Verkaufsstopp / Rückruf in DE
+- Hersteller-direkte Inspektion durch deutsche Behörden
+
+Stufe 4 — EU-weite Wirkung:
+- Safety-Gate-Eintrag durch deutsche Behörden
+- Wöchentliche Veröffentlichung EU-weit
+- Andere Mitgliedstaaten ziehen nach
+- Plattform-Sanktionen (Amazon, eBay, Galaxus)
+
+D.3 KONSEQUENZEN FÜR HERSTELLER IM DE-MARKT
+-------------------------------------------
+
+Wenn deutsche Behörden aufgrund einer schweizerischen Beanstandung tätig werden:
+
+- Marktüberwachungs-Inspektion am Hersteller-Sitz
+- Bußgelder nach §27 ProdSG: bis 100.000 € pro Verstoß
+- Bei mehreren Produkten: kumulierte Bußen möglich
+- Strafrechtliche Ermittlungen bei Vorsatz (§263, §314 StGB)
+- Persönliche Geschäftsführer-Haftung nach §43 GmbHG
+- Verlust DVGW-/SVGW-Konformitätszertifikate (falls vorhanden)
+- Versicherungs-Probleme bei Produkthaftpflicht
+- B2B-Kunden-Verlust (Hotelketten, Gastronomie, Gewerbe)
+- Reputationsschaden domain-übergreifend
+- Worst case: Insolvenz bei Großschaden
+
+
+================================================================================
+TEIL E — SPRACHENREGIME UND VERPACKUNGS-PFLICHTEN
+================================================================================
+
+E.1 PFLICHTSPRACHEN
+-------------------
+
+Schweiz hat vier Amtssprachen:
+- Deutsch (ca. 63 % der Bevölkerung)
+- Französisch (ca. 23 %)
+- Italienisch (ca. 8 %)
+- Rätoromanisch (selten)
+
+Für Lebensmittelkontaktmaterialien und Wasserfilter:
+- Mindestens in den drei Hauptsprachen DE / FR / IT, wenn das Produkt im ganzen
+  Land vertrieben wird
+- Bei regionalem Vertrieb: mindestens in der Sprache des Vertriebsgebiets
+- Sicherheitsrelevante Informationen MUSS in DE / FR / IT vorliegen (LGV)
+
+E.2 KENNZEICHNUNGS-PFLICHTEN
+----------------------------
+
+Auf der Verpackung oder dem Produkt müssen erscheinen:
+- Produktbezeichnung
+- Hersteller-Angabe und Adresse
+- Importeur-Angabe (NaturalAqua) für CH-Import
+- Verwendungshinweise / Bedienungsanleitung
+- Mindestens Warnhinweise in DE / FR / IT (sofern relevant)
+- Wechselintervalle, max. Druck und Temperatur
+- Bei Outdoor-Filtern: klare Aussage zur Eignung als Mikroorganismen-Filter
+  (ja/nein)
+
+
+================================================================================
+TEIL F — UNTERSCHIEDE DE/EU vs. CH (KOMPAKT)
+================================================================================
+
+THEMA                    | DE / EU                  | CH
+-------------------------|--------------------------|----------------------------
+Rahmenrecht Lebensmittel | VO (EG) 1935/2004        | LMG / LGV / FCMV
+Trinkwasser-Material     | TrinkwV + UBA-BWGL       | TBDV
+Produktsicherheit        | VO (EU) 2023/988 (GPSR)  | PrSG / PrSV
+Wettbewerbsrecht         | UWG (DE)                 | UWG (SR 241)
+Heilmittel-Werbung       | HWG                      | HMG
+Trinkwasser-Zertifizierer| DVGW CERT, Kiwa          | SVGW, Eurofins CH, SGS CH
+Akkreditierungs-Stelle   | DAkkS                    | SAS
+Material-Bewertungen     | UBA-BWGL Kunststoffe,    | weitgehend EU-äquivalent
+                         | Elastomer-Leitlinie, etc.| via FCMV
+Markt-Überwachung        | Bundesländer +           | Kantone (operativ) +
+                         | BVL (zentral)            | BLV (Aufsicht)
+Safety-Gate-Status       | Volles Mitglied          | Bilateraler Datenaustausch
+Sprachen-Pflicht         | Landessprache            | DE / FR / IT
+CE-Pflicht Wasserfilter  | Nein (passive Filter)    | Nein (analog)
+Sorgfaltspflicht         | Art. 11 GPSR             | Art. 26 LMG + Art. 8 PrSG
+
+
+================================================================================
+TEIL G — CH-SPEZIFISCHE PRÜFCHECKLISTE FÜR DAS COMPLIANCE-TOOL
+================================================================================
+
+Ergänzend zur EU-Checkliste (siehe compliance_DE_EU.txt Teil I) für CH-Import:
+
+[ ] 1. SVGW-Zertifizierung
+    - Vorhanden? Zertifikat-Nummer? Datum?
+    - Erforderlich oder freiwillig (je nach Anschluss-Art)?
+
+[ ] 2. CH-Importeur-Kennzeichnung
+    - NaturalAqua-Adresse auf Produkt oder Verpackung
+    - UID-Nummer NaturalAqua
+
+[ ] 3. CH-Bedienungsanleitung
+    - In Deutsch
+    - In Französisch (wenn Vertrieb in Westschweiz)
+    - In Italienisch (wenn Vertrieb in Tessin)
+
+[ ] 4. CH-Konformität FCMV
+    - Konformitätserklärung nach SR 817.023.21
+    - Anhang 2 (Kunststoffe) und Anhang 6 (andere) berücksichtigt
+
+[ ] 5. Trinkwasser-Kompatibilität nach TBDV
+    - Materialien mit TBDV vereinbar
+    - Keine Beeinträchtigung der mikrobiologischen oder chemischen Qualität
+
+[ ] 6. Werbeaussagen-Compliance UWG CH
+    - Keine herabsetzenden Aussagen über CH-Leitungswasser
+    - Keine HMG-relevanten Krankheitsversprechen
+    - Belegfähigkeit nach Art. 3 lit. b UWG
+
+[ ] 7. CH-Risikobewertung (Art. 8 PrSG)
+    - Gefahr-Identifikation und Mitigation dokumentiert
+    - Meldepflicht-Bewusstsein
+
+[ ] 8. Selbstkontroll-Konzept nach Art. 28 LMG
+    - Schriftlich dokumentiert
+    - Regelmäßige Überprüfung
+    - Akte mindestens 10 Jahre
+
+[ ] 9. Vertrieb-Pflichten
+    - Beanstandungs-Mechanismen
+    - Rückruf-Verfahren bei Bedarf
+    - Aufbewahrung Lieferketten-Dokumentation
+
+[ ] 10. CH-Beweissicherung
+    - Wayback-Snapshots eigene Webseite mit Datum
+    - Lieferanten-Korrespondenz archiviert
+    - Korrespondenz mit Hersteller bei Compliance-Anfragen
+
+
+================================================================================
+TEIL H — KONKRETE EMPFEHLUNGEN FÜR DAS COMPLIANCE-TOOL
+================================================================================
+
+H.1 WAS DAS TOOL VOM HERSTELLER (RIVA) EINFORDERN SOLLTE
+--------------------------------------------------------
+
+Pflicht (für CH-Vertrieb):
+1. Konformitätserklärung nach VO (EG) 1935/2004 (EU-Konform reicht in der Regel)
+2. KTW-W270-Bescheinigungen für alle wasserberührten Kunststoffteile
+3. UBA-Bewertungsgrundlage-Konformitätsnachweise
+4. Bedienungsanleitung in DE (für CH zusätzlich FR / IT)
+5. Risikobewertung nach Art. 6 GPSR (intern beim Hersteller dokumentiert)
+6. Hersteller-Identifikation auf Produkt oder Verpackung
+7. Akkreditierte Prüfberichte für alle quantitativ beworbenen Filterleistungen
+
+Empfohlen / optional:
+8. DVGW-Zertifizierung
+9. SVGW-Zertifizierung (für CH-Markt)
+10. ISO 9001 / ISO 22000 des Herstellungsstandorts
+11. NSF-Zertifizierung mit konkretem Standard
+12. Wertschöpfungs-Erklärung "Made in Germany" (bei dieser Auslobung)
+
+H.2 RISIKO-FLAGS DIE DAS TOOL ERKENNEN SOLLTE
+---------------------------------------------
+
+Wenn folgende Aussagen oder Sachverhalte vorliegen, soll das Tool warnen:
+
+- "99,99 %" oder höher bei Viren, wenn Filterfeinheit > 0,02 µm
+- "99,99 %" oder höher bei Bakterien ohne akkreditierten Pruefbericht
+- "Zertifiziert" ohne Benennung der Zertifizierungs-Stelle
+- "Laborzertifikat" ohne Akkreditierungs-Zeichen
+- "Wissenschaftlich geprüft" ohne konkrete Studien-Referenz
+- "Wasservitalisierung" / "Energetisierung" / "Cluster"
+- "Filtert Hormone / Medikamente" ohne konkrete Stoffliste
+- "Filtert PFAS" ohne PFAS-Stoffliste (mindestens 12 Verbindungen)
+- "Filtert Mikroplastik" ohne Partikelgrößen-Bereich und Pruefmethode
+- "Beugt Krankheit X vor" / "Vermeidet Risiko X"
+- "Mehr Sicherheit für Babynahrung / Kinder"
+- "Made in Germany" bei OEM-Material aus Drittländern
+- "Aus jeder Quelle trinken" / "Outdoor in fragwürdigen Gegenden"
+- "Abkochen nicht nötig"
+- "Gesünderes Wasser"
+- "NSF/ANSI 42" als Beleg für Mikrobiologie-Wirkung (ist nur ästhetisch)
+
+H.3 BELEGE-KLASSIFIZIERUNG (das Tool sollte unterscheiden)
+----------------------------------------------------------
+
+Klasse 1 — Höchste Belegqualität:
+- Akkreditierter Pruefbericht am Endprodukt (DIN EN ISO/IEC 17025)
+- DVGW- / SVGW- / NSF-Zertifikat am Endprodukt
+- Zertifikat einer benannten Konformitätsbewertungsstelle
+
+Klasse 2 — Akzeptable Belegqualität:
+- Akkreditierter Pruefbericht am Endprodukt für vergleichbare Konfiguration
+- Konformitätserklärung Vorlieferant nach 1935/2004 mit klarem Bezug zum Material
+- KTW-W270-Bescheinigung mit klarer Identifikation des Materials
+
+Klasse 3 — Begrenzt aussagekräftig:
+- Hersteller-Eigentest (auch wenn methodisch sauber)
+- Vorlieferanten-Datenblatt zu allgemeinen Material-Eigenschaften
+- Pruefbericht zu deutlich anderer Konfiguration (anderes Modell, andere
+  Filterfeinheit, andere Durchflussrate)
+
+Klasse 4 — Nicht akzeptabel als Beleg:
+- Brief eines Labors an einen Dritten (nicht den Hersteller)
+- Allgemeine Material-Aussagen ohne Pruefbezug
+- Werbeflyer / Marketing-Material des Vorlieferanten
+- Pruefberichte zu fundamental anderen Produkten
+- Selbstwidersprüchliche oder anonymisierte Berichte
+
+
+================================================================================
+TEIL I — WORKFLOW-EMPFEHLUNG FÜR DAS COMPLIANCE-TOOL
+================================================================================
+
+Pro Produkt sollte das Tool folgende Workflow-Schritte ermöglichen:
+
+1. PRODUKTANLAGE
+   - Stammdaten (Name, Artikelnummer, Kategorie)
+   - Technische Daten (Filterfeinheit, Durchfluss, Material)
+   - Bilder Produkt und Verpackung
+   - Werbeaussagen-Inventar (alle auf der eigenen Webseite verwendeten Aussagen)
+
+2. BELEG-EINHOLUNG
+   - Versendete Anfragen an Hersteller (Datum, Frist)
+   - Erhaltene Dokumente (mit Datum, Klassifizierung 1-4)
+   - Offene Lücken (was fehlt noch?)
+
+3. BEWERTUNG PRO AUSSAGE
+   - Aussage auf eigener Webseite
+   - Zugeordneter Beleg (welcher Klasse?)
+   - Bewertung: belegbar / unzureichend / nicht belegbar
+   - Maßnahme: belassen / anpassen / streichen
+
+4. RISIKO-MATRIX PRO PRODUKT
+   - Lebensmittelrechtliches Risiko (FCMV / 1935/2004)
+   - Trinkwasserrechtliches Risiko (TBDV / TrinkwV)
+   - Produktsicherheitsrechtliches Risiko (PrSG / GPSR)
+   - Wettbewerbsrechtliches Risiko (UWG)
+   - Heilmittelrechtliches Risiko (HMG / HWG)
+   - Reputationsrisiko
+
+5. MASSNAHMEN-TRACKING
+   - Welche Massnahmen sind erforderlich?
+   - Wer ist verantwortlich?
+   - Bis wann zu erledigen?
+   - Status: offen / in Bearbeitung / abgeschlossen
+   - Belege der Erledigung (Screenshots Webseite, etc.)
+
+6. AKTENABLAGE
+   - Versionierung
+   - Vollständige Dokumentation für 10-Jahres-Aufbewahrung
+   - Export-Funktion für Behördenanfragen
+
+7. WIEDERVORLAGE
+   - Jährliche Wiederholungsprüfung
+   - Bei Hersteller-Änderungen
+   - Bei Material-Änderungen
+   - Bei Beanstandungs-Eingang
+
+
+================================================================================
+TEIL J — REFERENZ-DOKUMENTE UND QUELLEN
+================================================================================
+
+Schweizerische Rechtstexte:
+- LMG: https://www.fedlex.admin.ch/eli/cc/2017/62/de
+- LGV: https://www.fedlex.admin.ch/eli/cc/2017/63/de
+- FCMV: https://www.fedlex.admin.ch/eli/cc/2017/183/de
+- TBDV: https://www.fedlex.admin.ch/eli/cc/2017/184/de
+- PrSG: https://www.fedlex.admin.ch/eli/cc/2010/270/de
+- THG: https://www.fedlex.admin.ch/eli/cc/1996/1498_1498_1498/de
+- UWG: https://www.fedlex.admin.ch/eli/cc/1988/223_223_223/de
+- HMG: https://www.fedlex.admin.ch/eli/cc/2001/422/de
+
+EU-Rechtstexte:
+- VO (EG) 1935/2004: https://eur-lex.europa.eu/eli/reg/2004/1935/oj
+- VO (EU) 10/2011: https://eur-lex.europa.eu/eli/reg/2011/10/oj
+- VO (EU) 2020/2184 (Trinkwasser): https://eur-lex.europa.eu/eli/dir/2020/2184/oj
+- VO (EU) 2023/988 (GPSR): https://eur-lex.europa.eu/eli/reg/2023/988/oj
+- VO (EU) 2019/1020 (Marktüberwachung): https://eur-lex.europa.eu/eli/reg/2019/1020/oj
+
+Behörden:
+- BLV: https://www.blv.admin.ch
+- BAG: https://www.bag.admin.ch
+- SECO: https://www.seco.admin.ch
+- Swissmedic: https://www.swissmedic.ch
+- SVGW: https://www.svgw.ch
+- SAS: https://www.sas.admin.ch
+
+Zertifizierungs-Stellen:
+- DVGW CERT: https://www.dvgw-cert.com
+- Kiwa: https://www.kiwa.com
+- TÜV SÜD CH: https://www.tuvsud.com/de-ch
+- Eurofins: https://www.eurofins.ch
+
+EU-Datenbanken:
+- Safety Gate: https://ec.europa.eu/safety-gate-alerts
+- EUR-Lex: https://eur-lex.europa.eu
+
+
+================================================================================
+ENDE COMPLIANCE-WISSENSBASIS CH
+================================================================================
