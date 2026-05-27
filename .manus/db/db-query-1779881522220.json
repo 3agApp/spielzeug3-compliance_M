@@ -1,0 +1,26 @@
+{
+  "query": "SELECT COUNT(*) as total, brand FROM products WHERE supplierId = 90001 GROUP BY brand ORDER BY total DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user J1L9FvUd1r4oKv8.75a96d268c41 --database kgkV5LdecSJ3HqPv7WFR7a --execute SELECT COUNT(*) as total, brand FROM products WHERE supplierId = 90001 GROUP BY brand ORDER BY total DESC LIMIT 10;",
+  "rows": [
+    {
+      "total": "32",
+      "brand": "rivaALVA"
+    },
+    {
+      "total": "31",
+      "brand": "RIVA Filter"
+    },
+    {
+      "total": "6",
+      "brand": "Viva"
+    },
+    {
+      "total": "6",
+      "brand": "Jova EM"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\tbrand\n32\trivaALVA\n31\tRIVA Filter\n6\tViva\n6\tJova EM\n",
+  "stderr": "",
+  "execution_time_ms": 662
+}

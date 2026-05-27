@@ -1038,3 +1038,20 @@
 - [x] Seed: Version 7.4 (Swiss-Edition) für tigerbox TOUCH PLUS (gelb, id=120008) angelegt, 23 Dokumente + 1 Analyse zugeordnet
 - [x] Tests: versions.test.ts (10 Tests: Schema-Validierung, Zuweisung, Lösch-Guard, isActive)
 - [x] 388 Tests total, 0 TS-Fehler
+
+## RIVA Filter – Supplier Website Compliance Check + Produkt-Analyse
+- [x] DB: supplier_website_checks, supplier_website_check_items Tabellen
+- [x] DB: supplier_documents Tabelle (PDF-Upload für Lieferanten)
+- [x] DB: product_compliance_checks, product_compliance_items Tabellen
+- [x] Backend: supplierWebsiteCheckRouter (KI-Analyse der Lieferanten-Website)
+- [x] Backend: supplierDocumentsRouter (Upload, List, Delete, Update)
+- [x] Backend: productComplianceCheckRouter (Einzel- und Batch-Analyse)
+- [x] Frontend: SupplierWebsiteCheckTab.tsx (Website-Compliance-Tab)
+- [x] Frontend: SupplierDocumentsTab.tsx (Dokument-Upload-Tab)
+- [x] Frontend: ProductComplianceTab.tsx (Produkt-Compliance-Tab)
+- [x] SupplierDetail.tsx: 3 neue Tabs eingebunden
+- [x] RIVA Filter GmbH als Lieferant angelegt (ID: 90001, Website: riva-filter.de)
+- [x] 75 RIVA-Produkte aus Webshop importiert (rivaALVA, RIVA Filter, Viva, Jova EM)
+- [x] 5 PDFs als Lieferanten-Dokumente hochgeladen (Aktennotizen, Prüfberichte)
+- [x] Batch-Produkt-Compliance-Analyse gestartet (75 Produkte, EU/DE/CH Trinkwasser-Regulierungen)
+- [x] i18n: Neue Keys für supplierDocs und productCompliance in DE und EN

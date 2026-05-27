@@ -1,0 +1,60 @@
+CREATE TABLE `product_compliance_checks` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`productId` int NOT NULL,
+	`supplierId` int NOT NULL,
+	`status` enum('pending','running','completed','failed') NOT NULL DEFAULT 'pending',
+	`overallScore` int,
+	`euScore` int,
+	`deScore` int,
+	`chScore` int,
+	`riskLevel` enum('critical','high','medium','low'),
+	`analysisResult` json,
+	`criticalIssues` json,
+	`requiredDocuments` json,
+	`errorMessage` text,
+	`triggeredByUserId` int,
+	`tenantId` int NOT NULL DEFAULT 1,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `product_compliance_checks_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `product_compliance_items` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`checkId` int NOT NULL,
+	`productId` int NOT NULL,
+	`regulationCode` varchar(64) NOT NULL,
+	`regulationName` varchar(512) NOT NULL,
+	`jurisdiction` enum('eu','de','ch','international') NOT NULL DEFAULT 'eu',
+	`status` enum('fulfilled','partially_fulfilled','not_fulfilled','not_applicable','unclear') NOT NULL DEFAULT 'unclear',
+	`criticality` enum('critical','high','medium','low','info') NOT NULL DEFAULT 'medium',
+	`finding` text,
+	`evidence` text,
+	`recommendation` text,
+	`legalRisk` text,
+	`chRisk` text,
+	`documentRequired` varchar(512),
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	CONSTRAINT `product_compliance_items_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `supplier_documents` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`supplierId` int NOT NULL,
+	`productId` int,
+	`fileName` varchar(512) NOT NULL,
+	`fileKey` varchar(1024) NOT NULL,
+	`fileUrl` text NOT NULL,
+	`mimeType` varchar(128),
+	`fileSizeBytes` int,
+	`documentType` enum('test_report','certificate','declaration','safety_datasheet','technical_doc','compliance_note','audit_report','product_datasheet','other') NOT NULL DEFAULT 'other',
+	`title` varchar(512),
+	`description` text,
+	`regulationRef` varchar(256),
+	`isConfidential` boolean NOT NULL DEFAULT false,
+	`uploadedByUserId` int,
+	`tenantId` int NOT NULL DEFAULT 1,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `supplier_documents_id` PRIMARY KEY(`id`)
+);

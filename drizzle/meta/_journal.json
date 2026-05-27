@@ -183,6 +183,13 @@
       "when": 1779879107085,
       "tag": "0025_spooky_shadowcat",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "5",
+      "when": 1779880862045,
+      "tag": "0026_amused_mantis",
+      "breakpoints": true
     }
   ]
 }

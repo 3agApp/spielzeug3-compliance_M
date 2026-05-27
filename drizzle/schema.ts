@@ -1096,3 +1096,80 @@ export interface SupplierComplianceItem {
   legalRisk: string;
   chRisk: string;
 }
+
+// ─── Supplier Documents ───────────────────────────────────────────────────────
+export const supplierDocuments = mysqlTable("supplier_documents", {
+  id: int("id").autoincrement().primaryKey(),
+  supplierId: int("supplierId").notNull(),
+  productId: int("productId"), // optional: linked to a specific product
+  fileName: varchar("fileName", { length: 512 }).notNull(),
+  fileKey: varchar("fileKey", { length: 1024 }).notNull(), // S3 key
+  fileUrl: text("fileUrl").notNull(), // S3 public URL
+  mimeType: varchar("mimeType", { length: 128 }),
+  fileSizeBytes: int("fileSizeBytes"),
+  documentType: mysqlEnum("documentType", [
+    "test_report",         // Prüfbericht / Laborbericht
+    "certificate",         // Zertifikat (DVGW, CE, TÜV, etc.)
+    "declaration",         // Konformitätserklärung (DoC)
+    "safety_datasheet",    // Sicherheitsdatenblatt
+    "technical_doc",       // Technische Dokumentation
+    "compliance_note",     // Aktennotiz / interne Prüfung
+    "audit_report",        // Auditbericht
+    "product_datasheet",   // Produktdatenblatt
+    "other",
+  ]).default("other").notNull(),
+  title: varchar("title", { length: 512 }),
+  description: text("description"),
+  regulationRef: varchar("regulationRef", { length: 256 }), // e.g. "TrinkwV 2023, DVGW W291"
+  isConfidential: boolean("isConfidential").default(false).notNull(),
+  uploadedByUserId: int("uploadedByUserId"),
+  tenantId: int("tenantId").default(1).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type SupplierDocument = typeof supplierDocuments.$inferSelect;
+export type InsertSupplierDocument = typeof supplierDocuments.$inferInsert;
+
+// ─── Product Compliance Checks ────────────────────────────────────────────────
+// Per-product compliance analysis (more granular than supplier-level check)
+export const productComplianceChecks = mysqlTable("product_compliance_checks", {
+  id: int("id").autoincrement().primaryKey(),
+  productId: int("productId").notNull(),
+  supplierId: int("supplierId").notNull(),
+  status: mysqlEnum("status", ["pending", "running", "completed", "failed"]).default("pending").notNull(),
+  overallScore: int("overallScore"),      // 0-100
+  euScore: int("euScore"),
+  deScore: int("deScore"),
+  chScore: int("chScore"),
+  riskLevel: mysqlEnum("riskLevel", ["critical", "high", "medium", "low"]),
+  analysisResult: json("analysisResult"),  // Full JSON from LLM
+  criticalIssues: json("criticalIssues"),  // Array of critical issue strings
+  requiredDocuments: json("requiredDocuments"), // List of docs to request
+  errorMessage: text("errorMessage"),
+  triggeredByUserId: int("triggeredByUserId"),
+  tenantId: int("tenantId").default(1).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ProductComplianceCheck = typeof productComplianceChecks.$inferSelect;
+export type InsertProductComplianceCheck = typeof productComplianceChecks.$inferInsert;
+
+// ─── Product Compliance Check Items ──────────────────────────────────────────
+export const productComplianceItems = mysqlTable("product_compliance_items", {
+  id: int("id").autoincrement().primaryKey(),
+  checkId: int("checkId").notNull(),
+  productId: int("productId").notNull(),
+  regulationCode: varchar("regulationCode", { length: 64 }).notNull(),
+  regulationName: varchar("regulationName", { length: 512 }).notNull(),
+  jurisdiction: mysqlEnum("jurisdiction", ["eu", "de", "ch", "international"]).default("eu").notNull(),
+  status: mysqlEnum("status", ["fulfilled", "partially_fulfilled", "not_fulfilled", "not_applicable", "unclear"]).default("unclear").notNull(),
+  criticality: mysqlEnum("criticality", ["critical", "high", "medium", "low", "info"]).default("medium").notNull(),
+  finding: text("finding"),
+  evidence: text("evidence"),
+  recommendation: text("recommendation"),
+  legalRisk: text("legalRisk"),
+  chRisk: text("chRisk"),
+  documentRequired: varchar("documentRequired", { length: 512 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ProductComplianceItem = typeof productComplianceItems.$inferSelect;

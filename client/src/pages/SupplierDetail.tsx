@@ -26,6 +26,8 @@ import { useMemo, useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { ProductImportDialog } from "@/components/ProductImportDialog";
 import { SupplierWebsiteCheckTab } from "@/components/SupplierWebsiteCheckTab";
+import { SupplierDocumentsTab } from "@/components/SupplierDocumentsTab";
+import { ProductComplianceTab } from "@/components/ProductComplianceTab";
 
 // ─── Status badge ─────────────────────────────────────────────────────────────
 function StatusBadge({ status }: { status: string }) {
@@ -239,6 +241,8 @@ export default function SupplierDetail() {
           <TabsTrigger value="products">{t.inline.produkte} ({stats.total})</TabsTrigger>
           <TabsTrigger value="contact">{t.inline.kontakt}</TabsTrigger>
           <TabsTrigger value="website-check">{t.inline.website_compliance_check}</TabsTrigger>
+          <TabsTrigger value="documents">{(t as any).supplierDocs?.tab_title ?? "Documents"}</TabsTrigger>
+          <TabsTrigger value="product-compliance">{(t as any).productCompliance?.tab_title ?? "Product Compliance"}</TabsTrigger>
         </TabsList>
 
         {/* ── Overview tab ── */}
@@ -608,6 +612,16 @@ export default function SupplierDetail() {
             supplierId={supplier.id}
             supplierWebsite={(supplier as any).website ?? null}
           />
+        </TabsContent>
+
+        {/* ── Supplier Documents tab ── */}
+        <TabsContent value="documents" className="mt-4">
+          <SupplierDocumentsTab supplierId={supplier.id} />
+        </TabsContent>
+
+        {/* ── Product Compliance tab ── */}
+        <TabsContent value="product-compliance" className="mt-4">
+          <ProductComplianceTab supplierId={supplier.id} />
         </TabsContent>
       </Tabs>
 
