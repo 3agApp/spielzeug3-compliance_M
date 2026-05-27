@@ -4,6 +4,7 @@
  */
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
+import { REGULATION_PENALTIES, CH_ONLY_RISKS, getChResidualRisks } from "../knowledge/regulation_penalties";
 import { getDb } from "../db";
 import {
   productComplianceChecks,
@@ -496,6 +497,80 @@ export const productComplianceCheckRouter = router({
         total: productList.length,
         checkIds,
         message: `Started analysis for ${batch.length} products`,
+      };
+    }),
+
+  // Get regulation penalty database
+  getRegulationPenalties: protectedProcedure
+    .query(async () => {
+      return {
+        penalties: REGULATION_PENALTIES,
+        chOnlyRisks: CH_ONLY_RISKS,
+        chResidualRisks: getChResidualRisks(),
+      };
+    }),
+
+  // CH residual risk simulation: what CH risks remain if all DE/EU items were fulfilled?
+  getChResidualRiskSimulation: protectedProcedure
+    .input(z.object({ checkId: z.number() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const items = await db
+        .select()
+        .from(productComplianceItems)
+        .where(eq(productComplianceItems.checkId, input.checkId));
+
+      const deEuItems = items.filter(i => i.jurisdiction === "eu" || i.jurisdiction === "de");
+      const chItems = items.filter(i => i.jurisdiction === "ch");
+
+      // Enrich items with penalty info
+      const enrichItem = (item: typeof items[0]) => {
+        const penalty = REGULATION_PENALTIES.find(
+          p => p.code === item.regulationCode ||
+          item.regulationCode?.startsWith(p.code.split("-")[0])
+        );
+        return { ...item, penaltyInfo: penalty ?? null };
+      };
+
+      // CH residual risks from DE/EU regulations (what remains if DE/EU is clean)
+      const chResidualFromDeEu = REGULATION_PENALTIES
+        .filter(p => p.chResidualRisk !== null)
+        .map(p => ({
+          code: p.code,
+          name: p.name,
+          residualRisk: p.chResidualRisk,
+          reducedByDeCompliance: p.chReducedByDeCompliance,
+          maxFine: p.maxFine,
+          currentDeEuStatus: deEuItems.find(i => i.regulationCode === p.code)?.status ?? "unknown",
+        }));
+
+      // CH-only risks that always remain
+      const alwaysChRisks = CH_ONLY_RISKS.map(r => ({
+        ...r,
+        currentChStatus: chItems.find(i => i.regulationCode === r.code)?.status ?? "unknown",
+      }));
+
+      const deEuIssues = deEuItems.filter(i =>
+        i.status === "not_fulfilled" || i.status === "partially_fulfilled"
+      ).length;
+      const chIssues = chItems.filter(i =>
+        i.status === "not_fulfilled" || i.status === "partially_fulfilled"
+      ).length;
+
+      return {
+        deEuItems: deEuItems.map(enrichItem),
+        chItems: chItems.map(enrichItem),
+        chResidualFromDeEu,
+        alwaysChRisks,
+        summary: {
+          totalDeEuIssues: deEuIssues,
+          totalChIssues: chIssues,
+          chRisksIfDeClean:
+            chResidualFromDeEu.filter(r => r.residualRisk).length +
+            alwaysChRisks.filter(r => !r.reducedByDeCompliance).length,
+        },
       };
     }),
 
