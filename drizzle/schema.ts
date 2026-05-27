@@ -998,3 +998,101 @@ export const productVersions = mysqlTable("product_versions", {
 });
 export type ProductVersion = typeof productVersions.$inferSelect;
 export type InsertProductVersion = typeof productVersions.$inferInsert;
+
+// ─── Supplier Website Compliance Checks ──────────────────────────────────────
+export const supplierWebsiteChecks = mysqlTable("supplier_website_checks", {
+  id: int("id").autoincrement().primaryKey(),
+  supplierId: int("supplierId").notNull(),
+  websiteUrl: varchar("websiteUrl", { length: 512 }).notNull(),
+  status: mysqlEnum("status", [
+    "pending",    // Noch nicht gestartet
+    "running",    // KI analysiert gerade
+    "completed",  // Analyse abgeschlossen
+    "failed",     // Fehler bei der Analyse
+  ]).default("pending").notNull(),
+  // Raw scraped content (summary)
+  scrapedSummary: text("scrapedSummary"),
+  // Overall scores
+  overallScore: int("overallScore"),           // 0-100
+  euScore: int("euScore"),                     // EU-Regulierungen Score 0-100
+  deScore: int("deScore"),                     // DE-Regulierungen Score 0-100
+  chScore: int("chScore"),                     // CH-Regulierungen Score 0-100
+  // AI analysis result (structured JSON)
+  analysisResult: json("analysisResult").$type<SupplierComplianceAnalysis>(),
+  // Meta
+  triggeredByUserId: int("triggeredByUserId"),
+  errorMessage: text("errorMessage"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type SupplierWebsiteCheck = typeof supplierWebsiteChecks.$inferSelect;
+export type InsertSupplierWebsiteCheck = typeof supplierWebsiteChecks.$inferInsert;
+
+// ─── Supplier Compliance Check Items ─────────────────────────────────────────
+// Individual regulatory items found/assessed during a website check
+export const supplierCheckItems = mysqlTable("supplier_check_items", {
+  id: int("id").autoincrement().primaryKey(),
+  checkId: int("checkId").notNull(),
+  supplierId: int("supplierId").notNull(),
+  // Regulation reference
+  regulationCode: varchar("regulationCode", { length: 64 }).notNull(), // e.g. "GPSR", "CE", "REACH"
+  regulationName: varchar("regulationName", { length: 255 }).notNull(),
+  jurisdiction: mysqlEnum("jurisdiction", ["eu", "de", "ch", "international"]).notNull(),
+  // Assessment
+  status: mysqlEnum("status", [
+    "fulfilled",          // Erfüllt
+    "partially_fulfilled",// Teilweise erfüllt
+    "not_fulfilled",      // Nicht erfüllt
+    "not_applicable",     // Nicht anwendbar
+    "unclear",            // Unklar / nicht prüfbar
+  ]).notNull(),
+  criticality: mysqlEnum("criticality", [
+    "critical",   // Rechtlich kritisch – sofortiger Handlungsbedarf
+    "high",       // Hoch – baldiger Handlungsbedarf
+    "medium",     // Mittel
+    "low",        // Niedrig
+    "info",       // Informativ
+  ]).notNull(),
+  // Details
+  finding: text("finding").notNull(),           // Was wurde gefunden / bewertet
+  evidence: text("evidence"),                   // Konkrete Textstellen / URLs
+  recommendation: text("recommendation"),       // Handlungsempfehlung
+  legalRisk: text("legalRisk"),                // Rechtliches Risiko für Hersteller (DE/EU)
+  chRisk: text("chRisk"),                      // Rechtliches Risiko für uns (CH)
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type SupplierCheckItem = typeof supplierCheckItems.$inferSelect;
+export type InsertSupplierCheckItem = typeof supplierCheckItems.$inferInsert;
+
+// ─── Type for AI analysis result ─────────────────────────────────────────────
+export interface SupplierComplianceAnalysis {
+  companyName: string;
+  websiteUrl: string;
+  analysisDate: string;
+  productCategories: string[];
+  overallAssessment: string;
+  summaryDE: string;
+  summaryEN: string;
+  criticalFindings: string[];
+  positiveFindings: string[];
+  items: SupplierComplianceItem[];
+  scores: {
+    overall: number;
+    eu: number;
+    de: number;
+    ch: number;
+  };
+}
+
+export interface SupplierComplianceItem {
+  regulationCode: string;
+  regulationName: string;
+  jurisdiction: "eu" | "de" | "ch" | "international";
+  status: "fulfilled" | "partially_fulfilled" | "not_fulfilled" | "not_applicable" | "unclear";
+  criticality: "critical" | "high" | "medium" | "low" | "info";
+  finding: string;
+  evidence: string;
+  recommendation: string;
+  legalRisk: string;
+  chRisk: string;
+}

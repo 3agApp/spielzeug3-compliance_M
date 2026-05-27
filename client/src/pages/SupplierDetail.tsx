@@ -25,6 +25,7 @@ import {
 import { useMemo, useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { ProductImportDialog } from "@/components/ProductImportDialog";
+import { SupplierWebsiteCheckTab } from "@/components/SupplierWebsiteCheckTab";
 
 // ─── Status badge ─────────────────────────────────────────────────────────────
 function StatusBadge({ status }: { status: string }) {
@@ -237,6 +238,7 @@ export default function SupplierDetail() {
           <TabsTrigger value="overview">{t.inline.uebersicht}</TabsTrigger>
           <TabsTrigger value="products">{t.inline.produkte} ({stats.total})</TabsTrigger>
           <TabsTrigger value="contact">{t.inline.kontakt}</TabsTrigger>
+          <TabsTrigger value="website-check">{t.inline.website_compliance_check}</TabsTrigger>
         </TabsList>
 
         {/* ── Overview tab ── */}
@@ -598,6 +600,14 @@ export default function SupplierDetail() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* ── Website Compliance Check tab ── */}
+        <TabsContent value="website-check" className="mt-4">
+          <SupplierWebsiteCheckTab
+            supplierId={supplier.id}
+            supplierWebsite={(supplier as any).website ?? null}
+          />
         </TabsContent>
       </Tabs>
 

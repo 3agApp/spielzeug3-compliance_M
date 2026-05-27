@@ -1,0 +1,16 @@
+{
+  "query": "SELECT id, supplierCode, name, country FROM suppliers WHERE supplierCode = 'RIVA-DE-001';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user J1L9FvUd1r4oKv8.75a96d268c41 --database kgkV5LdecSJ3HqPv7WFR7a --execute SELECT id, supplierCode, name, country FROM suppliers WHERE supplierCode = 'RIVA-DE-001';",
+  "rows": [
+    {
+      "id": "90001",
+      "supplierCode": "RIVA-DE-001",
+      "name": "RIVA Filter GmbH",
+      "country": "DE"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsupplierCode\tname\tcountry\n90001\tRIVA-DE-001\tRIVA Filter GmbH\tDE\n",
+  "stderr": "",
+  "execution_time_ms": 560
+}

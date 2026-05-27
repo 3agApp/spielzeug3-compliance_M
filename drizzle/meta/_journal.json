@@ -176,6 +176,13 @@
       "when": 1776464553390,
       "tag": "0024_military_malcolm_colcord",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "5",
+      "when": 1779879107085,
+      "tag": "0025_spooky_shadowcat",
+      "breakpoints": true
     }
   ]
 }
