@@ -322,6 +322,10 @@
 - [x] 11 neue Tests für den öffentlichen Endpoint (publicApiRoutes.test.ts), alle grün
 - [x] 0 TypeScript-Fehler, 160 Tests grün
 
+## Korrektur: Dynamische Siegel-Vorschau
+- [x] Vorschau-Frame so isolieren, dass das dynamische Widget-Script und der CORS-Abruf tatsächlich ausgeführt werden
+- [x] Vorschau für Produkt 60001 mit QR-Bild, Link und Produktname technisch verifizieren (kein Fallback sichtbar)
+
 ## Siegel-Redesign: Professionelle SVG-Grafiken (konsistent HTML + PDF)
 - [x] Drei hochwertige SVG-Siegel-Grafiken erstellt (verified/in_progress/not_verified)
 - [x] SVGs als CDN-Assets hochgeladen

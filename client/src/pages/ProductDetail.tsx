@@ -1694,8 +1694,9 @@ function ProductEmbedCode({
   const codes: Record<string, string> = { dynamic: dynamicCode, widget: widgetCode, badge: badgeCode, minimal: minimalCode };
   const currentCode = codes[activeTab];
 
-  // srcdoc für die isolierte Vorschau
-  // Bei der dynamischen Variante: Script-Tag wird ausgeführt (allow-scripts), lädt echte API
+  // srcdoc für die isolierte Vorschau. Der Frame erhält nur Script-Rechte,
+  // aber keinen Same-Origin-Zugriff auf das Portal. Dadurch verhält sich die
+  // Vorschau wie eine externe Shop-Einbettung und lädt die öffentliche API über CORS.
   const previewHtml = `<!DOCTYPE html>
 <html>
 <head>
@@ -1778,17 +1779,10 @@ ${currentCode.replace(/<!--.*?-->/g, "").replace(/<\/script>/g, "</script>").tri
             <iframe
               key={currentCode}
               srcDoc={previewHtml}
-              sandbox="allow-same-origin"
+              sandbox="allow-scripts"
               title={lang === "de" ? "Widget-Vorschau" : "Widget Preview"}
               className="w-full border-0 rounded-lg"
-              style={{ minHeight: activeTab === "widget" ? 100 : 60, maxHeight: 140 }}
-              onLoad={(e) => {
-                const iframe = e.currentTarget;
-                try {
-                  const body = iframe.contentDocument?.body;
-                  if (body) iframe.style.height = Math.max(body.scrollHeight + 8, 60) + "px";
-                } catch {}
-              }}
+              style={{ minHeight: activeTab === "badge" ? 72 : 132, height: activeTab === "badge" ? 72 : 132 }}
             />
           </div>
         )}
