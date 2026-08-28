@@ -59,7 +59,12 @@ export function SealPreview({
 
   // Load active seal URLs (custom upload or CDN default)
   const { data: activeSealUrls } = trpc.sealAssets.getActive.useQuery();
+  const batchInfoQuery = trpc.products.getBatchInfo.useQuery(
+    { productId: productId ?? 0 },
+    { enabled: !!productId }
+  );
   const sealImages: Record<SealStatus, string> = activeSealUrls ?? DEFAULT_SEAL_IMAGES;
+  const swissVerificationNumber = batchInfoQuery.data?.swissVerificationNumber?.trim() ?? "";
 
   async function handleDownload() {
     setDownloading(true);
@@ -94,9 +99,10 @@ export function SealPreview({
     const qrSrc = qrCodeUrl ?? "";
     return `<!-- Swiss Product Seal Widget -->
 <div style="display:inline-block;font-family:'Helvetica Neue',Arial,sans-serif;text-align:center;width:180px;border:2px solid ${cfg.borderColor};border-radius:14px;padding:16px 14px 14px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
-  <img src="${sealImgUrl}" alt="Swiss Product Seal – ${cfg.label}" width="120" height="132" style="display:block;margin:0 auto 10px;" />
+	  <img src="${sealImgUrl}" alt="Swiss Product Seal – ${cfg.label}" width="120" height="132" style="display:block;margin:0 auto 10px;" />
 ${qrSrc ? `  <img src="${qrSrc}" alt="QR-Code" width="100" height="100" style="display:block;margin:0 auto 6px;border-radius:6px;" />` : ""}
   <p style="font-size:9px;color:#9ca3af;margin:0 0 8px;">Scan for compliance info</p>
+${swissVerificationNumber ? `  <p style="font-size:8px;color:#6b7280;margin:0 0 8px;text-align:center;">CH VERIFICATION NO.</p>\n  <p style="font-family:monospace;font-size:10px;font-weight:700;color:#111827;margin:0 0 8px;text-align:center;">${swissVerificationNumber}</p>` : ""}
   <hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 8px;" />
   <p style="font-size:8px;color:#9ca3af;font-style:italic;margin:0 0 2px;">Imported by</p>
   <p style="font-size:11px;font-weight:700;color:#111;margin:0 0 2px;">${tenantName}</p>
@@ -257,6 +263,13 @@ ${qrSrc ? `  <img src="${qrSrc}" alt="QR-Code" width="100" height="100" style="d
             <p style={{ fontSize: 9, color: "#9ca3af", margin: "0 0 10px", textAlign: "center" }}>
               Scan for compliance info
             </p>
+
+            {swissVerificationNumber && (
+              <div style={{ width: "100%", margin: "0 0 10px", textAlign: "center" }}>
+                <p style={{ fontSize: 7.5, color: "#9ca3af", margin: "0 0 2px", letterSpacing: "0.04em" }}>CH VERIFICATION NO.</p>
+                <p style={{ fontSize: 10, fontWeight: 700, color: "#111827", margin: 0, fontFamily: "monospace" }}>{swissVerificationNumber}</p>
+              </div>
+            )}
 
             {/* Divider */}
             <div style={{ width: "100%", height: 1, background: "#e5e7eb", marginBottom: 10 }} />

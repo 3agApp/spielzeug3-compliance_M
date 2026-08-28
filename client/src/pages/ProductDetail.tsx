@@ -3129,7 +3129,7 @@ function BatchTab({
   productId: number;
   canEdit: boolean;
 }) {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const batchQuery = trpc.products.getBatchInfo.useQuery({ productId });
   const updateMutation = trpc.products.updateBatchInfo.useMutation({
     onSuccess: () => {
@@ -3142,6 +3142,7 @@ function BatchTab({
 
   const [editing, setEditing] = useState(false);
   const [batchNumber, setBatchNumber] = useState("");
+  const [swissVerificationNumber, setSwissVerificationNumber] = useState("");
   const [productionDate, setProductionDate] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
   const [importerName, setImporterName] = useState("");
@@ -3152,6 +3153,7 @@ function BatchTab({
   if (batch && !initialized.current) {
     initialized.current = true;
     setBatchNumber(batch.batchNumber ?? "");
+    setSwissVerificationNumber(batch.swissVerificationNumber ?? "");
     setProductionDate(batch.productionDate ?? "");
     setExpiryDate(batch.expiryDate ?? "");
     setImporterName(batch.importerName ?? "");
@@ -3161,6 +3163,7 @@ function BatchTab({
     updateMutation.mutate({
       productId,
       batchNumber: batchNumber || undefined,
+      swissVerificationNumber: swissVerificationNumber || undefined,
       productionDate: productionDate || undefined,
       expiryDate: expiryDate || undefined,
       importerName: importerName || undefined,
@@ -3171,11 +3174,17 @@ function BatchTab({
     // Re-sync form with latest data
     if (batch) {
       setBatchNumber(batch.batchNumber ?? "");
+      setSwissVerificationNumber(batch.swissVerificationNumber ?? "");
       setProductionDate(batch.productionDate ?? "");
       setExpiryDate(batch.expiryDate ?? "");
       setImporterName(batch.importerName ?? "");
     }
     setEditing(true);
+  }
+
+  function generateSwissVerificationNumber() {
+    const year = new Date().getFullYear();
+    setSwissVerificationNumber(`SPS-CH-${productId}-${year}-001`);
   }
 
   if (batchQuery.isLoading) {
@@ -3225,6 +3234,24 @@ function BatchTab({
                 <p className="text-xs text-muted-foreground">{t.batch.batchNumberHint}</p>
               </div>
               <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <Label htmlFor="swissVerificationNumber">{lang === "de" ? "Interne CH-Verifikationsnummer" : "Internal Swiss verification number"}</Label>
+                  <button type="button" onClick={generateSwissVerificationNumber} className="text-xs text-primary hover:underline">
+                    {lang === "de" ? "Automatisch erzeugen" : "Generate automatically"}
+                  </button>
+                </div>
+                <Input
+                  id="swissVerificationNumber"
+                  placeholder="SPS-CH-60001-2026-001"
+                  value={swissVerificationNumber}
+                  onChange={(e) => setSwissVerificationNumber(e.target.value.toUpperCase())}
+                  className="font-mono"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {lang === "de" ? "Diese Nummer erscheint auf dem Siegel und wird auf der Landingpage geprüft." : "This number appears on the seal and is verified on the landing page."}
+                </p>
+              </div>
+              <div className="space-y-1.5">
                 <Label htmlFor="importerName">{t.batch.importerNameLabel}</Label>
                 <Input
                   id="importerName"
@@ -3272,6 +3299,11 @@ function BatchTab({
               label={t.batch.batchNumber}
               value={batch?.batchNumber}
               empty={t.batch.notSpecified}
+            />
+            <InfoField
+              label={lang === "de" ? "Interne CH-Verifikationsnummer" : "Internal Swiss verification number"}
+              value={batch?.swissVerificationNumber}
+              empty={lang === "de" ? "Noch nicht hinterlegt" : "Not assigned yet"}
             />
             <InfoField
               label={t.batch.importerNameLabel}

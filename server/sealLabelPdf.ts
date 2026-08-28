@@ -18,6 +18,8 @@ export interface SealLabelOptions {
   tenantLogoUrl?: string | null;
   /** Optional: tenant primary color to override the verified-status border/accent color */
   tenantPrimaryColor?: string | null;
+  /** Optional: internal Swiss verification number printed on product-specific labels */
+  swissVerificationNumber?: string | null;
 }
 
 // ─── Color config ─────────────────────────────────────────────────────────────
@@ -124,7 +126,7 @@ function drawQrPlaceholder(doc: PDFKit.PDFDocument, x: number, y: number, size: 
  * ensuring pixel-identical appearance across HTML, PDF, and embed widgets.
  */
 export async function generateSealLabelPdf(opts: SealLabelOptions): Promise<Buffer> {
-  const { status, tenantName, tenantUrl, qrCodeBuffer, tenantId = 1, tenantLogoUrl, tenantPrimaryColor } = opts;
+  const { status, tenantName, tenantUrl, qrCodeBuffer, tenantId = 1, tenantLogoUrl, tenantPrimaryColor, swissVerificationNumber } = opts;
   // Apply tenant primary color to verified status only; keep semantic colors for others
   const baseCfg = STATUS_COLORS[status];
   const cfg = (status === "verified" && tenantPrimaryColor && /^#[0-9A-Fa-f]{6}$/.test(tenantPrimaryColor))
@@ -240,8 +242,21 @@ export async function generateSealLabelPdf(opts: SealLabelOptions): Promise<Buff
     doc.text("Scan for compliance info", 0, qrY + qrSize + 7, { width: W, align: "center" });
     doc.restore();
 
+    // ── INTERNAL SWISS VERIFICATION NUMBER ─────────────────────────────────────
+    const verificationY = qrY + qrSize + 19;
+    if (swissVerificationNumber) {
+      doc.save();
+      setFill(doc, "#9ca3af");
+      doc.fontSize(6.5).font("Helvetica");
+      doc.text("CH VERIFICATION NO.", 0, verificationY, { width: W, align: "center" });
+      setFill(doc, "#111111");
+      doc.fontSize(8).font("Courier-Bold");
+      doc.text(swissVerificationNumber, 0, verificationY + 8, { width: W, align: "center" });
+      doc.restore();
+    }
+
     // ── DIVIDER ───────────────────────────────────────────────────────────────
-    const divY = qrY + qrSize + 22;
+    const divY = qrY + qrSize + (swissVerificationNumber ? 38 : 22);
     doc.save();
     doc.moveTo(margin + 16, divY).lineTo(W - margin - 16, divY);
     setStroke(doc, "#e5e7eb");

@@ -166,6 +166,20 @@ export const tenantRouter = router({
       }
     }),
 
+  // ── Public Swiss batch verification (no auth required) ────────────────────
+  verifySwissBatch: publicProcedure
+    .input(z.object({
+      uuid: z.string().uuid(),
+      verificationNumber: z.string().trim().min(3).max(128),
+    }))
+    .query(async ({ input }) => {
+      try {
+        return await tenantService.verifySwissBatch(input.uuid, input.verificationNumber);
+      } catch (err) {
+        throw toTRPCError(err);
+      }
+    }),
+
   // ── Toggle public visibility ──────────────────────────────────────────────
   setPublicVisible: protectedProcedure
     .input(z.object({ productId: z.number(), visible: z.boolean() }))

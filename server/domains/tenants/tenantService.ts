@@ -21,6 +21,7 @@ import { getDb } from "../../db";
 import { products, productSafetyEntries, documents, productImages } from "../../../drizzle/schema";
 import { eq, asc } from "drizzle-orm";
 import { getSealStatus, getPublicProductUrl } from "../../sealUtils";
+import { verifySwissBatchNumber } from "./swissBatchVerification";
 import { TRPCError } from "@trpc/server";
 import { Errors, requireRole } from "../../shared";
 import type { UserContext } from "../../shared/tenantGuard";
@@ -340,6 +341,46 @@ export const tenantService = {
             websiteUrl: (tenant as any).websiteUrl ?? null,
           }
         : null,
+    };
+  },
+
+  /** Validate an internal Swiss batch number without exposing the stored value. */
+  async verifySwissBatch(uuid: string, verificationNumber: string) {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+
+    const result = await db
+      .select({
+        productName: products.productName,
+        publicVisible: products.publicVisible,
+        status: products.status,
+        completenessScore: products.completenessScore,
+        sealStatusOverride: products.sealStatusOverride,
+        batchInfo: products.batchInfo,
+        importerName: products.importerName,
+        tenantId: products.tenantId,
+      })
+      .from(products)
+      .where(eq(products.publicUuid, uuid))
+      .limit(1);
+
+    const product = result[0];
+    if (!product || !product.publicVisible) throw Errors.notFound("Product", uuid);
+
+    const batchInfo = (product.batchInfo ?? {}) as { swissVerificationNumber?: string | null };
+    const sealStatus = getSealStatus(product);
+    const tenant = await getTenantById(product.tenantId);
+    const status = verifySwissBatchNumber({
+      storedVerificationNumber: batchInfo.swissVerificationNumber,
+      submittedVerificationNumber: verificationNumber,
+      sealStatus,
+    });
+
+    return {
+      status,
+      isSwissMarketCovered: status === "verified",
+      productName: product.productName,
+      importerName: product.importerName ?? tenant?.name ?? "spielzeug3 AG",
     };
   },
 

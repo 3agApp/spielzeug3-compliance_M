@@ -365,6 +365,13 @@
 - [x] tenantDb.ts: updateTenant um websiteUrl-Feld erweitert
 - [x] 172 Tests grün, 0 TypeScript-Fehler
 
+## Chargenbasierte Schweizer Markt-Verifikation im Siegel
+- [x] Aktuelles Siegel und vorhandene Chargen-/Batch-Daten auf Integrationspunkte prüfen
+- [x] Interne Chargennummer pro Produkt verwaltbar und validierbar machen
+- [x] Öffentliche Landingpage um eine kundenseitige Chargenprüfung ergänzen
+- [x] Verifikation zeigt eindeutig, ob das Produkt für den Schweizer Markt durch spielzeug3 AG abgedeckt ist
+- [x] Chargenprüfung und Siegeldarstellung automatisiert testen (13 relevante Tests und TypeScript fehlerfrei)
+
 ## Portal-Tab: Website-URL des Mandanten editierbar
 - [x] Backend: neue updateMyTenant-Prozedur (admin/compliance_manager) mit websiteUrl, name, contactEmail
 - [x] tenantService.updateMyTenant: Mandanten-eigene Einstellungen ohne super_admin-Rechte änderbar

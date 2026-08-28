@@ -194,10 +194,12 @@ export function registerPdfRoutes(app: Express) {
       // Optionally load real QR code from S3
       let qrCodeBuffer: Buffer | undefined;
       let productName: string | undefined;
+      let swissVerificationNumber: string | undefined;
       if (productIdParam && !isNaN(productIdParam)) {
         const product = await getProductById(productIdParam);
         if (product) {
           productName = (product as any).productName ?? undefined;
+          swissVerificationNumber = ((product as any).batchInfo?.swissVerificationNumber ?? undefined) as string | undefined;
           const qrUrl: string | null = (product as any).qrCodeUrl ?? null;
           if (qrUrl) {
             try {
@@ -220,6 +222,7 @@ export function registerPdfRoutes(app: Express) {
         tenantUrl,
         tenantLogoUrl,
         tenantPrimaryColor,
+        swissVerificationNumber,
         qrCodeBuffer,
         tenantId: isNaN(tenantId) ? 1 : tenantId,
       });

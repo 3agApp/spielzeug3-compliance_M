@@ -102,11 +102,13 @@ export const productsRouter = router({
       }
       const batch = (product.batchInfo ?? {}) as {
         batchNumber?: string | null;
+        swissVerificationNumber?: string | null;
         productionDate?: string | null;
         expiryDate?: string | null;
       };
       return {
         batchNumber: batch.batchNumber ?? "",
+        swissVerificationNumber: batch.swissVerificationNumber ?? "",
         productionDate: batch.productionDate ?? "",
         expiryDate: batch.expiryDate ?? "",
         importerName: product.importerName ?? "",
@@ -320,6 +322,7 @@ export const productsRouter = router({
       z.object({
         productId: z.number(),
         batchNumber: z.string().max(128).optional(),
+        swissVerificationNumber: z.string().trim().max(128).optional(),
         productionDate: z.string().optional(),
         expiryDate: z.string().optional(),
         importerName: z.string().max(255).optional(),
@@ -337,6 +340,9 @@ export const productsRouter = router({
       const batchInfo = {
         ...existingBatch,
         batchNumber: input.batchNumber !== undefined ? input.batchNumber : (existingBatch.batchNumber ?? null),
+        swissVerificationNumber: input.swissVerificationNumber !== undefined
+          ? input.swissVerificationNumber.toUpperCase().replace(/\s+/g, "")
+          : (existingBatch.swissVerificationNumber ?? null),
         productionDate: input.productionDate !== undefined ? input.productionDate : (existingBatch.productionDate ?? null),
         expiryDate: input.expiryDate !== undefined ? input.expiryDate : (existingBatch.expiryDate ?? null),
       };

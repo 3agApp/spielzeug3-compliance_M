@@ -81,6 +81,18 @@ describe("generateSealLabelPdf", () => {
     expect(buf.slice(0, 4).toString("ascii")).toBe("%PDF");
   });
 
+  it("generates a valid PDF when an internal Swiss verification number is printed", async () => {
+    const buf = await generateSealLabelPdf({
+      status: "verified",
+      tenantName: "Spielzeug 3 AG",
+      tenantUrl: "spielzeug3.ch",
+      swissVerificationNumber: "SPS-CH-60001-2026-001",
+    });
+
+    expect(buf.slice(0, 4).toString("ascii")).toBe("%PDF");
+    expect(buf.length).toBeGreaterThan(1000);
+  });
+
   it("PDF with qrCodeBuffer is larger than PDF without (real QR code adds content)", async () => {
     // Generate a real QR code PNG to use as qrCodeBuffer
     const QRCode = await import("qrcode");

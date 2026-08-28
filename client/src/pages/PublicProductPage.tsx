@@ -15,6 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { SwissBatchVerificationCard } from "@/components/SwissBatchVerificationCard";
 
 // ─── i18n ────────────────────────────────────────────────────────────────────
 type Lang = "de" | "en";
@@ -864,6 +865,9 @@ export default function PublicProductPage() {
               </div>
             </div>
           )}
+
+          {/* ── Customer Swiss batch verification ───────────────────────────── */}
+          <SwissBatchVerificationCard uuid={uuid} lang={lang} />
 
           {/* ── Importer ─────────────────────────────────────────────────── */}
           <div className="rounded-2xl overflow-hidden bg-white shadow-sm border border-gray-100/80">
