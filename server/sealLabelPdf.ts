@@ -61,6 +61,30 @@ function setStroke(doc: PDFKit.PDFDocument, hex: string) {
   doc.strokeColor(hexToRgb(hex));
 }
 
+function escapeSvgText(value: string): string {
+  return value.replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;",
+  }[char] ?? char));
+}
+
+async function loadSealGraphicPng(status: SealLabelStatus, tenantId: number): Promise<Buffer> {
+  try {
+    const activeUrl = await getActiveSealUrl(tenantId, status);
+    const response = await fetch(activeUrl);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return sharp(Buffer.from(await response.arrayBuffer()))
+      .resize(800, 880, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 0 } })
+      .png()
+      .toBuffer();
+  } catch {
+    const svgPath = SVG_PATHS[status];
+    return sharp(fs.readFileSync(svgPath))
+      .resize(800, 880, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 0 } })
+      .png()
+      .toBuffer();
+  }
+}
+
 // ─── QR placeholder ───────────────────────────────────────────────────────────
 
 /** Draw a clean QR-code placeholder pattern (no logo overlay) */
@@ -295,4 +319,72 @@ export async function generateSealLabelPdf(opts: SealLabelOptions): Promise<Buff
 
     doc.end();
   });
+}
+
+/**
+ * Create a print-ready PNG label at 300 dpi (1240 × 1748 px, A6 ratio).
+ * It deliberately uses only the shipped Sharp dependency, so it works in
+ * deployed environments without relying on Poppler or other OS binaries.
+ */
+export async function generateSealLabelPng(opts: SealLabelOptions): Promise<Buffer> {
+  const {
+    status, tenantName, tenantUrl, qrCodeBuffer, tenantId = 1,
+    tenantLogoUrl, tenantPrimaryColor, swissVerificationNumber,
+  } = opts;
+  const baseCfg = STATUS_COLORS[status];
+  const cfg = (status === "verified" && tenantPrimaryColor && /^#[0-9A-Fa-f]{6}$/.test(tenantPrimaryColor))
+    ? { border: tenantPrimaryColor, urlColor: tenantPrimaryColor }
+    : baseCfg;
+  const width = 1240;
+  const height = 1748;
+  const sealPng = await loadSealGraphicPng(status, tenantId);
+
+  let tenantLogo: Buffer | null = null;
+  if (tenantLogoUrl) {
+    try {
+      const response = await fetch(tenantLogoUrl);
+      if (response.ok) {
+        tenantLogo = await sharp(Buffer.from(await response.arrayBuffer()))
+          .resize(360, 96, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 0 } })
+          .png()
+          .toBuffer();
+      }
+    } catch {
+      tenantLogo = null;
+    }
+  }
+
+  let qrPng: Buffer | null = null;
+  if (qrCodeBuffer) {
+    qrPng = await sharp(qrCodeBuffer).resize(470, 470, { fit: "contain" }).png().toBuffer();
+  }
+
+  const verificationBlock = swissVerificationNumber
+    ? `<text x="620" y="1278" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#9ca3af" letter-spacing="1.5">CH VERIFICATION NO.</text>
+       <text x="620" y="1322" text-anchor="middle" font-family="monospace" font-size="32" font-weight="700" fill="#111827">${escapeSvgText(swissVerificationNumber)}</text>`
+    : "";
+  const dividerY = swissVerificationNumber ? 1360 : 1270;
+  const importedY = dividerY + 48;
+  const tenantText = tenantLogo ? "" : `<text x="620" y="${importedY + 65}" text-anchor="middle" font-family="Arial, sans-serif" font-size="36" font-weight="700" fill="#111827">${escapeSvgText(tenantName)}</text>`;
+  const urlY = tenantLogo ? importedY + 150 : importedY + 118;
+  const textOverlay = Buffer.from(`<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+    <rect x="60" y="60" width="1120" height="1628" rx="42" fill="#ffffff" stroke="${cfg.border}" stroke-width="10"/>
+    <text x="620" y="1218" text-anchor="middle" font-family="Arial, sans-serif" font-size="27" fill="#9ca3af">Scan for compliance info</text>
+    ${verificationBlock}
+    <line x1="145" x2="1095" y1="${dividerY}" y2="${dividerY}" stroke="#e5e7eb" stroke-width="3"/>
+    <text x="620" y="${importedY}" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-style="italic" fill="#9ca3af">Imported by</text>
+    ${tenantText}
+    <text x="620" y="${urlY}" text-anchor="middle" font-family="Arial, sans-serif" font-size="27" font-weight="700" fill="${cfg.urlColor}">${escapeSvgText(tenantUrl)}</text>
+  </svg>`);
+
+  const composites: sharp.OverlayOptions[] = [
+    { input: textOverlay, top: 0, left: 0 },
+    { input: sealPng, top: 100, left: 220 },
+  ];
+  if (qrPng) composites.push({ input: qrPng, top: 680, left: 385 });
+  if (tenantLogo) composites.push({ input: tenantLogo, top: importedY + 22, left: 440 });
+
+  return sharp({
+    create: { width, height, channels: 4, background: "#ffffff" },
+  }).composite(composites).png({ compressionLevel: 8 }).toBuffer();
 }

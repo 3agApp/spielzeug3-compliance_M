@@ -2,7 +2,8 @@
  * Tests for the Seal Label PDF generator (sealLabelPdf.ts)
  */
 import { describe, it, expect } from "vitest";
-import { generateSealLabelPdf } from "./sealLabelPdf";
+import sharp from "sharp";
+import { generateSealLabelPng, generateSealLabelPdf } from "./sealLabelPdf";
 import type { SealLabelOptions } from "./sealLabelPdf";
 
 describe("generateSealLabelPdf", () => {
@@ -92,6 +93,20 @@ describe("generateSealLabelPdf", () => {
     expect(buf.slice(0, 4).toString("ascii")).toBe("%PDF");
     expect(buf.length).toBeGreaterThan(1000);
   });
+
+  it("generates a high-resolution PNG with the internal Swiss verification number", async () => {
+    const png = await generateSealLabelPng({
+      status: "verified",
+      tenantName: "Spielzeug 3 AG",
+      tenantUrl: "swiss-product-seal.ch",
+      swissVerificationNumber: "SPS-CH-60001-2026-001",
+    });
+    const metadata = await sharp(png).metadata();
+
+    expect(png.subarray(1, 4).toString("ascii")).toBe("PNG");
+    expect(metadata.width).toBe(1240);
+    expect(metadata.height).toBe(1748);
+  }, 15_000);
 
   it("PDF with qrCodeBuffer is larger than PDF without (real QR code adds content)", async () => {
     // Generate a real QR code PNG to use as qrCodeBuffer

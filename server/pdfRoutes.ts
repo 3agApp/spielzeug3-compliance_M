@@ -48,7 +48,7 @@ import {
   getDb,
 } from "./db";
 import { generateAiAnalysisPdf } from "./pdfGenerator";
-import { generateSealLabelPdf, type SealLabelStatus } from "./sealLabelPdf";
+import { generateSealLabelPng, generateSealLabelPdf, type SealLabelStatus } from "./sealLabelPdf";
 import { generateRiskReportPdf } from "./riskReportPdf";
 import { getTenantById } from "./tenantDb";
 import { productRiskAssessments } from "../drizzle/schema";
@@ -161,7 +161,8 @@ export function registerPdfRoutes(app: Express) {
    * Query params:
    *   status=verified|in_progress|not_verified  (default: verified)
    *   tenantId=1                                 (default: 1)
-   *   productId=N                                (optional – embeds the real QR code from S3)
+   *   productId=N                                (optional – embeds the real QR code and internal CH verification number)
+   *   format=pdf|png                             (default: pdf; PNG is rendered at 600 dpi)
    * Authentication: required (session cookie).
    */
   app.get("/api/reports/seal-label", async (req, res) => {
@@ -180,6 +181,7 @@ export function registerPdfRoutes(app: Express) {
       const status: SealLabelStatus = allowedStatuses.includes(rawStatus as SealLabelStatus)
         ? (rawStatus as SealLabelStatus)
         : "verified";
+      const format = String(req.query.format ?? "pdf") === "png" ? "png" : "pdf";
 
       const tenantId = parseInt(String(req.query.tenantId ?? "1"));
       const productIdParam = req.query.productId ? parseInt(String(req.query.productId)) : null;
@@ -215,8 +217,7 @@ export function registerPdfRoutes(app: Express) {
         }
       }
 
-      // Generate PDF
-      const pdfBuffer = await generateSealLabelPdf({
+      const labelOptions = {
         status,
         tenantName,
         tenantUrl,
@@ -225,12 +226,25 @@ export function registerPdfRoutes(app: Express) {
         swissVerificationNumber,
         qrCodeBuffer,
         tenantId: isNaN(tenantId) ? 1 : tenantId,
-      });
+      };
 
       const statusSlug = status.replace(/_/g, "-");
       const safeName = productName
         ? `_${productName.replace(/[^a-zA-Z0-9äöüÄÖÜß\-_]/g, "_").slice(0, 40)}`
         : "";
+
+      if (format === "png") {
+        const pngBuffer = await generateSealLabelPng(labelOptions);
+        const pngFilename = `Swiss-Product-Seal${safeName}_${statusSlug}_${new Date().toISOString().slice(0, 10)}.png`;
+        res.setHeader("Content-Type", "image/png");
+        res.setHeader("Content-Disposition", `attachment; filename="${pngFilename}"`);
+        res.setHeader("Content-Length", pngBuffer.length);
+        res.setHeader("Cache-Control", "private, no-store");
+        res.send(pngBuffer);
+        return;
+      }
+
+      const pdfBuffer = await generateSealLabelPdf(labelOptions);
       const filename = `Swiss-Product-Seal${safeName}_${statusSlug}_${new Date().toISOString().slice(0, 10)}.pdf`;
 
       res.setHeader("Content-Type", "application/pdf");

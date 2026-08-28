@@ -372,6 +372,12 @@
 - [x] Verifikation zeigt eindeutig, ob das Produkt für den Schweizer Markt durch spielzeug3 AG abgedeckt ist
 - [x] Chargenprüfung und Siegeldarstellung automatisiert testen (13 relevante Tests und TypeScript fehlerfrei)
 
+## Produktspezifischer PNG-Siegelexport mit CH-Verifikationsnummer
+- [x] Vorhandenen PNG-Export und produktspezifische Chargendaten prüfen
+- [x] Hochauflösendes PNG-Siegel mit QR-Code, Importeur und CH-Verifikationsnummer erzeugen
+- [x] Download-Button im Produkt-Siegelbereich ergänzen
+- [x] PNG-Abmessungen, Chargennummer und Dateityp automatisiert prüfen (1240 × 1748 px, PNG-Signatur, 14 relevante Tests)
+
 ## Portal-Tab: Website-URL des Mandanten editierbar
 - [x] Backend: neue updateMyTenant-Prozedur (admin/compliance_manager) mit websiteUrl, name, contactEmail
 - [x] tenantService.updateMyTenant: Mandanten-eigene Einstellungen ohne super_admin-Rechte änderbar

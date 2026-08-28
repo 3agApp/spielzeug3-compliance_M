@@ -1817,13 +1817,13 @@ function SealLabelDownloadButton({
   productId: number;
   sealStatus: SealStatus;
 }) {
-  const [downloading, setDownloading] = useState(false);
+  const [downloadingFormat, setDownloadingFormat] = useState<"pdf" | "png" | null>(null);
   const { t, lang } = useLang();
 
-  async function handleDownload() {
-    setDownloading(true);
+  async function handleDownload(format: "pdf" | "png") {
+    setDownloadingFormat(format);
     try {
-      const url = `/api/reports/seal-label?status=${sealStatus}&productId=${productId}`;
+      const url = `/api/reports/seal-label?status=${sealStatus}&productId=${productId}&format=${format}`;
       const response = await fetch(url, { credentials: "include" });
       if (!response.ok) {
         const err = await response.json().catch(() => ({}));
@@ -1834,34 +1834,49 @@ function SealLabelDownloadButton({
       const a = document.createElement("a");
       a.href = objectUrl;
       const statusSlug = sealStatus.replace(/_/g, "-");
-      a.download = `Swiss-Product-Seal_${statusSlug}_${new Date().toISOString().slice(0, 10)}.pdf`;
+      a.download = `Swiss-Product-Seal_${statusSlug}_${new Date().toISOString().slice(0, 10)}.${format}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(objectUrl);
-      toast.success(t.seal.printLabelSuccess, { description: t.seal.printLabelSuccessDesc });
+      toast.success(
+        format === "png" ? (lang === "de" ? "PNG-Siegel heruntergeladen" : "PNG seal downloaded") : t.seal.printLabelSuccess,
+        { description: format === "png"
+          ? (lang === "de" ? "Das hochauflösende PNG enthält QR-Code und die hinterlegte CH-Verifikationsnummer." : "The high-resolution PNG includes the QR code and the stored Swiss verification number.")
+          : t.seal.printLabelSuccessDesc }
+      );
     } catch (err: any) {
       toast.error(t.seal.printLabelError, { description: translateError(err.message, lang) ?? t.errors.unknownError });
     } finally {
-      setDownloading(false);
+      setDownloadingFormat(null);
     }
   }
 
   return (
-    <Button
-      variant="outline"
-      size="sm"
-      className="w-full"
-      onClick={handleDownload}
-      disabled={downloading}
-    >
-      {downloading ? (
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-      ) : (
-        <FileText className="mr-2 h-4 w-4" />
-      )}
-      {downloading ? t.seal.printLabelGenerating : t.seal.printLabel}
-    </Button>
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      <Button
+        variant="outline"
+        size="sm"
+        className="w-full"
+        onClick={() => handleDownload("pdf")}
+        disabled={!!downloadingFormat}
+      >
+        {downloadingFormat === "pdf" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
+        {downloadingFormat === "pdf" ? t.seal.printLabelGenerating : t.seal.printLabel}
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        className="w-full"
+        onClick={() => handleDownload("png")}
+        disabled={!!downloadingFormat}
+      >
+        {downloadingFormat === "png" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ImageIcon className="mr-2 h-4 w-4" />}
+        {downloadingFormat === "png"
+          ? (lang === "de" ? "PNG wird erstellt…" : "Creating PNG…")
+          : (lang === "de" ? "Siegel als PNG (300 dpi)" : "Seal as PNG (300 dpi)")}
+      </Button>
+    </div>
   );
 }
 
