@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculateIncidentCostAmounts, makeIncidentCostCenterCode } from "../server/domains/incidents/incidentCostService";
+import { calculateIncidentCostAmounts, incidentCostService, makeIncidentCostCenterCode } from "../server/domains/incidents/incidentCostService";
 
 describe("incident cost calculation", () => {
   it("calculates an internal time entry from hours, rate and VAT", () => {
@@ -24,5 +24,18 @@ describe("incident cost calculation", () => {
 
   it("creates a stable, traceable cost-centre code", () => {
     expect(makeIncidentCostCenterCode(42, new Date("2026-09-02T12:00:00Z"))).toBe("IC-2026-000042");
+  });
+
+  it("blocks supplier accounts from reading protected case costs", async () => {
+    await expect(incidentCostService.getByIncident({ id: 9, tenantId: 1, complianceRole: "supplier" } as any, 30001)).rejects.toThrow();
+  });
+
+  it("blocks supplier accounts from attaching a receipt to an expense", async () => {
+    await expect(incidentCostService.attachReceipt({ id: 9, tenantId: 1, complianceRole: "supplier" } as any, {
+      entryId: 1,
+      fileName: "invoice.pdf",
+      fileUrl: "https://example.com/invoice.pdf",
+      fileKey: "test/invoice.pdf",
+    })).rejects.toThrow();
   });
 });

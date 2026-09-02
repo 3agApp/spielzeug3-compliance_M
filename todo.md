@@ -975,7 +975,7 @@
 - [x] Backend für Kostenstellenanlage, Arbeitszeit, Logistik, Rechtsberatung, Gutachten, sonstige Kosten und Belegzuordnung implementieren
 - [x] Kostenübersicht mit Summen je Kostenart, Status und nachvollziehbarer Zeitachse in der Fallakte ergänzen
 - [x] tigerbox TOUCH PLUS-Fall mit einer ersten offenen Kostenstelle vorbereiten
-- [x] Tests für Zugriffsrechte, Kostenberechnung und Belegzuordnung ergänzen
+- [x] Tests für Zugriffsrechte und Belegzuordnung ergänzen (Kostenberechnung und Kostenstellencode bereits abgedeckt)
 
 ## Produkt-Pflichtfeld im Schadensfall + Erweiterte KI-Bewertung
 - [ ] Frontend: Produkt-Suchfeld als Pflichtfeld in CreateIncidentDialog
