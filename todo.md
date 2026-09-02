@@ -970,6 +970,13 @@
 - [x] Frontend: Konfidenz-Anzeige und Begründung der KI-Einschätzung
 - [x] Tests: incidentAiService Tests (9 Tests: suggestAssessment mit Mock-LLM – alle grün)
 
+## tigerbox TOUCH PLUS – Fallkostenstelle und Aufwandserfassung
+- [x] Datenmodell für eine fallbezogene Kostenstelle sowie einzeln belegbare Aufwandspositionen ergänzen
+- [x] Backend für Kostenstellenanlage, Arbeitszeit, Logistik, Rechtsberatung, Gutachten, sonstige Kosten und Belegzuordnung implementieren
+- [x] Kostenübersicht mit Summen je Kostenart, Status und nachvollziehbarer Zeitachse in der Fallakte ergänzen
+- [x] tigerbox TOUCH PLUS-Fall mit einer ersten offenen Kostenstelle vorbereiten
+- [x] Tests für Zugriffsrechte, Kostenberechnung und Belegzuordnung ergänzen
+
 ## Produkt-Pflichtfeld im Schadensfall + Erweiterte KI-Bewertung
 - [ ] Frontend: Produkt-Suchfeld als Pflichtfeld in CreateIncidentDialog
 - [ ] Frontend: Produktvorschau-Karte nach Auswahl (Name, Art.Nr., Marke)

@@ -984,6 +984,81 @@ export const incidentTimeline = mysqlTable("incident_timeline", {
 export type IncidentTimelineEntry = typeof incidentTimeline.$inferSelect;
 export type InsertIncidentTimelineEntry = typeof incidentTimeline.$inferInsert;
 
+// ─── Incident Cost Centres (fallbezogene Kostenstellen) ──────────────────────
+
+export const incidentCostCenters = mysqlTable("incident_cost_centers", {
+  id: int("id").autoincrement().primaryKey(),
+  incidentId: int("incidentId").notNull().unique(), // one accountable cost centre per incident
+  tenantId: int("tenantId").default(1).notNull(),
+  costCenterCode: varchar("costCenterCode", { length: 64 }).notNull().unique(),
+  name: varchar("name", { length: 255 }).notNull(),
+  currency: varchar("currency", { length: 3 }).default("CHF").notNull(),
+  status: mysqlEnum("status", ["open", "on_hold", "closed"]).default("open").notNull(),
+  insurerName: varchar("insurerName", { length: 255 }),
+  insurerClaimReference: varchar("insurerClaimReference", { length: 128 }),
+  notes: text("notes"),
+  createdByUserId: int("createdByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type IncidentCostCenter = typeof incidentCostCenters.$inferSelect;
+export type InsertIncidentCostCenter = typeof incidentCostCenters.$inferInsert;
+
+// ─── Incident Cost Entries (Aufwand, Kosten und Belege) ──────────────────────
+
+export const incidentCostEntries = mysqlTable("incident_cost_entries", {
+  id: int("id").autoincrement().primaryKey(),
+  incidentId: int("incidentId").notNull(),
+  costCenterId: int("costCenterId").notNull(),
+  tenantId: int("tenantId").default(1).notNull(),
+  category: mysqlEnum("category", [
+    "internal_time",
+    "logistics",
+    "legal",
+    "expert_opinion",
+    "laboratory",
+    "authority_fees",
+    "customer_remediation",
+    "travel",
+    "communication",
+    "other",
+  ]).notNull(),
+  description: text("description").notNull(),
+  incurredAt: timestamp("incurredAt").notNull(),
+  counterparty: varchar("counterparty", { length: 255 }),
+  invoiceNumber: varchar("invoiceNumber", { length: 128 }),
+  // Work effort is optional; if given, amounts are calculated from hours × hourly rate.
+  hours: decimal("hours", { precision: 10, scale: 2 }),
+  hourlyRate: decimal("hourlyRate", { precision: 12, scale: 2 }),
+  amountNet: decimal("amountNet", { precision: 14, scale: 2 }).notNull(),
+  vatAmount: decimal("vatAmount", { precision: 14, scale: 2 }).default("0.00").notNull(),
+  amountGross: decimal("amountGross", { precision: 14, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).default("CHF").notNull(),
+  status: mysqlEnum("status", [
+    "planned",
+    "incurred",
+    "invoiced",
+    "paid",
+    "submitted_to_insurer",
+    "partially_reimbursed",
+    "reimbursed",
+    "disputed",
+    "voided",
+  ]).default("incurred").notNull(),
+  insurerReference: varchar("insurerReference", { length: 128 }),
+  receiptFileName: varchar("receiptFileName", { length: 512 }),
+  receiptFileUrl: text("receiptFileUrl"),
+  receiptFileKey: varchar("receiptFileKey", { length: 512 }),
+  receiptMimeType: varchar("receiptMimeType", { length: 128 }),
+  receiptFileSizeBytes: int("receiptFileSizeBytes"),
+  voidReason: text("voidReason"),
+  createdByUserId: int("createdByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type IncidentCostEntry = typeof incidentCostEntries.$inferSelect;
+export type InsertIncidentCostEntry = typeof incidentCostEntries.$inferInsert;
+
 // ─── Product Versions ─────────────────────────────────────────────────────────
 export const productVersions = mysqlTable("product_versions", {
   id: int("id").autoincrement().primaryKey(),

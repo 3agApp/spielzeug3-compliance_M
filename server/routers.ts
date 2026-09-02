@@ -28,6 +28,7 @@ import { declarationsRouter } from "./routers/declarations";
 import { productImportRouter } from "./routers/productImport";
 import { productCopyRouter } from "./routers/productCopy";
 import { incidentsRouter } from "./routers/incidents";
+import { incidentCostsRouter } from "./routers/incidentCosts";
 import { versionsRouter } from "./routers/versions";
 import { supplierWebsiteCheckRouter } from "./routers/supplierWebsiteCheck";
 import { supplierDocumentsRouter } from "./routers/supplierDocuments";
@@ -69,6 +70,7 @@ export const appRouter = router({
   productImport: productImportRouter,
   productCopy: productCopyRouter,
   incidents: incidentsRouter,
+  incidentCosts: incidentCostsRouter,
   versions: versionsRouter,
   supplierWebsiteCheck: supplierWebsiteCheckRouter,
   supplierDocuments: supplierDocumentsRouter,

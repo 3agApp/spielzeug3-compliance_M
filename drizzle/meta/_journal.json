@@ -190,6 +190,13 @@
       "when": 1779880862045,
       "tag": "0026_amused_mantis",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "5",
+      "when": 1788340692812,
+      "tag": "0027_tired_human_fly",
+      "breakpoints": true
     }
   ]
 }

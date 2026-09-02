@@ -7,6 +7,7 @@
 import { useState } from "react";
 import { useLocation, useParams } from "wouter";
 import ComplianceLayout from "@/components/ComplianceLayout";
+import { IncidentCostTracker } from "@/components/IncidentCostTracker";
 import { trpc } from "@/lib/trpc";
 import { useLang } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
@@ -996,6 +997,7 @@ export default function IncidentDetail() {
     tabEvidence: "Evidence",
     tabAssessment: "Assessment",
     tabRecall: "Recall",
+    tabCosts: "Costs",
     tabTimeline: "Timeline",
     incidentDetails: "Incident Details",
     description: "Description",
@@ -1047,6 +1049,7 @@ export default function IncidentDetail() {
     tabEvidence: "Beweise",
     tabAssessment: "Bewertung",
     tabRecall: "Rückruf",
+    tabCosts: "Kosten",
     tabTimeline: "Timeline",
     incidentDetails: "Vorfalldetails",
     description: "Beschreibung",
@@ -1218,8 +1221,8 @@ export default function IncidentDetail() {
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="overview">
-          <TabsList className="grid grid-cols-5 w-full max-w-2xl">
+          <Tabs defaultValue={window.location.hash === "#costs" ? "costs" : "overview"}>
+          <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full max-w-3xl h-auto">
             <TabsTrigger value="overview">{T.tabOverview}</TabsTrigger>
             <TabsTrigger value="evidence">
               {T.tabEvidence}
@@ -1234,6 +1237,7 @@ export default function IncidentDetail() {
               )}
             </TabsTrigger>
             <TabsTrigger value="recall">{T.tabRecall}</TabsTrigger>
+            <TabsTrigger value="costs">{T.tabCosts}</TabsTrigger>
             <TabsTrigger value="timeline">{T.tabTimeline}</TabsTrigger>
           </TabsList>
 
@@ -1523,6 +1527,11 @@ export default function IncidentDetail() {
             ) : (
               <RecallPanel recall={incident.recall} incidentId={incidentId} onUpdated={refetchAll} lang={lang} />
             )}
+          </TabsContent>
+
+          {/* ── Costs ── */}
+          <TabsContent value="costs" className="space-y-4 mt-4">
+            <IncidentCostTracker incidentId={incidentId} />
           </TabsContent>
 
           {/* ── Timeline ── */}
